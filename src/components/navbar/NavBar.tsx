@@ -11,7 +11,7 @@ const Navbar = () => {
   return (
     <header className="max_screen_width py-6 bg-primary">
       <nav className="max_width flex items-center justify-between">
-        <div className="">
+        <div className="xl:hidden block">
           <MenuButton
             color="dark"
             isOpenNavBar={isOpenNavBar}
