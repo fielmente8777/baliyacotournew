@@ -1,6 +1,5 @@
 "use client";
 
-import { AccommodationSectionProps } from "@/@types/landingPageTypes";
 import { createContext, useContext, useState } from "react";
 
 interface OpenGalleryProps {
@@ -12,13 +11,8 @@ interface OpenAmenityModalArray {
   amenities: string[];
 }
 
-type RoomDetailsType = AccommodationSectionProps["cards"][0];
-
 interface WebContextType {
-   isOpen: boolean;
-  room: RoomDetailsType | null;
-  openRoom: (room: RoomDetailsType) => void;
-  closeRoom: () => void;
+
 
   isOpenNavBar: boolean;
   setIsOpenNavBar: (open: boolean) => void;
@@ -47,11 +41,6 @@ interface WebContextType {
 }
 
 const WebContext = createContext<WebContextType>({
-
-  isOpen: false,
-  room: null,
-  openRoom: () => {},
-  closeRoom: () => {},
 
   isOpenNavBar: false,
   setIsOpenNavBar: () => {},
@@ -114,26 +103,11 @@ export const WebProvider = ({ children }: WebProviderProps) => {
     setImageCurrentIndex(0);
   };
 
-  const [room, setRoom] = useState<RoomDetailsType | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const openRoom = (room: RoomDetailsType) => {
-    setRoom(room);
-    setIsOpen(true);
-  };
-
-  const closeRoom = () => {
-    setIsOpen(false);
-    setRoom(null);
-  };
 
   return (
     <WebContext.Provider
       value={{
-        isOpen,
-        room,
-        openRoom,
-        closeRoom,
+
         isOpenNavBar,
         setIsOpenNavBar,
 
