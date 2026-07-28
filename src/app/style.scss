@@ -1,0 +1,108 @@
+@layer utilities {
+  a,
+  button {
+    cursor: pointer;
+  }
+  .demo {
+    .swiper {
+      pointer-events: none;
+    }
+    .swiper-wrapper {
+      transition-timing-function: linear !important;
+    }
+  }
+
+  .box-shadow {
+    box-shadow: 0 7px 29px 0 rgba(100, 100, 111, 0.2);
+  }
+
+  .md-box-shadow {
+    @media (min-width: 768px) {
+      box-shadow: 0 7px 29px 0 rgba(100, 100, 111, 0.2);
+    }
+  }
+
+  // container sizes
+
+  .max_screen_width {
+    max-width: 1600px;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .max_width {
+    max-width: 100%;
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1rem;
+
+    @media (min-width: 768px) {
+      /* md */
+      max-width: 720px;
+    }
+
+    @media (min-width: 1024px) {
+      /* lg */
+      max-width: 960px;
+      padding-inline: 0;
+    }
+
+    @media (min-width: 1280px) {
+      /* xl */
+      max-width: 1140px;
+      padding-inline: 0;
+    }
+
+    @media (min-width: 1536px) {
+      /* 2xl */
+      max-width: 1320px;
+      padding-inline: 0;
+    }
+
+    @media (min-width: 1920px) {
+      /* 3xl */
+      max-width: 1440px;
+      padding-inline: 0;
+    }
+  }
+
+  // mobile desktop and across all devices
+
+  .hide-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scroll {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+
+
+.room-card{
+  .swiper-button-next,
+  .swiper-button-prev {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 7px 29px 0 rgba(100, 100, 111, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    svg {
+      color: var(--primary);
+      width: 20px;
+      height: 20px;
+    }
+    @media (width < 768px) {
+      width: 32px;
+      height: 32px;
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+.marquee-wrapper {
+  display: flex;
+  width: max-content;
+  animation: marquee 18s linear infinite;
+}
+
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+}
+
+.marquee-item {
+  display: inline-flex;
+  align-items: center; /* vertical center */
+  gap: 32px; /* spacing like image */
+  margin-right: 32px;
+  // font-size: 42px;
+  // font-weight: 600;
+  // text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // color: var(--color-primary); /* or Tailwind text-primary */
+  // font-size: 1em;              /* same height as text */
+  // line-height: 1;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

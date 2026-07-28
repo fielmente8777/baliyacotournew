@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #E0F1DC;
+  --light: #2E323B;
+  --dark: #161616;
+}
+
+@theme inline {
+  --color-primary: #E0F1DC;
+  --color-light: #2E323B;
+  --color-dark: #161616;
+}
+
+
+
+body {
+  font-family: var(--font-fira-sans);  
+}
