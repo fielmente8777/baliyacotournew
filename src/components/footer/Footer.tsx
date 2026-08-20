@@ -27,8 +27,8 @@ const Footer = () => {
               key={index}
               className={clsx(
                 "flex flex-col gap-4",
-                index === 1 && "w-fit ml-auto",
-                index === 0 && "w-fit ml-40"
+                index === 1 && "w-fit xl:ml-auto",
+                index === 0 && "w-fit xl:ml-40"
               )}
             >
               <h3 className="text-2xl font-bold">{list.title}</h3>
