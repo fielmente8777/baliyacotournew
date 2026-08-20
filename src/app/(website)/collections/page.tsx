@@ -7,7 +7,7 @@ import { products } from "./pageData";
 export default function CollectionsPage() {
   return (
     <main className="">
-      <Section className="md:px-10 px-14">
+      <Section className="md:px-10 px-4">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center mb-8">
           <Breadcrumb />
           <SortButton />

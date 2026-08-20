@@ -14,7 +14,7 @@ export default function ProductGrid({
       <div
         className="
         grid
-        grid-cols-2
+        grid-cols-1
         gap-x-5
         gap-y-12
 

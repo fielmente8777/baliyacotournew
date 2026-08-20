@@ -10,7 +10,7 @@ const Footer = () => {
       <div className="flex flex-col gap-16 py-10">
         {/* line */}
         <Line />
-        <Container className="grid md:grid-cols-3 grid-cols-1">
+        <Container className="grid md:grid-cols-3 grid-cols-1 max-xl:gap-6">
           <div className="w-[200px] text-center">
             <div className="relative w-[200px] aspect-4/1.5">
               <Image
