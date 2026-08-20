@@ -13,7 +13,7 @@ import {
   useUpdateProfileMutation,
 } from '@/store/api/profileApi';
 import type { Gender } from '@/@types/account';
-import AccountContent from '../../app/(website)/my-account/components/AccountContent';
+import AccountContent from '../../app/(website)/my-account/components/AccountContent'
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
 import OutlineButton from '../../app/(website)/my-account/components/OutlineButton';
