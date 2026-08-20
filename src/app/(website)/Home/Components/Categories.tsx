@@ -25,23 +25,23 @@ const Categories: React.FC<CategoriesProps> = ({
   cta,
 }) => {
   return (
-    <Section defaultPadding={false} className="bg-primary max-xl:px-4 max-lg:py-10">
+    <Section defaultPadding={false} className="bg-secondary max-xl:px-4 max-lg:py-10">
       <div className="max-w-[1440px] ml-auto items-center grid lg:grid-cols-2 grid-cols-1 gap-6">
         <div className="flex flex-col gap-4">
-          <SectionHeading title={title} titleStyle={{ color: "#9B2C40" }} />
-          <p className="text-light">{description}</p>
+          <SectionHeading title={title} titleColor="white" />
+          <p className="text-white">{description}</p>
           <LinkButton
             href={cta.link}
             label={cta.label}
             arrowIcon
-            className="lg:my-16 rounded-full bg-[#9B2C40] gap-4 text-white"
+            className="lg:my-16 rounded-full bg-dark gap-4 text-white border-secondary"
           />
           <p className="flex flex-wrap uppercase">
             {types.map((type, index) => (
-              <span key={index} className="flex items-center">
+              <span key={index} className="flex items-center text-white">
                 {type}
 
-                {index !== types.length - 1 && <span className="w-2 bg-[#0D1829] inline-flex rounded-full aspect-square mx-2"/>}
+                {index !== types.length - 1 && <span className="w-2 bg-white inline-flex rounded-full aspect-square mx-2"/>}
               </span>
             ))}
           </p>

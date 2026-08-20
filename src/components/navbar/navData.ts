@@ -1,18 +1,11 @@
 export const navData = [
   {
-    name: "Home",
-    href: "/",
+    name: "Pre-made Collections",
+    href: "/collections",
   },
   {
-    name: "About",
-    href: "/about",
+    name: "Bestsellers",
+    href: "/collections",
   },
-  {
-    name: "Services",
-    href: "/services",
-  },
-  {
-    name: "Contact",
-    href: "/contact",
-  },
+  
 ];

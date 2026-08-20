@@ -3,6 +3,8 @@ import { Fira_Sans } from "next/font/google";
 import "./globals.css";
 import "./style.scss";
 import Navbar from "@/components/navbar/NavBar";
+import Footer from "@/components/footer/Footer";
+import ReduxProvider from "@/store/provider";
 
 const firaSans = Fira_Sans({
   variable: "--font-fira-sans",
@@ -21,10 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={` ${firaSans.variable} h-full antialiased`}>
-      <body suppressHydrationWarning={true}>
-        <Navbar />
-        {children}
+    <html lang="en" >
+      <body suppressHydrationWarning={true} className={` ${firaSans.variable} bg-[#FAF8F0] h-full antialiased`}> 
+        <ReduxProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </ReduxProvider>
       </body>
     </html>
   );

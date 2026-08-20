@@ -10,7 +10,7 @@ import { homePageData } from "./Home/pagedata";
 
 export default function Home() {
   return (
-    <main>
+    <main className="bg-[#FAF7F2]">
       <VideoBanner {...homePageData.hero} />
       <Categories {...homePageData.categories} />
       <DesignProcess {...homePageData.designProcess} />

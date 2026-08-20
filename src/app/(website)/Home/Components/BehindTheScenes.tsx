@@ -26,10 +26,10 @@ const BehindTheScenes: React.FC<BehindTheScenesProps> = ({
   ];
 
   return (
-    <SectionWithContainer sectionClassName="bg-primary">
+    <SectionWithContainer sectionClassName="bg-secondary">
       <div className="text-center space-y-2">
-        <SectionHeading title={title} />
-        <p className="text-light">{description}</p>
+        <SectionHeading title={title} titleColor="white" />
+        <p className="text-white">{description}</p>
       </div>
       <div className="mt-10">
         <SwiperCarousel

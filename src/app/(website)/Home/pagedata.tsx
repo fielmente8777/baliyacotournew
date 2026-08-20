@@ -33,7 +33,7 @@ export const homePageData = {
     types: ["Kurtis", "Lehengas"],
     cta: {
       label: "Design Your Dress",
-      link: "#design",
+      link: "/create-your-own-design",
     },
   },
 
@@ -69,6 +69,10 @@ export const homePageData = {
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat.",
     image: "/Rectangle-23951.png",
+    cta: {
+      label: "Design Your Dress",
+      link: "/create-your-own-design",
+    },
   },
   preMadeDesigns: {
     title: "Pre made Designs",

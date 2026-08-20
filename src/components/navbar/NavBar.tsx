@@ -9,7 +9,7 @@ const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
 
   return (
-    <header className="max_screen_width py-6 bg-primary">
+    <header className="max_screen_width py-6 bg-white">
       <nav className="max_width flex items-center justify-between">
         <div className="xl:hidden block">
           <MenuButton
@@ -23,7 +23,7 @@ const Navbar = () => {
             <li className="" key={index}>
               <Link
                 href={item.href}
-                className="text-[#5C6476] hover:text-white transition-all duration-300 ease-in-out"
+                className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
               >
                 {item.name}
               </Link>
@@ -32,7 +32,7 @@ const Navbar = () => {
         </ul>
         <Link
           href="/"
-          className="lg:w-[152.47px] w-[100px] relative aspect-[4/1.7] self-center-safe"
+          className="lg:w-[152.47px] w-[100px] mr-26 relative aspect-[4/1.7] self-center"
         >
           <Image src="/logo.png" alt="logo" fill className="object-cover" />
         </Link>
@@ -40,7 +40,7 @@ const Navbar = () => {
         <ul className="flex items-center gap-6">
           <li>
             <Link
-              href="/"
+              href="/my-account/personal-details"
               className="text-[#5C6476] hover:text-white transition-all duration-300 ease-in-out"
             >
               <ProfileIcon />
@@ -48,7 +48,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              href="/"
+              href="/cart"
               className="text-[#5C6476] hover:text-white transition-all duration-300 ease-in-out"
             >
               <CartIcon />
