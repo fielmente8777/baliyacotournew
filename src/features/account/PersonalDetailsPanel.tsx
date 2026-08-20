@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Personal Details — read view (Profile.pdf) that flips to an edit form
- * (Profile-4.pdf) in place. Two screens, one route: the design shows no
- * URL change, and keeping it local means the form state dies when the
- * user cancels, which is what you want.
- */
 
 import { useState } from 'react';
 import {
