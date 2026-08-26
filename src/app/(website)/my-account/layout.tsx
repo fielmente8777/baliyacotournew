@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import AccountLayout from './components/AccountLayout';
+import RequireAuth from '@/features/auth/RequireAuth';
 
 export const metadata: Metadata = {
   title: 'My Account | Baliye Couture',
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
  * renders inside it automatically and no page re-wraps itself.
  */
 export default function MyAccountLayout({ children }: { children: ReactNode }) {
-  return <AccountLayout>{children}</AccountLayout>;
+  return (
+    <RequireAuth>
+      <AccountLayout>{children}</AccountLayout>
+    </RequireAuth>
+  );
 }

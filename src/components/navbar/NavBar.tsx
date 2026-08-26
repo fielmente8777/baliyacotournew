@@ -4,9 +4,11 @@ import { navData } from "./navData";
 import Image from "next/image";
 import MenuButton from "./MenuButton";
 import { useState } from "react";
+import { useAuth } from "@/features/auth/useAuth";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="max_screen_width py-6 bg-white">
@@ -39,17 +41,24 @@ const Navbar = () => {
 
         <ul className="flex items-center gap-6">
           <li>
+            {/* Signed out, this goes to /login and comes back here after. */}
             <Link
-              href="/my-account/personal-details"
-              className="text-[#5C6476] hover:text-white transition-all duration-300 ease-in-out"
+              href={
+                isAuthenticated
+                  ? "/my-account/personal-details"
+                  : "/login?redirect=%2Fmy-account%2Fpersonal-details"
+              }
+              aria-label={isAuthenticated ? "My account" : "Sign in"}
+              className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
             >
               <ProfileIcon />
             </Link>
           </li>
           <li>
             <Link
-              href="/cart"
-              className="text-[#5C6476] hover:text-white transition-all duration-300 ease-in-out"
+              href={isAuthenticated ? "/cart" : "/login?redirect=%2Fcart"}
+              aria-label="Cart"
+              className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
             >
               <CartIcon />
             </Link>

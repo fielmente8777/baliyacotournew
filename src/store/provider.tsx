@@ -8,17 +8,26 @@
  * App Router.
  */
 
-import { useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { makeStore, setupListeners, type AppStore } from './index';
 
 export default function ReduxProvider({ children }: { children: ReactNode }) {
-  const storeRef = useRef<AppStore | null>(null);
+  const [store] = useState<AppStore>(() => makeStore());
 
-  if (!storeRef.current) {
-    storeRef.current = makeStore();
-    setupListeners(storeRef.current.dispatch);
-  }
+  useEffect(() => setupListeners(store.dispatch), [store]);
 
-  return <Provider store={storeRef.current}>{children}</Provider>;
+  /**
+   * GoogleOAuthProvider loads the GIS script once for the whole app. With an
+   * empty client id it renders children untouched, so a missing env var
+   * degrades to "Gmail button does nothing" rather than a crash.
+   */
+  return (
+    <Provider store={store}>
+      <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
+        {children}
+      </GoogleOAuthProvider>
+    </Provider>
+  );
 }
