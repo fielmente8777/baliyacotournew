@@ -1,13 +1,17 @@
 'use client';
 
+/**
+ * Personal Details — read view (Profile.pdf) flipping to an edit form
+ * (Profile-4.pdf) in place. All data comes from GET /profile.
+ */
 
 import { useState } from 'react';
 import {
   useGetProfileQuery,
   useUpdateProfileMutation,
 } from '@/store/api/profileApi';
-import type { Gender } from '@/@types/account';
-import AccountContent from '../../app/(website)/my-account/components/AccountContent'
+import type { Gender, UpdateProfileBody } from '@/@types/account';
+import AccountContent from '../../app/(website)/my-account/components/AccountContent';
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
 import OutlineButton from '../../app/(website)/my-account/components/OutlineButton';
@@ -18,57 +22,84 @@ const GENDERS: Array<{ value: Gender; label: string }> = [
   { value: 'other', label: 'Other' },
 ];
 
+const NOT_ADDED = '- not added-';
+
 /** 19/02/1999 — the display format used in the design. */
-const formatDob = (iso: string | null) => {
-  if (!iso) return '- not added-';
+const formatDob = (iso?: string) => {
+  if (!iso) return NOT_ADDED;
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
-    ? '- not added-'
+    ? NOT_ADDED
     : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 };
 
+/** "+918580547174" → "+91- 8580547174" as the design shows it. */
+const formatPhone = (phone?: string) => {
+  if (!phone) return NOT_ADDED;
+  const match = phone.match(/^(\+\d{1,3})(\d{6,})$/);
+  return match ? `${match[1]}- ${match[2]}` : phone;
+};
+
+/** <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp. */
+const toDateInput = (iso?: string) => (iso ? iso.slice(0, 10) : '');
+
 export default function PersonalDetailsPanel() {
-  const { data: profile, isLoading } = useGetProfileQuery();
+  const { data: profile, isLoading, isError, refetch } = useGetProfileQuery();
   const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
 
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', email: '', gender: '', dob: '' });
+  const [form, setForm] = useState({ name: '', email: '', gender: '', dob: '' });
   const [error, setError] = useState<string | null>(null);
 
   const startEditing = () => {
     if (!profile) return;
     setForm({
-      name: profile.name,
-      phone: profile.phone,
-      email: profile.email,
+      name: profile.name ?? '',
+      email: profile.email ?? '',
       gender: profile.gender ?? '',
-      dob: profile.dob ? profile.dob.slice(0, 10) : '',
+      dob: toDateInput(profile.dob),
     });
     setError(null);
     setEditing(true);
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) return setError('Please enter your full name.');
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Please enter a valid email.');
-    if (!/^\d{10}$/.test(form.phone)) return setError('Mobile number must be 10 digits.');
+    if (form.name && form.name.trim().length < 2) {
+      return setError('Name must be at least 2 characters.');
+    }
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
+      return setError('Please enter a valid email address.');
+    }
 
     setError(null);
-    await updateProfile({
-      name: form.name.trim(),
-      phone: form.phone,
-      email: form.email.trim(),
-      gender: (form.gender || null) as Gender | null,
-      dob: form.dob || null,
-    }).unwrap();
-    setEditing(false);
+
+    /* Send only fields with a value — the backend treats every key as a set,
+       so an empty string would overwrite a good value with nothing. */
+    const body: UpdateProfileBody = {};
+    if (form.name.trim()) body.name = form.name.trim();
+    if (form.email.trim()) body.email = form.email.trim().toLowerCase();
+    if (form.gender) body.gender = form.gender as Gender;
+    if (form.dob) body.dob = form.dob;
+
+    try {
+      console.log('body', body);
+      await updateProfile(body).unwrap();
+      setEditing(false);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      setError(
+        status === 409
+          ? 'That email is already used by another account.'
+          : 'Could not save your details. Please try again.'
+      );
+    }
   };
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <AccountContent>
         <PageHeader title="Personal Details" />
-        <div className="space-y-4 p-5 md:p-6">
+        <div className="space-y-5 p-5 md:p-6">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-5 w-full animate-pulse rounded bg-black/5" />
           ))}
@@ -77,12 +108,26 @@ export default function PersonalDetailsPanel() {
     );
   }
 
+  if (isError || !profile) {
+    return (
+      <AccountContent>
+        <PageHeader title="Personal Details" />
+        <div className="p-5 md:p-6">
+          <p className="text-sm text-[#A52C45]">We couldn&apos;t load your profile.</p>
+          <OutlineButton type="button" onClick={() => refetch()} className="mt-4">
+            Try again
+          </OutlineButton>
+        </div>
+      </AccountContent>
+    );
+  }
+
   if (!editing) {
     const rows: Array<[string, string]> = [
-      ['Full Name', profile.name],
-      ['Mobile Number', `${profile.countryCode}- ${profile.phone}`],
-      ['Email ID', profile.email],
-      ['Gender', GENDERS.find((g) => g.value === profile.gender)?.label ?? '- not added-'],
+      ['Full Name', profile.name || NOT_ADDED],
+      ['Mobile Number', formatPhone(profile.phone)],
+      ['Email ID', profile.email || NOT_ADDED],
+      ['Gender', GENDERS.find((g) => g.value === profile.gender)?.label ?? NOT_ADDED],
       ['DOB', formatDob(profile.dob)],
     ];
 
@@ -123,19 +168,12 @@ export default function PersonalDetailsPanel() {
           className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
         />
 
-        <div className="flex h-12 items-center rounded-md border border-[#EAE6DF] px-4 focus-within:border-[#A52C45]">
-          <span className="shrink-0 border-r border-[#EAE6DF] pr-3 text-sm text-[#222]">
-            {profile.countryCode}
+        {/* Read-only: phone is the login identity and only the OTP flow changes it. */}
+        <div className="flex h-12 items-center rounded-md border border-[#EAE6DF] bg-[#FAF9F7] px-4">
+          <span className="text-sm text-[#8A8A8A]">
+            {formatPhone(profile.phone)}
           </span>
-          <input
-            inputMode="numeric"
-            value={form.phone}
-            onChange={(e) =>
-              /^\d{0,10}$/.test(e.target.value) && setForm({ ...form, phone: e.target.value })
-            }
-            placeholder="Mobile Number"
-            className="w-full bg-transparent pl-3 text-sm outline-none"
-          />
+          <span className="ml-auto text-xs text-[#9A9A9A]">Cannot be changed</span>
         </div>
 
         <input
@@ -162,6 +200,7 @@ export default function PersonalDetailsPanel() {
         <input
           type="date"
           value={form.dob}
+          max={new Date().toISOString().slice(0, 10)}
           onChange={(e) => setForm({ ...form, dob: e.target.value })}
           className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm text-[#222] outline-none focus:border-[#A52C45]"
         />

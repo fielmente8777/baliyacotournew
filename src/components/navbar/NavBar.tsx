@@ -3,12 +3,12 @@ import Link from "next/link";
 import { navData } from "./navData";
 import Image from "next/image";
 import MenuButton from "./MenuButton";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, signOut } = useAuth();
 
   return (
     <header className="max_screen_width py-6 bg-white">
@@ -41,18 +41,17 @@ const Navbar = () => {
 
         <ul className="flex items-center gap-6">
           <li>
-            {/* Signed out, this goes to /login and comes back here after. */}
-            <Link
-              href={
-                isAuthenticated
-                  ? "/my-account/personal-details"
-                  : "/login?redirect=%2Fmy-account%2Fpersonal-details"
-              }
-              aria-label={isAuthenticated ? "My account" : "Sign in"}
-              className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
-            >
-              <ProfileIcon />
-            </Link>
+            {isAuthenticated ? (
+              <AccountMenu onSignOut={signOut} />
+            ) : (
+              <Link
+                href="/login?redirect=%2Fmy-account%2Fpersonal-details"
+                aria-label="Sign in"
+                className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
+              >
+                <ProfileIcon />
+              </Link>
+            )}
           </li>
           <li>
             <Link
@@ -142,3 +141,75 @@ export const CartIcon = () => (
     </defs>
   </svg>
 );
+
+/**
+ * Profile dropdown for signed-in users. Closes on outside click and Escape.
+ */
+const AccountMenu = ({ onSignOut }: { onSignOut: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onDocClick = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+        className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
+      >
+        <ProfileIcon />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-[calc(100%+12px)] z-40 w-52 overflow-hidden rounded-lg bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+        >
+          <Link
+            href="/my-account/personal-details"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm text-[#333] hover:bg-[#F7F7F7]"
+          >
+            My Account
+          </Link>
+          <Link
+            href="/my-account/orders"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm text-[#333] hover:bg-[#F7F7F7]"
+          >
+            My Orders
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onSignOut();
+            }}
+            className="block w-full border-t border-[#EFEFEF] px-4 py-2.5 text-left text-sm text-[#A52C45] hover:bg-[#FBF6F7]"
+          >
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

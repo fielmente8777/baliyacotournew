@@ -1,16 +1,11 @@
-/** Demo profile + addresses, matching the Figma copy. */
+/**
+ * Demo addresses, matching the Figma copy.
+ *
+ * The profile fixture is gone — /profile is live now, so anything faked here
+ * would only ever mask a broken request.
+ */
 
-import type { Address, UserProfile } from '@/@types/account';
-
-export const mockProfile: UserProfile = {
-  _id: 'usr-1',
-  name: 'Jyotsana Gaur',
-  countryCode: '+91',
-  phone: '8580547174',
-  email: 'jyotsanagaur909@gmail.com',
-  gender: 'female',
-  dob: null,
-};
+import type { Address } from '@/@types/account';
 
 export const mockAddresses: Address[] = [
   {
