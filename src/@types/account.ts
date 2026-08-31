@@ -47,11 +47,29 @@ export interface Address {
   _id: string;
   fullName: string;
   street: string;
+  /** Optional second line — the design shows two lines of street text. */
+  landmark?: string;
   city: string;
   state: string;
   pincode: string;
+  country?: string;
+  /** Delivery contact, not always the account holder's number. */
+  phone?: string;
   type: AddressType;
+  isDefault: boolean;
+}
+
+/** Body for POST /addresses and PUT /addresses/:id. */
+export interface SaveAddressBody {
+  fullName: string;
+  street: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country?: string;
+  phone?: string;
+  type?: AddressType;
   isDefault?: boolean;
 }
 
-export type SaveAddressArg = Omit<Address, '_id'> & { _id?: string };

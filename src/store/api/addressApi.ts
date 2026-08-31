@@ -1,49 +1,42 @@
-/** Saved address endpoints. */
+/**
+ * Saved shipping addresses. Never mocked — an address belongs to whoever the
+ * token identifies.
+ */
 
-import type { Address, SaveAddressArg } from '@/@types/account';
-import { mockAddresses } from '@/mocks/account.mock';
-import { USE_MOCKS, baseApi, mockDelay } from './baseApi';
-
-let demoAddresses: Address[] = [...mockAddresses];
+import type { Address, SaveAddressBody } from '@/@types/account';
+import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
 export const addressApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAddresses: builder.query<Address[], void>(
-      USE_MOCKS
-        ? {
-            queryFn: async () => {
-              await mockDelay();
-              return { data: demoAddresses };
-            },
-            providesTags: ['Address'],
-          }
-        : { query: () => '/profile/addresses', providesTags: ['Address'] }
-    ),
+    getAddresses: builder.query<Address[], void>({
+      query: () => '/addresses',
+      transformResponse: (res: ApiEnvelope<Address[]>) => unwrap(res),
+      providesTags: ['Address'],
+    }),
 
-    saveAddress: builder.mutation<Address, SaveAddressArg>(
-      USE_MOCKS
-        ? {
-            queryFn: async (arg: SaveAddressArg) => {
-              await mockDelay();
-              const saved: Address = { ...arg, _id: arg._id ?? `addr-${Date.now()}` };
-              demoAddresses = arg._id
-                ? demoAddresses.map((a) => (a._id === arg._id ? saved : a))
-                : [...demoAddresses, saved];
-              return { data: saved };
-            },
-            invalidatesTags: ['Address'],
-          }
-        : {
-            query: (body) => ({
-              url: body._id ? `/profile/addresses/${body._id}` : '/profile/addresses',
-              method: body._id ? 'PUT' : 'POST',
-              body,
-            }),
-            invalidatesTags: ['Address'],
-          }
-    ),
+    createAddress: builder.mutation<Address, SaveAddressBody>({
+      query: (body) => ({ url: '/addresses', method: 'POST', body }),
+      transformResponse: (res: ApiEnvelope<Address>) => unwrap(res),
+      invalidatesTags: ['Address'],
+    }),
+
+    updateAddress: builder.mutation<Address, { id: string; body: Partial<SaveAddressBody> }>({
+      query: ({ id, body }) => ({ url: `/addresses/${id}`, method: 'PUT', body }),
+      transformResponse: (res: ApiEnvelope<Address>) => unwrap(res),
+      invalidatesTags: ['Address'],
+    }),
+
+    deleteAddress: builder.mutation<unknown, string>({
+      query: (id) => ({ url: `/addresses/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Address'],
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetAddressesQuery, useSaveAddressMutation } = addressApi;
+export const {
+  useGetAddressesQuery,
+  useCreateAddressMutation,
+  useUpdateAddressMutation,
+  useDeleteAddressMutation,
+} = addressApi;

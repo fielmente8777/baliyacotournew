@@ -4,7 +4,12 @@
 
 import { useState } from 'react';
 import { Briefcase, Home, MapPin } from 'lucide-react';
-import { useGetAddressesQuery, useSaveAddressMutation } from '@/store/api/addressApi';
+import {
+  useCreateAddressMutation,
+  useDeleteAddressMutation,
+  useGetAddressesQuery,
+  useUpdateAddressMutation,
+} from '@/store/api/addressApi';
 import type { AddressType } from '@/@types/account';
 import { INDIAN_STATES } from '@/mocks/account.mock';
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
@@ -29,7 +34,11 @@ const emptyForm = {
 
 export default function SavedAddressesPanel() {
   const { data: addresses, isLoading } = useGetAddressesQuery();
-  const [saveAddress, { isLoading: isSaving }] = useSaveAddressMutation();
+  const [createAddress, { isLoading: isCreating }] = useCreateAddressMutation();
+  const [updateAddress, { isLoading: isUpdating }] = useUpdateAddressMutation();
+  const [deleteAddress] = useDeleteAddressMutation();
+
+  const isSaving = isCreating || isUpdating;
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setFormOpen] = useState(false);
@@ -61,8 +70,14 @@ export default function SavedAddressesPanel() {
     if (!/^\d{6}$/.test(form.pincode)) return setError('Pincode must be 6 digits.');
 
     setError(null);
-    await saveAddress({ ...form, _id: editingId ?? undefined }).unwrap();
-    setFormOpen(false);
+
+    try {
+      if (editingId) await updateAddress({ id: editingId, body: form }).unwrap();
+      else await createAddress(form).unwrap();
+      setFormOpen(false);
+    } catch {
+      setError('Could not save this address. Please try again.');
+    }
   };
 
   if (isFormOpen) {
@@ -186,6 +201,12 @@ export default function SavedAddressesPanel() {
               <div className="flex flex-wrap items-center gap-3">
                 <h3 className="text-sm font-semibold text-[#222]">{a.fullName}</h3>
 
+                {a.isDefault && (
+                  <span className="rounded-full bg-[#FBF6F7] px-2.5 py-1 text-xs text-[#A52C45]">
+                    Default
+                  </span>
+                )}
+
                 <span className="flex items-center gap-1.5 rounded-full bg-[#F4F7F2] px-3 py-1 text-xs text-[#4B6B44]">
                   <Icon size={13} />
                   {meta?.label}
@@ -194,19 +215,42 @@ export default function SavedAddressesPanel() {
 
               <address className="mt-3 space-y-0.5 text-sm not-italic leading-relaxed text-[#5C5C5C]">
                 <p>{a.street}</p>
+                {a.landmark && <p>{a.landmark}</p>}
                 <p>
                   {a.city}, {a.state}
                 </p>
                 <p>{a.pincode}</p>
               </address>
 
-              <OutlineButton
-                type="button"
-                onClick={() => openForm(a._id)}
-                className="mt-4 h-10 w-full px-5 sm:w-auto"
-              >
-                Edit Address
-              </OutlineButton>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <OutlineButton
+                  type="button"
+                  onClick={() => openForm(a._id)}
+                  className="h-10 px-5"
+                >
+                  Edit Address
+                </OutlineButton>
+
+                {!a.isDefault && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => updateAddress({ id: a._id, body: { isDefault: true } })}
+                      className="h-10 px-3 text-sm text-[#666] transition-colors hover:text-[#A52C45]"
+                    >
+                      Set as default
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteAddress(a._id)}
+                      className="h-10 px-3 text-sm text-[#8A8A8A] transition-colors hover:text-[#A52C45]"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
             </article>
           );
         })}
