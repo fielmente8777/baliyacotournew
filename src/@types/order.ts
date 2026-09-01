@@ -15,7 +15,15 @@ export interface OrderMeasurementSnapshot {
 }
 
 export interface OrderItem {
-  suitDesignId: string | { _id: string; name?: string };
+  kind: 'product' | 'design';
+  productId?: string;
+  customDesignId?: string;
+  /** Frozen at placement — renaming a product can't rewrite past orders. */
+  itemSnapshot: {
+    name: string;
+    image?: string;
+    unitPrice: number;
+  };
   quantity: number;
   unitPrice: number;
   subtotal: number;

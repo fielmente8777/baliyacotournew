@@ -26,6 +26,7 @@ import { homePageData } from '../../app/(website)/Home/pagedata';
 import DesignProcess from '../../app/(website)/products/[slug]/Components/DesignProcess';
 import CustomerReviews from '../../app/(website)/products/[slug]/Components/CustomerReviews';
 import ProductGrid from './ProductGrid';
+import AddToCartButton from './AddToCartButton';
 
 export default function ProductDetailView({ slug }: { slug: string }) {
   const { data: product, isLoading, isError } = useGetProductBySlugQuery(slug);
@@ -103,12 +104,7 @@ export default function ProductDetailView({ slug }: { slug: string }) {
                 </Link>
               )}
 
-              <button
-                type="button"
-                className="flex-1 rounded-full bg-black py-4 font-medium text-white"
-              >
-                Add to Cart
-              </button>
+              <AddToCartButton product={product} />
             </div>
 
             <div className="mt-6 rounded bg-[#EAF6E8] py-3 text-center text-sm text-[#52734D]">

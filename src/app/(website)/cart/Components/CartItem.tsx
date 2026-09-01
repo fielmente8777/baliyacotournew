@@ -8,7 +8,12 @@ import {
   useRemoveCartItemMutation,
   useUpdateCartItemMutation,
 } from "@/store/api/cartApi";
-import type { CartItem as CartItemModel } from "@/@types/cart";
+import {
+  cartDesign,
+  cartProduct,
+  type CartItem as CartItemModel,
+} from "@/@types/cart";
+import { primaryImage } from "@/@types/product";
 import { formatINR } from "@/lib/format";
 
 interface Props {
@@ -16,16 +21,8 @@ interface Props {
 }
 
 /**
- * The API populates suitDesignId; guard anyway so a failed populate renders a
- * degraded row instead of throwing.
- */
-const designOf = (item: CartItemModel) =>
-  typeof item.suitDesignId === "string" ? null : item.suitDesignId;
-
-/**
- * Designs carry no image yet — the customization engine stores option ids, and
- * rendering a preview needs the garment artwork the product team has not
- * uploaded. Falls back to the placeholder until then.
+ * Designs carry no artwork — the engine stores option ids, and rendering a
+ * preview needs garment images the product team hasn't uploaded.
  */
 const PLACEHOLDER = "/Rectangle-23959.png";
 
@@ -33,25 +30,36 @@ export default function CartItem({ item }: Props) {
   const [updateItem, { isLoading: isUpdating }] = useUpdateCartItemMutation();
   const [removeItem, { isLoading: isRemoving }] = useRemoveCartItemMutation();
 
-  const design = designOf(item);
+  const product = cartProduct(item);
+  const design = cartDesign(item);
+
+  const title = product?.name ?? design?.name ?? "Custom Design";
+  const image = product ? primaryImage(product) : PLACEHOLDER;
   const lineTotal = item.unitPrice * item.quantity;
+
+  /* A design's chosen options, shown so the customer can confirm the build. */
+  const selections = design?.selections ?? [];
 
   return (
     <CheckoutCard className="p-4">
       <div className="flex gap-5">
         <Image
-          src={PLACEHOLDER}
-          alt={design?.name ?? "Your design"}
+          src={image}
+          alt={title}
           width={120}
           height={145}
-          className="rounded object-cover"
+          className="h-[145px] w-[120px] rounded object-cover"
         />
 
         <div className="flex flex-1 flex-col">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-xl font-medium">
-              {design?.name || "Custom Design"}
-            </h3>
+            <div>
+              <h3 className="text-xl font-medium">{title}</h3>
+
+              <span className="mt-1 inline-block rounded-full bg-[#F2EEE8] px-2.5 py-0.5 text-xs text-[#6B6B6B]">
+                {item.kind === "design" ? "Customised" : "Ready to wear"}
+              </span>
+            </div>
 
             <button
               type="button"
@@ -63,12 +71,25 @@ export default function CartItem({ item }: Props) {
             </button>
           </div>
 
+          {selections.length > 0 && (
+            <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-[#666] sm:grid-cols-3">
+              {selections.map((selection) => (
+                <div key={selection.groupLabel} className="flex gap-1.5">
+                  <dt className="text-[#999]">{selection.groupLabel}:</dt>
+                  <dd className="text-[#333]">{selection.optionLabel}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="text-2xl font-semibold">{formatINR(lineTotal)}</span>
+            <span className="text-2xl font-semibold">
+              {formatINR(lineTotal / 100)}
+            </span>
 
             {item.quantity > 1 && (
               <span className="text-[#777]">
-                {formatINR(item.unitPrice)} each
+                {formatINR(item.unitPrice / 100)} each
               </span>
             )}
           </div>
@@ -105,12 +126,12 @@ export default function CartItem({ item }: Props) {
             </div>
           </div>
 
-          {design && (
+          {product && (
             <Link
-              href={`/create-your-own-design?design=${design._id}`}
+              href={`/products/${product.slug}`}
               className="mt-auto w-fit pt-3 font-medium text-[#972E47]"
             >
-              View Customisation details
+              View product
             </Link>
           )}
         </div>

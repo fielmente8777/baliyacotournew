@@ -26,13 +26,13 @@ export default function PriceSummary({
         <div className="mt-8 space-y-5">
           <div className="flex justify-between">
             <span>Cart total</span>
-            <strong>{formatINR(totals.subtotal)}</strong>
+            <strong>{formatINR(totals.subtotal / 100)}</strong>
           </div>
 
           <div className="flex justify-between">
             <span>Shipping cost</span>
             <strong>
-              {totals.shipping === 0 ? "FREE" : formatINR(totals.shipping)}
+              {totals.shipping === 0 ? "FREE" : formatINR(totals.shipping / 100)}
             </strong>
           </div>
 
@@ -40,7 +40,7 @@ export default function PriceSummary({
             <div className="flex justify-between">
               <span>Discount</span>
               <strong className="text-green-600">
-                −{formatINR(totals.discount)}
+                −{formatINR(totals.discount / 100)}
               </strong>
             </div>
           )}
@@ -50,7 +50,7 @@ export default function PriceSummary({
 
         <div className="flex justify-between text-lg font-semibold">
           <span>Total Payable</span>
-          <span>{formatINR(totals.total)}</span>
+          <span>{formatINR(totals.total / 100)}</span>
         </div>
       </CheckoutCard>
 

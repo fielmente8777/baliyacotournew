@@ -1,51 +1,77 @@
 'use client';
 
 /**
- * "Option" step — saved measurement profiles (Stensil-3). Radio-selecting
- * a profile is what unlocks Add To Cart.
+ * Measurement step. Selecting a profile is what unlocks Add To Cart.
+ *
+ * Controlled by the shell rather than the slice, because the same panel serves
+ * the builder and could serve checkout later. Adding a new profile links to the
+ * account page rather than duplicating the form — one measurement form, one set
+ * of validation rules.
  */
 
-import { useGetMeasurementProfilesQuery } from '@/store/api/measurementApi';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectProfile, setSubview } from '@/store/features/createDesignSlice';
-import { MEASUREMENT_FIELDS } from '@/mocks/measurement.mock';
+import Link from 'next/link';
+import { useEffect } from 'react';
+
+import {
+  useGetMeasurementFieldsQuery,
+  useGetMeasurementProfilesQuery,
+} from '@/store/api/measurementApi';
 import { cn } from '@/lib/format';
 
-export default function MeasurementPanel() {
-  const dispatch = useAppDispatch();
+interface Props {
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}
+
+export default function MeasurementPanel({ selectedId, onSelect }: Props) {
   const { data: profiles, isLoading } = useGetMeasurementProfilesQuery();
-  const selectedProfileId = useAppSelector((s) => s.createDesign.selectedProfileId);
+  const { data: fields = [] } = useGetMeasurementFieldsQuery();
+
+  /* Preselect the default so a single-profile customer never stops here. */
+  useEffect(() => {
+    if (selectedId || !profiles?.length) return;
+    onSelect((profiles.find((p) => p.isDefault) ?? profiles[0])._id);
+  }, [profiles, selectedId, onSelect]);
 
   return (
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mb-8">
-        <h2 className="text-2xl font-semibold text-dark md:text-3xl lg:text-4xl">
-          My Measurement
+        <h2 className="text-2xl font-semibold text-dark md:text-3xl">
+          Measurements
         </h2>
 
-        <button
-          type="button"
-          onClick={() => dispatch(setSubview({ kind: 'newMeasurement' }))}
-          className="h-11 rounded-md bg-secondary px-5 text-sm font-medium text-white transition-colors hover:bg-secondary/90 md:h-12"
+        <Link
+          href="/my-account/saved-measurements"
+          className="flex h-11 items-center rounded-md bg-secondary px-5 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
         >
           Add New Measurement
-        </button>
+        </Link>
       </div>
 
       {isLoading && <p className="text-sm text-dark/60">Loading measurements…</p>}
 
-      {profiles?.length === 0 && (
-        <p className="rounded-xl bg-white p-6 text-sm text-dark/60">
-          No measurements saved yet. Add one to continue.
-        </p>
+      {!isLoading && profiles?.length === 0 && (
+        <div className="rounded-xl bg-white p-6">
+          <p className="text-sm text-dark/60">
+            You haven&apos;t saved any measurements yet. We need them to tailor this piece.
+          </p>
+
+          <Link
+            href="/my-account/saved-measurements"
+            className="mt-4 inline-block text-sm font-medium text-secondary underline"
+          >
+            Add your measurements
+          </Link>
+        </div>
       )}
 
       <div className="space-y-5">
-        {profiles?.map((p) => {
-          const active = selectedProfileId === p._id;
+        {profiles?.map((profile) => {
+          const active = selectedId === profile._id;
+
           return (
             <article
-              key={p._id}
+              key={profile._id}
               className={cn(
                 'rounded-2xl bg-white p-4 transition-shadow md:p-6',
                 active && 'ring-2 ring-secondary'
@@ -56,32 +82,36 @@ export default function MeasurementPanel() {
                   type="radio"
                   name="measurement-profile"
                   checked={active}
-                  onChange={() => dispatch(selectProfile(p._id))}
+                  onChange={() => onSelect(profile._id)}
                   className="h-4 w-4 accent-[#9B2C40]"
                 />
-                <span className="font-semibold text-dark">{p.profileName}</span>
+
+                <span className="font-semibold text-dark">{profile.profileName}</span>
+
+                {profile.isDefault && (
+                  <span className="rounded-full bg-[#F4F7F2] px-2.5 py-0.5 text-[11px] text-[#4B6B44]">
+                    Default
+                  </span>
+                )}
               </label>
 
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-                {MEASUREMENT_FIELDS.map((f) => (
-                  <div key={f.key} className="border-l border-[#EFEFEF] pl-3 first:border-l-0 first:pl-0">
-                    <dt className="text-xs text-dark/50">{f.label}</dt>
-                    <dd className="mt-0.5 text-sm font-semibold text-dark">
-                      {p.values[f.key]}&quot;
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+                {fields.map((field) => {
+                  const value = profile.values.find((v) => v.templateId === field._id);
 
-              <button
-                type="button"
-                onClick={() =>
-                  dispatch(setSubview({ kind: 'editMeasurement', profileId: p._id }))
-                }
-                className="mt-5 h-10 rounded-md border border-secondary px-4 text-sm font-medium text-secondary transition-colors hover:bg-secondary/5"
-              >
-                Edit measurements
-              </button>
+                  return (
+                    <div
+                      key={field._id}
+                      className="border-l border-[#EFEFEF] pl-3 first:border-l-0 first:pl-0"
+                    >
+                      <dt className="text-xs text-dark/50">{field.name}</dt>
+                      <dd className="mt-0.5 text-sm font-semibold text-dark">
+                        {value ? `${value.value}"` : '—'}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
             </article>
           );
         })}

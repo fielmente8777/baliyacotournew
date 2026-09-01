@@ -1,19 +1,40 @@
 /** Cart types. Mirrors baliye-node models/cart.ts as returned by GET /cart. */
 
+import type { Product } from './product';
+
+/**
+ * What a line points at.
+ *   product — bought as-is, no customization
+ *   design  — a saved CustomDesign, from the builder or a customized product
+ */
+export type CartItemKind = 'product' | 'design';
+
 export interface CartDesign {
   _id: string;
   name?: string;
-  totalPrice: number;
+  garmentTypeId: string;
+  selections: {
+    groupLabel: string;
+    optionLabel: string;
+    priceModifier: number;
+  }[];
+  pricing: {
+    basePrice: number;
+    adjustments: { label: string; amount: number }[];
+    total: number;
+  };
+  instructions?: string;
 }
 
 export interface CartItem {
   _id: string;
-  /** Populated by the API — a bare id if population ever fails. */
-  suitDesignId: CartDesign | string;
+  kind: CartItemKind;
+  /** Populated by the API; a bare id if population ever fails. */
+  productId?: Product | string;
+  customDesignId?: CartDesign | string;
   quantity: number;
-  /** Snapshot of the design price when the item was added, in rupees. */
+  /** Minor units, recomputed server-side at add time. */
   unitPrice: number;
-  /** Whose measurements this line is tailored to; falls back to the default. */
   measurementProfileId?: string;
 }
 
@@ -24,7 +45,9 @@ export interface Cart {
 }
 
 export interface AddToCartBody {
-  suitDesignId: string;
+  kind: CartItemKind;
+  productId?: string;
+  customDesignId?: string;
   quantity?: number;
   measurementProfileId?: string;
 }
@@ -42,3 +65,14 @@ export interface CartTotals {
   discount: number;
   total: number;
 }
+
+/** Narrows a populated reference, falling back when population failed. */
+export const cartProduct = (item: CartItem): Product | null =>
+  item.kind === 'product' && item.productId && typeof item.productId !== 'string'
+    ? item.productId
+    : null;
+
+export const cartDesign = (item: CartItem): CartDesign | null =>
+  item.kind === 'design' && item.customDesignId && typeof item.customDesignId !== 'string'
+    ? item.customDesignId
+    : null;

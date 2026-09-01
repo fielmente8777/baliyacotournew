@@ -1,44 +1,47 @@
 /**
- * Measurement types. Field keys match the New Measurement form in
- * Stensil-4 and the userMeasurement model on the backend.
+ * Measurement types. Template-driven: the fields themselves are configured by
+ * an admin, so the frontend never hardcodes which measurements exist.
  */
 
-export type MeasurementKey =
-  | 'chest'
-  | 'sleeve'
-  | 'shoulder'
-  | 'bicep'
-  | 'wristAround'
-  | 'frontRaise'
-  | 'waist'
-  | 'backRaise'
-  | 'hip'
-  | 'thigh'
-  | 'legLength'
-  | 'legOpening';
+export interface MeasurementTemplate {
+  _id: string;
+  name: string;
+  unit: 'in' | 'cm';
+  displayOrder: number;
+  isActive: boolean;
+}
 
-export interface MeasurementField {
-  key: MeasurementKey;
-  label: string;
-  /** Illustration shown when the matching mannequin hotspot is hovered. */
+/** Presentation metadata the backend doesn't store, matched by template name. */
+export interface MeasurementUiMeta {
   guideImage: string;
-  /** Hotspot position on the mannequin, in % of the stage box. */
   hotspot: { top: number; left: number };
   min: number;
   max: number;
 }
 
-/** A saved measurement profile — "Jyotsana Gaur" in the design. */
+/** A template resolved with its local UI metadata. */
+export interface MeasurementField extends MeasurementTemplate {
+  ui: MeasurementUiMeta;
+}
+
+export interface MeasurementValue {
+  templateId: string;
+  /** Denormalised at save time — survives a later template rename. */
+  name: string;
+  value: number;
+  unit: 'in' | 'cm';
+}
+
 export interface MeasurementProfile {
   _id: string;
   profileName: string;
-  unit: 'inch';
-  values: Record<MeasurementKey, number>;
-  isDefault?: boolean;
+  values: MeasurementValue[];
+  isDefault: boolean;
 }
 
-/** Form payload — values are strings while typing, parsed on submit. */
-export interface MeasurementFormValues {
-  profileName: string;
-  values: Record<MeasurementKey, string>;
+export interface SaveMeasurementProfileBody {
+  /** Optional — the backend generates "<FirstName>_Measurement" when omitted. */
+  profileName?: string;
+  values: { templateId: string; value: number }[];
+  isDefault?: boolean;
 }

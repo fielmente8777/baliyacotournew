@@ -1,76 +1,97 @@
 /**
- * UI state for the Create Your Own Design flow.
+ * Builder state for Create Your Own Design.
  *
- * Server data (fabrics, embroidery, measurement profiles) lives in RTK
- * Query. This slice holds only what the user has chosen and which screen
- * is open — the two things RTK Query cannot know.
+ * Holds only what the customer has chosen and where they are in the flow. The
+ * steps themselves, the options inside them and the price all come from the
+ * API — this slice never knows what "fabric" or "neck" means.
  */
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { StepSubview, StylingStep } from '@/@types/design';
+import type { SelectionInput } from '@/@types/design';
 
 interface CreateDesignState {
-  step: StylingStep;
-  subview: StepSubview;
-  /** Preview toggle in the top-right of the stage (Stensil-5). */
-  showMannequin: boolean;
+  /** One of these is set; the other stays null. */
+  garmentTypeId: string | null;
+  productId: string | null;
 
-  selectedFabricId: string | null;
-  selectedColourId: string | null;
-  selectedEmbroideryId: string | null;
-  selectedProfileId: string | null;
+  /** groupId → optionId. A map, because groups are data, not a fixed list. */
+  selections: Record<string, string>;
+
+  /** Index into the resolved step list, option groups first. */
+  stepIndex: number;
+
+  measurementProfileId: string | null;
+  instructions: string;
+  designName: string;
 }
 
 const initialState: CreateDesignState = {
-  step: 'fabric',
-  subview: { kind: 'list' },
-  showMannequin: false,
-  selectedFabricId: null,
-  selectedColourId: null,
-  selectedEmbroideryId: null,
-  selectedProfileId: null,
+  garmentTypeId: null,
+  productId: null,
+  selections: {},
+  stepIndex: 0,
+  measurementProfileId: null,
+  instructions: '',
+  designName: '',
 };
 
 const createDesignSlice = createSlice({
   name: 'createDesign',
   initialState,
   reducers: {
-    /** Rail click. Always resets the sub-screen so you can't land inside
-     *  "New Measurement" by switching tabs. */
-    setStep(state, action: PayloadAction<StylingStep>) {
-      state.step = action.payload;
-      state.subview = { kind: 'list' };
-      if (action.payload !== 'option') state.showMannequin = false;
+    /** Entering the builder from the garment picker or a product page. */
+    startDesign(
+      state,
+      action: PayloadAction<{ garmentTypeId?: string; productId?: string }>
+    ) {
+      const isSameContext =
+        state.garmentTypeId === (action.payload.garmentTypeId ?? null) &&
+        state.productId === (action.payload.productId ?? null);
+
+      /* Re-entering the same design keeps progress; a different one resets. */
+      if (isSameContext) return;
+
+      return {
+        ...initialState,
+        garmentTypeId: action.payload.garmentTypeId ?? null,
+        productId: action.payload.productId ?? null,
+      };
     },
 
-    setSubview(state, action: PayloadAction<StepSubview>) {
-      state.subview = action.payload;
-      /** The mannequin only makes sense while entering measurements. */
-      if (action.payload.kind === 'list') state.showMannequin = false;
+    /** Seeds the map from a product's preset selections, without clobbering
+     *  anything the customer has already changed. */
+    applyPresets(state, action: PayloadAction<SelectionInput[]>) {
+      for (const preset of action.payload) {
+        if (!state.selections[preset.groupId]) {
+          state.selections[preset.groupId] = preset.optionId;
+        }
+      }
     },
 
-    toggleMannequin(state, action: PayloadAction<boolean | undefined>) {
-      state.showMannequin = action.payload ?? !state.showMannequin;
+    selectOption(state, action: PayloadAction<{ groupId: string; optionId: string }>) {
+      state.selections[action.payload.groupId] = action.payload.optionId;
     },
 
-    /** Selecting a fabric expands it into the detail card (Stensil-1). */
-    selectFabric(state, action: PayloadAction<string>) {
-      const isSame = state.selectedFabricId === action.payload;
-      state.selectedFabricId = action.payload;
-      if (!isSame) state.selectedColourId = null;
-      state.subview = { kind: 'fabricDetail', fabricId: action.payload };
+    /** Clearing a parent must clear its dependants, or a hidden group keeps a
+     *  value the customer can no longer see or change. */
+    clearSelections(state, action: PayloadAction<string[]>) {
+      for (const groupId of action.payload) delete state.selections[groupId];
     },
 
-    selectColour(state, action: PayloadAction<string>) {
-      state.selectedColourId = action.payload;
+    setStepIndex(state, action: PayloadAction<number>) {
+      state.stepIndex = Math.max(0, action.payload);
     },
 
-    selectEmbroidery(state, action: PayloadAction<string>) {
-      state.selectedEmbroideryId = action.payload;
+    setMeasurementProfile(state, action: PayloadAction<string | null>) {
+      state.measurementProfileId = action.payload;
     },
 
-    selectProfile(state, action: PayloadAction<string>) {
-      state.selectedProfileId = action.payload;
+    setInstructions(state, action: PayloadAction<string>) {
+      state.instructions = action.payload;
+    },
+
+    setDesignName(state, action: PayloadAction<string>) {
+      state.designName = action.payload;
     },
 
     resetDesign: () => initialState,
@@ -78,13 +99,14 @@ const createDesignSlice = createSlice({
 });
 
 export const {
-  setStep,
-  setSubview,
-  toggleMannequin,
-  selectFabric,
-  selectColour,
-  selectEmbroidery,
-  selectProfile,
+  startDesign,
+  applyPresets,
+  selectOption,
+  clearSelections,
+  setStepIndex,
+  setMeasurementProfile,
+  setInstructions,
+  setDesignName,
   resetDesign,
 } = createDesignSlice.actions;
 

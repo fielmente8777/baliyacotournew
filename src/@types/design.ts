@@ -1,100 +1,114 @@
 /**
- * Domain types for the Create Your Own Design flow.
- * Mirrors baliye-node: models/designoption.ts + models/suit.ts
+ * Custom design types. Mirrors baliye-node's configuration-driven engine —
+ * services/customization.ts and services/design.v2.ts.
  */
 
-/** Matches DESIGN_OPTION_CATEGORIES on the backend. */
-export type DesignOptionCategory =
-  | 'suitType'
-  | 'color'
-  | 'fabric'
-  | 'lapel'
-  | 'buttons'
-  | 'pocketStyle'
-  | 'collar'
-  | 'sleeveStyle'
-  | 'backStyle'
-  | 'vent'
-  | 'lining'
-  | 'fit'
-  | 'pantStyle'
-  | 'pleats'
-  | 'cuffs';
+export type OptionInputType =
+  | 'single_select'
+  | 'multi_select'
+  | 'color_select'
+  | 'size_select'
+  | 'measurement'
+  | 'number'
+  | 'text'
+  | 'image_upload';
 
-/** A single selectable swatch/option returned by GET /design/options. */
 export interface DesignOption {
   _id: string;
-  category: DesignOptionCategory;
-  /** Display name, e.g. "Kanjivaram Silk" */
   label: string;
-  /** Slug stored on the design, e.g. "kanjivaram-silk" */
   value: string;
-  swatchImage?: string;
-  /** Added to base price when selected. */
-  priceModifier: number;
-  isActive: boolean;
-}
-
-export interface FabricColour {
-  _id: string;
-  label: string;
-  /** Hex used when no swatch image exists. */
+  image?: string;
   hex?: string;
-  swatchImage?: string;
+  /** Minor units, added to the base price when chosen. */
   priceModifier: number;
 }
-
-/** Fabric card in the grid — a DesignOption plus its colourways. */
-export interface Fabric extends DesignOption {
-  category: 'fabric';
-  /** Badge shown on hover, e.g. "$8 -$10 per meter" */
-  priceLabel?: string;
-  /** Large image used in the expanded detail card. */
-  heroImage?: string;
-  colours: FabricColour[];
-}
-
-export interface EmbroideryStyle extends DesignOption {
-  category: 'lining';
-  previewImage: string;
-}
-
-/** The three entries on the styling rail. */
-export type StylingStep = 'fabric' | 'embroidery' | 'option';
 
 /**
- * Nested state inside a step. A discriminated union so the compiler
- * enforces that only one sub-screen can be open at a time.
+ * One step in the builder. Which steps exist, their order and whether they are
+ * required all come from the garment type's configuration — the frontend
+ * renders whatever the product team set up, and knows nothing about "fabric"
+ * or "neck" specifically.
  */
-export type StepSubview =
-  | { kind: 'list' }
-  | { kind: 'fabricDetail'; fabricId: string }
-  | { kind: 'newMeasurement' }
-  | { kind: 'editMeasurement'; profileId: string };
-
-/** Everything the user has chosen so far. */
-export interface DesignSelection {
-  fabricId: string | null;
-  fabricColourId: string | null;
-  embroideryId: string | null;
-  measurementProfileId: string | null;
+export interface DesignGroup {
+  _id: string;
+  code: string;
+  label: string;
+  inputType: OptionInputType;
+  isRequired: boolean;
+  /** False while its dependency is unmet — hidden until then. */
+  isVisible: boolean;
+  position: number;
+  defaultOption: string | null;
+  dependsOn: { groupId: string; optionIds: string[] } | null;
+  options: DesignOption[];
 }
 
-/** Price breakdown rendered by SummaryBar. */
-export interface DesignPricing {
+export interface DesignConfig {
+  garmentType: {
+    _id: string;
+    name: string;
+    slug: string;
+    measurementTemplates: string[];
+  };
+  /** Set when customizing a pre-designed product. */
+  product: {
+    _id: string;
+    name: string;
+    slug: string;
+    images: { url: string; alt?: string; position: number }[];
+  } | null;
   basePrice: number;
-  fabricModifier: number;
-  colourModifier: number;
-  embroideryModifier: number;
-  totalPrice: number;
-  currency: 'INR';
+  presetSelections: { groupId: string; optionId: string }[];
+  groups: DesignGroup[];
 }
 
-/** Payload for POST /design (create suit design). */
-export interface CreateDesignPayload {
-  name?: string;
-  fabric?: string;
-  color?: string;
-  embroidery?: string;
-  customNotes?: string;
+export interface PriceBreakdown {
+  basePrice: number;
+  adjustments: { label: string; amount: number }[];
+  discount: number;
+  total: number;
+  currency: string;
 }
+
+export interface SelectionInput {
+  groupId: string;
+  optionId: string;
+}
+
+export interface CreateDesignBody {
+  garmentTypeId?: string;
+  productId?: string;
+  name?: string;
+  selections: SelectionInput[];
+  measurementProfileId?: string;
+  sizeOptionId?: string;
+  instructions?: string;
+}
+
+export interface SavedDesign {
+  _id: string;
+  name?: string;
+  garmentTypeId: string;
+  sourceProductId?: string;
+  selections: {
+    groupId: string;
+    groupLabel: string;
+    optionId: string;
+    optionLabel: string;
+    priceModifier: number;
+  }[];
+  pricing: PriceBreakdown;
+  instructions?: string;
+  createdAt: string;
+}
+
+/**
+ * The builder's own steps, appended after the configured option groups.
+ * Measurements and instructions aren't option groups on the backend, but they
+ * are steps in the customer's journey (§28).
+ */
+export type BuilderStep =
+  | { kind: 'option'; group: DesignGroup }
+  | { kind: 'measurement' }
+  | { kind: 'instructions' }
+  | { kind: 'review' };

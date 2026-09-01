@@ -1,19 +1,21 @@
 'use client';
 
 /**
- * Saved Measurements (Profile-5) with an inline add/edit form
- * (Profile-2). Reuses the same measurementApi and MEASUREMENT_FIELDS as
- * the Create Your Own Design flow, so a profile saved in one place shows
- * up in the other with no sync code.
+ * Saved Measurements (Profile-5) with an inline add/edit form (Profile-2).
+ *
+ * Shares measurementApi with the Create Your Own Design flow, so a profile
+ * saved in either place shows up in the other with no sync code.
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
 import {
+  useCreateMeasurementProfileMutation,
+  useDeleteMeasurementProfileMutation,
+  useGetMeasurementFieldsQuery,
   useGetMeasurementProfilesQuery,
-  useSaveMeasurementProfileMutation,
+  useUpdateMeasurementProfileMutation,
 } from '@/store/api/measurementApi';
-import { MEASUREMENT_FIELDS, emptyValues } from '@/mocks/measurement.mock';
-import type { MeasurementKey } from '@/@types/measurement';
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
@@ -21,45 +23,62 @@ import OutlineButton from '../../app/(website)/my-account/components/OutlineButt
 
 export default function SavedMeasurementsPanel() {
   const { data: profiles, isLoading } = useGetMeasurementProfilesQuery();
-  const [save, { isLoading: isSaving }] = useSaveMeasurementProfileMutation();
+  const { data: fields = [], isLoading: fieldsLoading } = useGetMeasurementFieldsQuery();
+
+  const [createProfile, { isLoading: isCreating }] = useCreateMeasurementProfileMutation();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateMeasurementProfileMutation();
+  const [deleteProfile] = useDeleteMeasurementProfileMutation();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setFormOpen] = useState(false);
   const [profileName, setProfileName] = useState('');
-  const [values, setValues] = useState<Record<MeasurementKey, string>>(emptyValues);
+  const [touched, setTouched] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
+  const isSaving = isCreating || isUpdating;
+  const existing = profiles?.find((p) => p._id === editingId);
+
+  const values = useMemo(() => {
+    const seed: Record<string, string> = {};
+    for (const f of fields) {
+      const saved = existing?.values.find((v) => v.templateId === f._id);
+      seed[f._id] = saved ? String(saved.value) : '';
+    }
+    return { ...seed, ...touched };
+  }, [fields, existing, touched]);
+
   const openForm = (id?: string) => {
-    const existing = profiles?.find((p) => p._id === id);
-    setEditingId(existing?._id ?? null);
-    setProfileName(existing?.profileName ?? '');
-    setValues(
-      existing
-        ? (Object.fromEntries(
-            MEASUREMENT_FIELDS.map((f) => [f.key, String(existing.values[f.key])])
-          ) as Record<MeasurementKey, string>)
-        : emptyValues()
-    );
+    const target = profiles?.find((p) => p._id === id);
+    setEditingId(target?._id ?? null);
+    setProfileName(target?.profileName ?? '');
+    setTouched({});
     setError(null);
     setFormOpen(true);
   };
 
   const handleSave = async () => {
-    if (!profileName.trim()) return setError('Please enter a profile name.');
-    const missing = MEASUREMENT_FIELDS.find((f) => !values[f.key]);
-    if (missing) return setError(`Please enter ${missing.label}.`);
+    const missing = fields.find((f) => !values[f._id]);
+    if (missing) return setError(`Please enter ${missing.name}.`);
 
     setError(null);
-    await save({
-      _id: editingId ?? undefined,
-      profileName: profileName.trim(),
-      unit: 'inch',
-      values: Object.fromEntries(
-        MEASUREMENT_FIELDS.map((f) => [f.key, Number(values[f.key])])
-      ) as Record<MeasurementKey, number>,
-    }).unwrap();
 
-    setFormOpen(false);
+    const body = {
+      ...(profileName.trim() ? { profileName: profileName.trim() } : {}),
+      values: fields.map((f) => ({ templateId: f._id, value: Number(values[f._id]) })),
+    };
+
+    try {
+      if (editingId) await updateProfile({ id: editingId, body }).unwrap();
+      else await createProfile(body).unwrap();
+      setFormOpen(false);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      setError(
+        status === 409
+          ? 'You already have a profile with that name.'
+          : 'Could not save your measurements. Please try again.'
+      );
+    }
   };
 
   if (isFormOpen) {
@@ -71,28 +90,30 @@ export default function SavedMeasurementsPanel() {
           <input
             value={profileName}
             onChange={(e) => setProfileName(e.target.value)}
-            placeholder="Enter profile name"
+            placeholder="Enter profile name (optional)"
             className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
           />
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {MEASUREMENT_FIELDS.map((f) => (
+            {fields.map((f) => (
               <div
-                key={f.key}
+                key={f._id}
                 className="flex h-12 items-center rounded-md border border-[#EAE6DF] px-4 focus-within:border-[#A52C45]"
               >
                 <input
                   inputMode="decimal"
-                  value={values[f.key]}
+                  value={values[f._id] ?? ''}
                   onChange={(e) =>
                     /^\d{0,3}(\.\d{0,2})?$/.test(e.target.value) &&
-                    setValues({ ...values, [f.key]: e.target.value })
+                    setTouched({ ...touched, [f._id]: e.target.value })
                   }
-                  placeholder={f.label}
-                  aria-label={f.label}
+                  placeholder={f.name}
+                  aria-label={f.name}
                   className="w-full bg-transparent text-sm outline-none placeholder:text-[#9A9A9A]"
                 />
-                <span className="shrink-0 pl-3 text-sm text-[#6B6B6B]">Inch</span>
+                <span className="shrink-0 pl-3 text-sm text-[#6B6B6B]">
+                  {f.unit === 'cm' ? 'Cm' : 'Inch'}
+                </span>
               </div>
             ))}
           </div>
@@ -118,7 +139,12 @@ export default function SavedMeasurementsPanel() {
       <PageHeader
         title="Saved Measurements"
         action={
-          <PrimaryButton type="button" onClick={() => openForm()} className="h-9 px-5">
+          <PrimaryButton
+            type="button"
+            onClick={() => openForm()}
+            className="h-9 px-5"
+            disabled={fieldsLoading || fields.length === 0}
+          >
             Add New Measurement
           </PrimaryButton>
         }
@@ -126,7 +152,7 @@ export default function SavedMeasurementsPanel() {
 
       {isLoading && <p className="p-5 text-sm text-[#8A8A8A] md:p-6">Loading measurements…</p>}
 
-      {profiles?.length === 0 && (
+      {!isLoading && profiles?.length === 0 && (
         <p className="p-5 text-sm text-[#8A8A8A] md:p-6">
           You haven&apos;t saved any measurements yet.
         </p>
@@ -135,24 +161,51 @@ export default function SavedMeasurementsPanel() {
       <div className="divide-y divide-[#F2EEE8]">
         {profiles?.map((p) => (
           <article key={p._id} className="p-5 md:p-6">
-            <h3 className="text-sm font-semibold text-[#222]">{p.profileName}</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold text-[#222]">{p.profileName}</h3>
+              {p.isDefault && (
+                <span className="rounded-full bg-[#F4F7F2] px-2.5 py-0.5 text-[11px] text-[#4B6B44]">
+                  Default
+                </span>
+              )}
+            </div>
 
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
-              {MEASUREMENT_FIELDS.map((f) => (
-                <div key={f.key} className="border-l border-[#F0ECE6] pl-3 first:border-l-0 first:pl-0">
-                  <dt className="text-xs leading-tight text-[#8A8A8A]">{f.label}</dt>
-                  <dd className="mt-1 text-sm font-semibold text-[#222]">{p.values[f.key]}&quot;</dd>
-                </div>
-              ))}
+              {fields.map((f) => {
+                const value = p.values.find((v) => v.templateId === f._id);
+                return (
+                  <div
+                    key={f._id}
+                    className="border-l border-[#F0ECE6] pl-3 first:border-l-0 first:pl-0"
+                  >
+                    <dt className="text-xs leading-tight text-[#8A8A8A]">{f.name}</dt>
+                    <dd className="mt-1 text-sm font-semibold text-[#222]">
+                      {value ? `${value.value}"` : '—'}
+                    </dd>
+                  </div>
+                );
+              })}
             </dl>
 
-            <OutlineButton
-              type="button"
-              onClick={() => openForm(p._id)}
-              className="mt-5 h-10 w-full px-5 sm:w-auto"
-            >
-              Edit Measurements
-            </OutlineButton>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <OutlineButton
+                type="button"
+                onClick={() => openForm(p._id)}
+                className="h-10 px-5"
+              >
+                Edit Measurements
+              </OutlineButton>
+
+              {!p.isDefault && (
+                <button
+                  type="button"
+                  onClick={() => deleteProfile(p._id)}
+                  className="h-10 px-3 text-sm text-[#8A8A8A] transition-colors hover:text-[#A52C45]"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           </article>
         ))}
       </div>

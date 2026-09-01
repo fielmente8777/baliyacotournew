@@ -49,26 +49,26 @@ export default function OrderSuccessView() {
 
         <div className="grid gap-8 md:grid-cols-3">
           {order?.items.map((item, index) => {
-            const design =
-              typeof item.suitDesignId === "string" ? null : item.suitDesignId;
+            /* itemSnapshot is frozen at placement — safe for historical orders. */
+            const snapshot = item.itemSnapshot;
 
             return (
               <div key={index} className="rounded bg-white p-4 shadow-sm">
                 <div className="relative aspect-4/4.5 w-full">
                   <Image
                     src={PLACEHOLDER}
-                    alt={design?.name ?? "Your design"}
+                    alt={snapshot?.name ?? "Your order"}
                     fill
                     className="rounded object-cover"
                   />
                 </div>
 
                 <h3 className="mt-4 font-semibold">
-                  {design?.name || "Custom Design"}
+                  {snapshot?.name || "Custom Design"}
                 </h3>
 
                 <p className="mt-1 text-sm text-[#666]">
-                  {formatINR(item.subtotal)}
+                  {formatINR(item.subtotal / 100)}
                   {item.quantity > 1 && ` · Qty ${item.quantity}`}
                 </p>
 
