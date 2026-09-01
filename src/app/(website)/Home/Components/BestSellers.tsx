@@ -1,37 +1,46 @@
+"use client";
+
 import { SectionWithContainer } from "@/components/sectionComponants";
 import { SectionHeading } from "@/components/typography";
-import Image from "next/image";
+import { useGetProductsQuery } from "@/store/api/productApi";
+import ProductCard from "@/features/catalog/ProductCard";
 
 interface BestSellersProps {
   title: string;
   description: string;
-  products: {
-    name: string;
-    image: string;
-  }[];
 }
 
-const BestSellers: React.FC<BestSellersProps> = ({
-  title,
-  description,
-  products,
-}) => {
+/**
+ * Live bestsellers, replacing the hardcoded four. `badge=bestseller` is the
+ * curated flag the product team sets — not a computed sales ranking, which
+ * would leave a new store with an empty homepage.
+ */
+const BestSellers: React.FC<BestSellersProps> = ({ title, description }) => {
+  const { data, isLoading } = useGetProductsQuery({
+    badge: "bestseller",
+    limit: 8,
+  });
+
+  const products = data?.items ?? [];
+
+  /* Nothing flagged yet — hide the section rather than show an empty grid. */
+  if (!isLoading && products.length === 0) return null;
+
   return (
     <SectionWithContainer sectionClassName="">
-      <div className="text-center space-y-4">
+      <div className="space-y-4 text-center">
         <SectionHeading title={title} />
         <p className="text-light">{description}</p>
       </div>
-      <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-8 mt-8">
-        {products.map((product, index) => (
-          <div key={index} className="aspect-4/5.25 relative">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover"
-            />
-          </div>
+
+      <div className="mt-8 grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-4">
+        {isLoading &&
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-4/5.25 animate-pulse bg-black/5" />
+          ))}
+
+        {products.map((product) => (
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </SectionWithContainer>

@@ -9,7 +9,7 @@ import { useLogoutMutation } from '@/store/api/authApi';
 export function useAuth() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { accessToken, refreshToken, user } = useAppSelector((s) => s.auth);
+  const { accessToken, refreshToken, user, isHydrated } = useAppSelector((s) => s.auth);
   const [logoutRequest] = useLogoutMutation();
 
   const signOut = async () => {
@@ -27,6 +27,8 @@ export function useAuth() {
 
   return {
     user,
+    /** False during SSR and the first client render — see authSlice.isHydrated. */
+    isHydrated,
     isAuthenticated: Boolean(accessToken),
     isAdmin: user?.role === 'admin',
     /** Send the user to /login, remembering where they were. */

@@ -35,6 +35,7 @@ export interface ApiEnvelope<T> {
 export const unwrap = <T,>(res: ApiEnvelope<T>): T => res.data;
 
 const rawBaseQuery = fetchBaseQuery({
+  // baseUrl: process.env.NEXT_PUBLIC_API_URL,
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth?.accessToken;
@@ -114,6 +115,8 @@ export const baseApi = createApi({
     'Address',
     'Order',
     'Auth',
+    'Product',
+    'GarmentType',
   ],
   endpoints: () => ({}),
 });

@@ -1,45 +1,41 @@
 "use client";
 
-import { useState } from "react";
 import { Home, Briefcase, MapPin } from "lucide-react";
+import type { AddressType as AddressTypeValue } from "@/@types/account";
 
-const types = [
-  {
-    label: "Home",
-    icon: Home,
-  },
-  {
-    label: "Work",
-    icon: Briefcase,
-  },
-  {
-    label: "Other",
-    icon: MapPin,
-  },
+const types: { value: AddressTypeValue; label: string; icon: typeof Home }[] = [
+  { value: "home", label: "Home", icon: Home },
+  { value: "work", label: "Work", icon: Briefcase },
+  { value: "other", label: "Other", icon: MapPin },
 ];
 
-export default function AddressType() {
-  const [selected, setSelected] = useState("Home");
+interface Props {
+  value: AddressTypeValue;
+  onChange: (value: AddressTypeValue) => void;
+}
 
+/**
+ * Controlled — the parent form owns the value, so it can be submitted. It kept
+ * its own useState before, which meant the selection never reached the request.
+ */
+export default function AddressType({ value, onChange }: Props) {
   return (
     <div className="mt-8">
+      <p className="mb-4 text-sm font-semibold">Address Type</p>
 
-      <p className="mb-4 text-sm font-semibold">
-        Address Type
-      </p>
-
-      <div className="flex gap-4">
-
+      <div className="flex flex-wrap gap-4">
         {types.map((item) => {
           const Icon = item.icon;
+          const isActive = value === item.value;
 
           return (
             <button
-              key={item.label}
+              key={item.value}
               type="button"
-              onClick={() => setSelected(item.label)}
+              onClick={() => onChange(item.value)}
+              aria-pressed={isActive}
               className={`flex items-center gap-2 rounded-full border px-5 py-3 transition ${
-                selected === item.label
+                isActive
                   ? "border-[#972E47] bg-[#972E47] text-white"
                   : "border-[#DDD] bg-white"
               }`}
@@ -49,9 +45,7 @@ export default function AddressType() {
             </button>
           );
         })}
-
       </div>
-
     </div>
   );
 }

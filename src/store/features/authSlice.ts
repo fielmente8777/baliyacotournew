@@ -19,24 +19,44 @@ interface AuthState {
   /** Dial code + national number, kept between the two login steps. */
   dialCode: string;
   phone: string;
+
+  /**
+   * False until the persisted session has been read from localStorage.
+   *
+   * The store is built during SSR too, where localStorage does not exist. If
+   * initialState read it directly, the server would render signed-out and the
+   * first client render signed-in — a hydration mismatch. So the slice starts
+   * empty everywhere, and ReduxProvider dispatches `hydrate` after mount.
+   * Components that branch on auth must wait for this flag.
+   */
+  isHydrated: boolean;
 }
 
-const persisted = loadAuth();
-
 const initialState: AuthState = {
-  accessToken: persisted.tokens?.accessToken ?? null,
-  refreshToken: persisted.tokens?.refreshToken ?? null,
-  user: persisted.user ?? null,
+  accessToken: null,
+  refreshToken: null,
+  user: null,
 
   step: 'phone',
   dialCode: '+91',
   phone: '',
+
+  isHydrated: false,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    /** Client-only: replays the persisted session into the store after mount. */
+    hydrate(state) {
+      const persisted = loadAuth();
+      state.accessToken = persisted.tokens?.accessToken ?? null;
+      state.refreshToken = persisted.tokens?.refreshToken ?? null;
+      state.user = persisted.user ?? null;
+      state.isHydrated = true;
+    },
+
     /** Called when the login page mounts, so a stale OTP step never shows. */
     resetLoginFlow(state) {
       state.step = 'phone';
@@ -83,12 +103,14 @@ const authSlice = createSlice({
       state.user = null;
       state.step = 'phone';
       state.phone = '';
+      state.isHydrated = true;
       clearAuth();
     },
   },
 });
 
 export const {
+  hydrate,
   resetLoginFlow,
   setStep,
   setDialCode,

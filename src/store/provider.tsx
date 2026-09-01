@@ -12,11 +12,17 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { makeStore, setupListeners, type AppStore } from './index';
+import { hydrate } from './features/authSlice';
 
 export default function ReduxProvider({ children }: { children: ReactNode }) {
   const [store] = useState<AppStore>(() => makeStore());
 
   useEffect(() => setupListeners(store.dispatch), [store]);
+
+  /* Read the persisted session only in the browser, after the first paint. */
+  useEffect(() => {
+    store.dispatch(hydrate());
+  }, [store]);
 
   /**
    * GoogleOAuthProvider loads the GIS script once for the whole app. With an

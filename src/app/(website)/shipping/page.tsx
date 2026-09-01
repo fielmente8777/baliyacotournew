@@ -59,9 +59,9 @@ export default function ShippingPage() {
 
           <div>
 
-            <PriceSummary
+            {/* <PriceSummary
               buttonText="Proceed To Buy"
-            />
+            /> */}
 
             <DeliveryBanner />
 

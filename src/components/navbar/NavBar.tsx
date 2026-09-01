@@ -8,7 +8,7 @@ import { useAuth } from "@/features/auth/useAuth";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, isHydrated, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   return (
@@ -56,7 +56,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              href={isAuthenticated ? "/cart" : "/login?redirect=%2Fcart"}
+              href={isHydrated && isAuthenticated ? "/cart" : "/login?redirect=%2Fcart"}
               aria-label="Cart"
               className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
             >
