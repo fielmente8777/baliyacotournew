@@ -128,6 +128,7 @@ export default function CartItem({ item }: Props) {
 
           {product && (
             <Link
+          
               href={`/products/${product.slug}`}
               className="mt-auto w-fit pt-3 font-medium text-[#972E47]"
             >

@@ -143,7 +143,7 @@ export default function SavedMeasurementsPanel() {
             type="button"
             onClick={() => openForm()}
             className="h-9 px-5"
-            disabled={fieldsLoading || fields.length === 0}
+            // disabled={fieldsLoading || fields.length === 0}
           >
             Add New Measurement
           </PrimaryButton>

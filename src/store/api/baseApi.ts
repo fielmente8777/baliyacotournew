@@ -115,6 +115,7 @@ export const baseApi = createApi({
     'Address',
     'Order',
     'Auth',
+    'ImageJob',
     'Product',
     'GarmentType',
   ],
