@@ -3,128 +3,117 @@
 /**
  * Embroidery transfer studio.
  *
- * Mirrors the Magnific Spaces canvas as a linear two-step flow:
+ *   1  Several photos of a garment  ──►  one sheet of isolated embroidery
+ *   2  Plain garment + that sheet   ──►  the finished garment
  *
- *   1  Donor garment  ──►  isolated motif sheet on white
- *   2  Target garment + that sheet  ──►  finished garment
- *
- * Step 1 exists because copying trim straight off a photographed garment drags
- * the donor's fabric colour along with it. Flattening the motifs onto white
- * first is what makes step 2 faithful.
- *
- * Both steps are billed generations, so nothing runs automatically.
- *
- * Open to anyone for the demo. Restore the admin check here and in
- * routes/ai.ts before this is deployed anywhere public.
+ * The sheet is downloadable, and stage 2 accepts an uploaded one, so an
+ * embroidery extracted and approved once can be reused across any number of
+ * colourways without going through stage 1 again. That reuse is what makes
+ * output consistent — stage 1 is generative and varies between runs, stage 2
+ * with a fixed sheet does not.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Download, Sparkles } from 'lucide-react';
 
 import {
   useApplyMotifsMutation,
   useExtractMotifsMutation,
   useGetRunQuery,
-  type MotifRegion,
 } from '@/store/api/studioApi';
-import { cropToBase64, type CropBox } from '@/lib/imageCrop';
 import { fileToResizedBase64 } from '@/lib/imageResize';
-
-import CropSelector from './CropSelector';
+import { downloadImage } from '@/lib/downloadImage';
 
 import UploadTile from './UploadTile';
+import ViewUploader, { type DonorView } from './ViewUploader';
+import SheetPicker, { type SheetChoice } from './SheetPicker';
 
-interface Slot {
-  preview: string;
-  base64: string;
-}
-
-/** The borders a crop can be labelled as — mirrors the backend enum. */
-const REGIONS: { value: MotifRegion; label: string }[] = [
-  { value: 'neckline', label: 'Neckline' },
-  { value: 'sleeve', label: 'Sleeve / cuff' },
-  { value: 'hem', label: 'Hem' },
-  { value: 'placket', label: 'Placket' },
-  { value: 'motif', label: 'Single motif' },
-];
-
-/** How long between polls while Magnific is working. */
 const POLL_MS = 4000;
+const MAX_VIEWS = 6;
+
+const newId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : String(Date.now() + Math.random());
 
 export default function MotifStudioView() {
-  const [donor, setDonor] = useState<Slot | null>(null);
-  /** Kept so a new crop can be cut from the original at full resolution. */
-  const [donorFile, setDonorFile] = useState<File | null>(null);
-  const [crop, setCrop] = useState<CropBox | null>(null);
-  const [region, setRegion] = useState<MotifRegion>('neckline');
-  const [target, setTarget] = useState<Slot | null>(null);
+  const [views, setViews] = useState<DonorView[]>([]);
+  const [target, setTarget] = useState<{ preview: string; base64: string } | null>(null);
+
+  /** Sheets uploaded from disk, kept separately from generated ones. */
+  const [uploadedSheets, setUploadedSheets] = useState<SheetChoice[]>([]);
+  const [selectedSheetIds, setSelectedSheetIds] = useState<string[]>([]);
+  const [sheetLabels, setSheetLabels] = useState<Record<string, string>>({});
+
   const [instruction, setInstruction] = useState('');
   const [variations, setVariations] = useState(1);
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyNote, setBusyNote] = useState<string | null>(null);
 
   const [extractMotifs, { isLoading: isExtracting }] = useExtractMotifsMutation();
   const [applyMotifs, { isLoading: isApplying }] = useApplyMotifsMutation();
 
-  /* Only poll while a run is open and something in it is unfinished. */
   const { data: jobs = [] } = useGetRunQuery(runId as string, {
     skip: !runId,
     pollingInterval: POLL_MS,
   });
 
-  const extractJob = useMemo(
-    () => jobs.find((job) => job.stage === 'extract'),
-    [jobs]
-  );
+  const extractJobs = useMemo(() => jobs.filter((j) => j.stage === 'extract'), [jobs]);
+  const applyJobs = useMemo(() => jobs.filter((j) => j.stage === 'apply'), [jobs]);
+  const isExtractPending = extractJobs.some((j) => j.status === 'pending');
 
-  const applyJobs = useMemo(
-    () => jobs.filter((job) => job.stage === 'apply'),
-    [jobs]
-  );
+  /** Generated sheets and uploaded ones, offered together in the picker. */
+  const availableSheets: SheetChoice[] = useMemo(() => {
+    const generated = extractJobs.flatMap((job) =>
+      job.status === 'completed'
+        ? job.resultUrls.map((url, index) => ({
+            id: `${job._id}-${index}`,
+            image: url,
+            preview: url,
+            label: sheetLabels[`${job._id}-${index}`] ?? 'extracted embroidery',
+            source: 'generated' as const,
+          }))
+        : []
+    );
 
-  const motifSheetUrl = extractJob?.status === 'completed'
-    ? extractJob.resultUrls[0]
-    : undefined;
+    return [...generated, ...uploadedSheets];
+  }, [extractJobs, uploadedSheets, sheetLabels]);
 
-  const isBusy = jobs.some((job) => job.status === 'pending');
-
-  /* Stop polling once nothing is pending — an idle tab shouldn't hit the API. */
-  useEffect(() => {
-    if (!runId || isBusy) return;
-    /* Left intentionally: RTK Query stops when the component unmounts, and a
-       finished run still needs its data on screen. */
-  }, [runId, isBusy]);
-
-  const readFile = async (file: File, set: (slot: Slot) => void) => {
+  const readFiles = async (files: FileList) => {
     setError(null);
-
-    if (!file.type.startsWith('image/')) {
-      return setError('Please choose an image file.');
-    }
+    const room = MAX_VIEWS - views.length;
+    const chosen = Array.from(files).slice(0, room);
 
     try {
-      const base64 = await fileToResizedBase64(file);
-      set({ base64, preview: URL.createObjectURL(file) });
+      const next = await Promise.all(
+        chosen.map(async (file) => ({
+          id: newId(),
+          base64: await fileToResizedBase64(file),
+          preview: URL.createObjectURL(file),
+          label: '',
+        }))
+      );
+      setViews((current) => [...current, ...next]);
     } catch {
-      setError('We could not read that image.');
+      setError('One of those images could not be read. Export it as a JPEG and retry.');
     }
   };
 
   const handleExtract = async () => {
-    if (!donorFile) return setError('Upload a garment with the embroidery you want.');
-    if (!crop || crop.width < 0.02) {
-      return setError('Drag a box around one border first — the whole garment gives poor results.');
-    }
-
+    if (views.length === 0) return setError('Add at least one photo of the garment.');
     setError(null);
 
     try {
-      /* Cut from the original file, not the downscaled preview, so the crop
-         keeps every pixel the camera captured. */
-      const cropped = await cropToBase64(donorFile, crop);
+      const job = await extractMotifs({
+        views: views.map((view) => ({
+          image: view.base64,
+          label: view.label || undefined,
+        })),
+        runId: runId ?? undefined,
+      }).unwrap();
 
-      const job = await extractMotifs({ donorImage: cropped, region }).unwrap();
       setRunId(job.runId);
     } catch (err) {
       const message = (err as { data?: { message?: string } }).data?.message;
@@ -132,48 +121,77 @@ export default function MotifStudioView() {
     }
   };
 
-  /** Runs the same crop again — output varies between calls, so retrying is
-   *  a legitimate part of the workflow rather than a workaround. */
-  const handleRetryExtract = async () => {
-    if (!donorFile || !crop) return;
+  const handleUploadSheets = async (files: FileList) => {
     setError(null);
 
     try {
-      const cropped = await cropToBase64(donorFile, crop);
-      const job = await extractMotifs({
-        donorImage: cropped,
-        region,
-        runId: runId ?? undefined,
-      }).unwrap();
-      setRunId(job.runId);
+      const next = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const base64 = await fileToResizedBase64(file);
+          return {
+            id: newId(),
+            image: base64,
+            preview: URL.createObjectURL(file),
+            label: '',
+            source: 'uploaded' as const,
+          };
+        })
+      );
+
+      setUploadedSheets((current) => [...current, ...next]);
+      setSelectedSheetIds((current) => [...current, ...next.map((s) => s.id)]);
     } catch {
-      setError('Retry failed.');
+      setError('That sheet could not be read.');
     }
   };
 
   const handleApply = async () => {
-    if (!target) return setError('Upload the plain garment to apply the trim to.');
-    if (!motifSheetUrl) return setError('Run step 1 first.');
+    if (!target) return setError('Upload the plain garment first.');
+    if (selectedSheetIds.length === 0) return setError('Choose at least one embroidery sheet.');
+
     setError(null);
+    setBusyNote('Preparing sheets…');
 
     try {
+      const chosen = availableSheets.filter((s) => selectedSheetIds.includes(s.id));
+
+      /* Generated sheets are URLs on our own server; uploaded ones are already
+         base64. Both are accepted, so no conversion is needed either way. */
+      const sheets = chosen.map((sheet) => ({
+        image: sheet.image,
+        label: sheet.label || undefined,
+      }));
+
+      setBusyNote(null);
+
       await applyMotifs({
         targetImage: target.base64,
-        motifSheetImage: motifSheetUrl,
+        sheets,
         instruction: instruction.trim() || undefined,
         variations,
-        sourceJobId: extractJob?._id,
         runId: runId ?? undefined,
       }).unwrap();
     } catch (err) {
       const message = (err as { data?: { message?: string } }).data?.message;
       setError(message ?? 'Generation failed.');
+    } finally {
+      setBusyNote(null);
+    }
+  };
+
+  const handleDownload = async (url: string, prefix: string) => {
+    try {
+      await downloadImage(url, `${prefix}-${Date.now()}.png`);
+    } catch {
+      setError('Download failed — open the image in a new tab and save it instead.');
     }
   };
 
   const reset = () => {
-    setDonor(null);
+    setViews([]);
     setTarget(null);
+    setUploadedSheets([]);
+    setSelectedSheetIds([]);
     setInstruction('');
     setRunId(null);
     setError(null);
@@ -189,12 +207,12 @@ export default function MotifStudioView() {
               Embroidery Transfer Studio
             </h1>
             <p className="mt-2 max-w-2xl text-[#6B6B6B]">
-              Take the embroidery from one garment and put it on another. Upload a
-              piece whose trim you like, then the plain garment you want it on.
+              Extract the embroidery from a garment once, save it, and apply it to
+              as many plain garments as you like.
             </p>
           </div>
 
-          {runId && (
+          {(runId || views.length > 0) && (
             <button
               type="button"
               onClick={reset}
@@ -214,160 +232,154 @@ export default function MotifStudioView() {
             <h2 className="text-lg font-semibold text-dark">Extract the embroidery</h2>
           </div>
 
-          <div className="grid items-start gap-6 md:grid-cols-[1fr_auto_1fr]">
+          <div className="grid items-start gap-6 lg:grid-cols-[1fr_auto_320px]">
             <div>
-              <p className="mb-2 text-sm font-medium text-dark">
-                Garment with the embroidery you want
+              <p className="mb-3 text-sm font-medium text-dark">
+                Photos of the garment — add several angles
               </p>
 
-              {donor ? (
-                <>
-                  <CropSelector src={donor.preview} value={crop} onChange={setCrop} />
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-[#6B6B6B]">This crop is the</span>
-
-                    {REGIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setRegion(option.value)}
-                        className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                          region === option.value
-                            ? 'bg-secondary text-white'
-                            : 'bg-[#F2EEE8] text-[#5C5C5C] hover:bg-[#E9E3DA]'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDonor(null);
-                      setDonorFile(null);
-                      setCrop(null);
-                    }}
-                    className="mt-3 text-xs text-[#8B6E54] underline"
-                  >
-                    Choose a different photo
-                  </button>
-                </>
-              ) : (
-                <UploadTile
-                  label=""
-                  hint="Upload a photo, then drag a box around one border"
-                  preview={null}
-                  onFile={(file) => {
-                    setDonorFile(file);
-                    setCrop(null);
-                    readFile(file, setDonor);
-                  }}
-                  onClear={() => {
-                    setDonor(null);
-                    setDonorFile(null);
-                  }}
-                />
-              )}
+              <ViewUploader
+                views={views}
+                onAdd={readFiles}
+                onRelabel={(id, label) =>
+                  setViews((current) =>
+                    current.map((v) => (v.id === id ? { ...v, label } : v))
+                  )
+                }
+                onRemove={(id) =>
+                  setViews((current) => current.filter((v) => v.id !== id))
+                }
+                max={MAX_VIEWS}
+                disabled={isExtractPending}
+              />
             </div>
 
-            <div className="hidden self-center md:block">
+            <div className="hidden self-center lg:block">
               <ArrowRight size={22} className="text-[#CCC]" />
             </div>
 
             <div>
-              <p className="mb-2 text-sm font-medium text-dark">Isolated motifs</p>
+              <p className="mb-2 text-sm font-medium text-dark">Isolated embroidery</p>
 
-              <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl bg-[#FBFAF8] ring-1 ring-[#EEE]">
-                {motifSheetUrl ? (
+              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#FBFAF8] ring-1 ring-[#EEE]">
+                {extractJobs.find((j) => j.status === 'completed')?.resultUrls[0] ? (
                   <Image
-                    src={motifSheetUrl}
-                    alt="Extracted embroidery motifs"
+                    src={extractJobs.find((j) => j.status === 'completed')!.resultUrls[0]}
+                    alt="Extracted embroidery"
                     width={400}
-                    height={533}
+                    height={400}
                     unoptimized
                     className="h-full w-full object-contain"
                   />
                 ) : (
                   <span className="px-6 text-center text-xs text-[#9A9A9A]">
-                    {extractJob?.status === 'pending'
+                    {isExtractPending
                       ? 'Extracting… usually 20–60 seconds'
-                      : extractJob?.status === 'failed'
-                        ? 'Extraction failed — try another photo'
-                        : 'The neckline, cuff and hem borders will appear here'}
+                      : extractJobs.some((j) => j.status === 'failed')
+                        ? 'Extraction failed — try different photos'
+                        : 'Every border found across your photos will appear here'}
                   </span>
                 )}
               </div>
+
+              {extractJobs
+                .filter((j) => j.status === 'completed')
+                .flatMap((job) => job.resultUrls)
+                .slice(0, 1)
+                .map((url) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => handleDownload(url, 'embroidery-sheet')}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-secondary py-2.5 text-sm font-medium text-secondary"
+                  >
+                    <Download size={15} />
+                    Download sheet
+                  </button>
+                ))}
             </div>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            {!extractJob && (
-              <button
-                type="button"
-                onClick={handleExtract}
-                disabled={isExtracting || !crop}
-                className="h-11 rounded-md bg-secondary px-8 text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
-              >
-                {isExtracting ? 'Sending…' : 'Extract embroidery'}
-              </button>
-            )}
-
-            {extractJob && extractJob.status !== 'pending' && (
-              <button
-                type="button"
-                onClick={handleRetryExtract}
-                disabled={isExtracting}
-                className="h-11 rounded-md border border-secondary px-6 text-sm font-medium text-secondary"
-              >
-                {isExtracting ? 'Sending…' : 'Try again'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleExtract}
+              disabled={isExtracting || views.length === 0 || isExtractPending}
+              className="h-11 rounded-md bg-secondary px-8 text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
+            >
+              {isExtracting
+                ? 'Sending…'
+                : extractJobs.length > 0
+                  ? 'Extract again'
+                  : 'Extract embroidery'}
+            </button>
 
             <p className="text-xs text-[#9A9A9A]">
-              Output varies between runs — retry if a piece comes back wrong.
+              Output varies between runs — extract again if a piece comes back wrong.
             </p>
           </div>
         </section>
 
         {/* ---- Step 2 ---------------------------------------------------- */}
-        <section
-          className={`mt-6 rounded-2xl bg-white p-5 transition-opacity md:p-6 ${
-            motifSheetUrl ? '' : 'pointer-events-none opacity-50'
-          }`}
-        >
+        <section className="mt-6 rounded-2xl bg-white p-5 md:p-6">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs text-white">
               2
             </span>
-            <h2 className="text-lg font-semibold text-dark">Apply it to a garment</h2>
+            <h2 className="text-lg font-semibold text-dark">Apply it to a plain garment</h2>
           </div>
 
-          <div className="grid items-start gap-6 md:grid-cols-[1fr_1fr]">
+          <div className="grid items-start gap-6 md:grid-cols-2">
             <UploadTile
-              label="Plain garment to decorate"
+              label="Plain garment with no embroidery"
               hint="Its colour, cut and pose are kept exactly"
               preview={target?.preview ?? null}
-              onFile={(file) => readFile(file, setTarget)}
+              onFile={async (file) => {
+                try {
+                  setTarget({
+                    base64: await fileToResizedBase64(file),
+                    preview: URL.createObjectURL(file),
+                  });
+                } catch {
+                  setError('That image could not be read.');
+                }
+              }}
               onClear={() => setTarget(null)}
             />
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-dark">
-                Extra instructions (optional)
-              </label>
+              <SheetPicker
+                available={availableSheets}
+                selectedIds={selectedSheetIds}
+                onToggle={(id) =>
+                  setSelectedSheetIds((current) =>
+                    current.includes(id)
+                      ? current.filter((s) => s !== id)
+                      : [...current, id]
+                  )
+                }
+                onUpload={handleUploadSheets}
+                onRelabel={(id, label) => {
+                  setSheetLabels((current) => ({ ...current, [id]: label }));
+                  setUploadedSheets((current) =>
+                    current.map((s) => (s.id === id ? { ...s, label } : s))
+                  );
+                }}
+                onRemove={(id) => {
+                  setUploadedSheets((current) => current.filter((s) => s.id !== id));
+                  setSelectedSheetIds((current) => current.filter((s) => s !== id));
+                }}
+              />
 
               <textarea
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-                rows={5}
-                placeholder="e.g. Keep the hem border narrower than the neckline."
-                className="w-full rounded-lg border border-[#E4E0D8] p-3 text-sm outline-none focus:border-secondary"
+                rows={3}
+                placeholder="Extra instructions (optional) — e.g. keep the hem border narrower."
+                className="mt-4 w-full rounded-lg border border-[#E4E0D8] p-3 text-sm outline-none focus:border-secondary"
               />
 
-              <label className="mt-4 block text-sm text-[#6B6B6B]">
+              <label className="mt-3 block text-sm text-[#6B6B6B]">
                 Variations
                 <select
                   value={variations}
@@ -382,17 +394,13 @@ export default function MotifStudioView() {
                 </select>
               </label>
 
-              <p className="mt-1 text-xs text-[#9A9A9A]">
-                Each variation is a separate paid generation.
-              </p>
-
               <button
                 type="button"
                 onClick={handleApply}
-                disabled={isApplying || !target || !motifSheetUrl}
-                className="mt-5 h-11 w-full rounded-md bg-secondary text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
+                disabled={isApplying || !target || selectedSheetIds.length === 0}
+                className="mt-4 h-11 w-full rounded-md bg-secondary text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
               >
-                {isApplying ? 'Sending…' : 'Generate garment'}
+                {busyNote ?? (isApplying ? 'Sending…' : 'Generate garment')}
               </button>
             </div>
           </div>
@@ -409,22 +417,30 @@ export default function MotifStudioView() {
               {applyJobs.flatMap((job) =>
                 job.status === 'completed'
                   ? job.resultUrls.map((url) => (
-                      <a
+                      <div
                         key={url}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
                         className="overflow-hidden rounded-xl bg-white ring-1 ring-[#EEE]"
                       >
-                        <Image
-                          src={url}
-                          alt="Generated garment"
-                          width={400}
-                          height={533}
-                          unoptimized
-                          className="aspect-[3/4] w-full object-cover"
-                        />
-                      </a>
+                        <a href={url} target="_blank" rel="noreferrer">
+                          <Image
+                            src={url}
+                            alt="Generated garment"
+                            width={400}
+                            height={533}
+                            unoptimized
+                            className="aspect-[3/4] w-full object-cover"
+                          />
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(url, 'garment')}
+                          className="flex w-full items-center justify-center gap-2 border-t border-[#EEE] py-2 text-xs text-secondary"
+                        >
+                          <Download size={13} />
+                          Download
+                        </button>
+                      </div>
                     ))
                   : [
                       <div

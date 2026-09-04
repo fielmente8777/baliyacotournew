@@ -31,7 +31,13 @@ export const studioApi = baseApi.injectEndpoints({
     /** Stage 1 — isolate embroidery from a donor garment. */
     extractMotifs: builder.mutation<
       ImageJob,
-      { donorImage: string; region?: MotifRegion; runId?: string }
+      {
+        /** Several angles of the same garment; borders seen twice are
+         *  extracted once. */
+        views: { image: string; label?: string }[];
+        region?: MotifRegion;
+        runId?: string;
+      }
     >({
       query: (body) => ({ url: '/ai/extract-motifs', method: 'POST', body }),
       transformResponse: (res: ApiEnvelope<ImageJob>) => unwrap(res),
@@ -43,7 +49,8 @@ export const studioApi = baseApi.injectEndpoints({
       ImageJob[],
       {
         targetImage: string;
-        motifSheetImage: string;
+        /** URLs from stage 1, or base64 for sheets re-uploaded from disk. */
+        sheets: { image: string; label?: string }[];
         instruction?: string;
         variations?: number;
         sourceJobId?: string;
