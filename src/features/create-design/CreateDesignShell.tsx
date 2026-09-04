@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * The design builder.
+ * The design builder, laid out as the Figma shows it: a white product card on
+ * the left holding the styling rail, the garment preview, the price and the
+ * CTA, with the option grid on the right.
  *
- * Everything is derived from GET /designs/config: which steps exist, their
- * order, which are required and which are hidden behind a dependency. Adding
- * "Dupatta" to a garment type in the dashboard makes it appear here with no
- * frontend change.
+ * The steps inside that rail are not fixed. They come from GET /designs/config,
+ * so a garment type exposing Dupatta gets a Dupatta step with no code change.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -30,9 +30,10 @@ import {
 import { useGetMeasurementProfilesQuery } from '@/store/api/measurementApi';
 import { useCart } from '@/hooks/useCart';
 import type { BuilderStep, PriceBreakdown } from '@/@types/design';
-import { cn, formatINR } from '@/lib/format';
+import { cn } from '@/lib/format';
 
 import StepRail from './StepRail';
+import PriceSummary from './PriceSummary';
 import OptionStep from './steps/OptionStep';
 import InstructionsStep from './steps/InstructionsStep';
 import ReviewStep from './steps/ReviewStep';
@@ -42,6 +43,12 @@ interface Props {
   garmentTypeId?: string;
   productId?: string;
 }
+
+/**
+ * A standard size means the garment is cut to a size chart, so body
+ * measurements are not needed. Only this option requires them.
+ */
+const CUSTOM_SIZE_LABEL = 'Custom Measurement';
 
 export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const dispatch = useAppDispatch();
@@ -63,12 +70,55 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     dispatch(startDesign({ garmentTypeId, productId }));
   }, [dispatch, garmentTypeId, productId]);
 
-  /* A customized product starts from what the team already configured. */
+  /**
+   * Seed from the product's presets — but only for groups this product
+   * actually exposes.
+   *
+   * A pre-designed product carries presets for every group it was built with,
+   * including ones the customer cannot change. Seeding those too meant sending
+   * selections for unconfigured groups, which the API rejects with "one of the
+   * selected options is not part of this design".
+   */
   useEffect(() => {
-    if (config?.presetSelections.length) dispatch(applyPresets(config.presetSelections));
+    if (!config?.presetSelections.length) return;
+
+    const configured = new Set(config.groups.map((group) => group._id));
+    const relevant = config.presetSelections.filter((preset) =>
+      configured.has(preset.groupId)
+    );
+
+    if (relevant.length) dispatch(applyPresets(relevant));
   }, [config, dispatch]);
 
-  /** Option groups the server says are visible, plus the builder's own steps. */
+  /** Only ever send selections for groups this design actually has. */
+  const payloadSelections = useMemo(() => {
+    if (!config) return [];
+    const configured = new Set(config.groups.map((group) => group._id));
+
+    return Object.entries(selections)
+      .filter(([groupId]) => configured.has(groupId))
+      .map(([groupId, optionId]) => ({ groupId, optionId }));
+  }, [config, selections]);
+
+  /** The size group, if this garment has one. */
+  const sizeGroup = useMemo(
+    () => config?.groups.find((group) => group.code === 'size') ?? null,
+    [config]
+  );
+
+  /**
+   * True when the customer picked a standard size, so the measurement step is
+   * unnecessary. Custom Measurement — or no size group at all — keeps it.
+   */
+  const usesStandardSize = useMemo(() => {
+    if (!sizeGroup) return false;
+    const chosenId = selections[sizeGroup._id];
+    if (!chosenId) return false;
+
+    const chosen = sizeGroup.options.find((option) => option._id === chosenId);
+    return Boolean(chosen && chosen.label !== CUSTOM_SIZE_LABEL);
+  }, [sizeGroup, selections]);
+
   const steps: BuilderStep[] = useMemo(() => {
     if (!config) return [];
 
@@ -78,15 +128,22 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
     return [
       ...optionSteps,
-      { kind: 'measurement' },
+      ...(usesStandardSize ? [] : ([{ kind: 'measurement' }] as BuilderStep[])),
       { kind: 'instructions' },
       { kind: 'review' },
     ];
-  }, [config]);
+  }, [config, usesStandardSize]);
+
+  /* Dropping the measurement step can leave the pointer past the end. */
+  useEffect(() => {
+    if (steps.length && stepIndex > steps.length - 1) {
+      dispatch(setStepIndex(steps.length - 1));
+    }
+  }, [steps.length, stepIndex, dispatch]);
 
   /**
-   * Clearing a parent selection must clear anything that depended on it,
-   * otherwise a now-hidden group keeps a value the customer can't see.
+   * Clearing a parent selection must clear anything that depended on it, or a
+   * now-hidden group keeps a price the customer cannot see or change.
    */
   useEffect(() => {
     if (!config) return;
@@ -98,21 +155,16 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     if (orphaned.length) dispatch(clearSelections(orphaned));
   }, [config, selections, dispatch]);
 
-  /* Re-price whenever a selection changes. The backend is the source of truth. */
+  /* Re-price on every change. The backend is the source of truth for price. */
   useEffect(() => {
     if (!config) return;
 
-    const payload = Object.entries(selections).map(([groupId, optionId]) => ({
-      groupId,
-      optionId,
-    }));
-
-    quotePrice({ garmentTypeId, productId, selections: payload })
+    quotePrice({ garmentTypeId, productId, selections: payloadSelections })
       .unwrap()
       .then(setPricing)
-      /* A partial selection can fail validation mid-flow; keep the last good price. */
+      /* A partial selection fails validation mid-flow; keep the last good price. */
       .catch(() => undefined);
-  }, [selections, config, garmentTypeId, productId, quotePrice]);
+  }, [payloadSelections, config, garmentTypeId, productId, quotePrice]);
 
   const isStepComplete = (index: number) => {
     const step = steps[index];
@@ -123,7 +175,6 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     return false;
   };
 
-  /** A step is reachable once every required step before it is satisfied. */
   const isStepReachable = (index: number) =>
     steps.slice(0, index).every((step, i) => {
       if (step.kind === 'option' && !step.group.isRequired) return true;
@@ -147,11 +198,11 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
         garmentTypeId,
         productId,
         name: designName || undefined,
-        selections: Object.entries(selections).map(([groupId, optionId]) => ({
-          groupId,
-          optionId,
-        })),
-        measurementProfileId: measurementProfileId ?? undefined,
+        selections: payloadSelections,
+        /* Omitted entirely for a standard size — there is no body to fit. */
+        measurementProfileId: usesStandardSize
+          ? undefined
+          : (measurementProfileId ?? undefined),
         instructions: instructions || undefined,
       }).unwrap();
 
@@ -160,7 +211,6 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
         '/create-your-own-design'
       );
 
-      /* null means we redirected to login; the design is saved either way. */
       if (result) router.push('/cart');
     } catch (err) {
       const message = (err as { data?: { message?: string } }).data?.message;
@@ -171,9 +221,9 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   if (isLoading || !config) {
     return (
       <main className="min-h-screen bg-[#FAF7F2] px-4 py-10 md:px-8">
-        <div className="mx-auto max-w-[1500px] animate-pulse space-y-6">
-          <div className="h-8 w-64 rounded bg-black/5" />
-          <div className="h-96 rounded-2xl bg-black/5" />
+        <div className="mx-auto grid max-w-[1500px] animate-pulse gap-8 lg:grid-cols-2">
+          <div className="h-[560px] rounded-2xl bg-black/5" />
+          <div className="h-[560px] rounded-2xl bg-black/5" />
         </div>
       </main>
     );
@@ -181,13 +231,14 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
   const activeStep = steps[Math.min(stepIndex, steps.length - 1)];
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);
-  const productImage = config.product?.images?.[0]?.url;
+  const previewImage =
+    config.product?.images?.[0]?.url ?? '/customization/kurta-preview.png';
 
   return (
     <main className="min-h-screen bg-[#FAF7F2]">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 md:py-10">
         <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-dark md:text-3xl">
+          <h1 className="text-2xl font-semibold text-[#1B2B36] md:text-3xl">
             {config.product ? `Customise ${config.product.name}` : config.garmentType.name}
           </h1>
 
@@ -196,17 +247,70 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_320px] lg:gap-8">
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <StepRail
-              steps={steps}
-              activeIndex={stepIndex}
-              isComplete={isStepComplete}
-              isReachable={isStepReachable}
-              onSelect={(i) => dispatch(setStepIndex(i))}
-            />
-          </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:gap-10">
+          {/* ---- Product card: rail, preview, price, CTA ------------------ */}
+          <section className="lg:sticky lg:top-24 lg:self-start">
+            <div className="flex flex-col rounded-2xl bg-white p-4 md:p-6 lg:p-8">
+              <div className="flex flex-1 flex-col gap-6 md:flex-row md:items-start md:gap-6">
+                <StepRail
+                  steps={steps}
+                  activeIndex={stepIndex}
+                  isComplete={isStepComplete}
+                  isReachable={isStepReachable}
+                  onSelect={(i) => dispatch(setStepIndex(i))}
+                />
 
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="relative aspect-[3/4] w-full max-w-[380px]">
+                    <Image
+                      src={previewImage}
+                      alt={config.product?.name ?? config.garmentType.name}
+                      fill
+                      sizes="(max-width: 768px) 80vw, 380px"
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 md:mt-10">
+                <PriceSummary pricing={pricing} basePrice={config.basePrice} />
+
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart}
+                  className={cn(
+                    'mt-6 h-12 w-full rounded-md text-[15px] font-medium transition-colors sm:w-64 md:h-14',
+                    canAddToCart
+                      ? 'bg-secondary text-white hover:bg-secondary/90'
+                      : 'cursor-not-allowed bg-[#EDEDED] text-[#B4B4B4]'
+                  )}
+                >
+                  {isSaving || isAdding ? 'Adding…' : 'Add To Cart'}
+                </button>
+
+                {missingStep !== -1 && (
+                  <button
+                    type="button"
+                    onClick={() => dispatch(setStepIndex(missingStep))}
+                    className="mt-3 block text-xs text-[#8B6E54] underline"
+                  >
+                    Finish{' '}
+                    {steps[missingStep]?.kind === 'option'
+                      ? (steps[missingStep] as { group: { label: string } }).group.label
+                      : 'measurements'}{' '}
+                    to continue
+                  </button>
+                )}
+
+                {error && <p className="mt-3 text-sm text-secondary">{error}</p>}
+              </div>
+            </div>
+          </section>
+
+          {/* ---- Options panel ------------------------------------------- */}
           <section className="min-w-0">
             {activeStep?.kind === 'option' && (
               <OptionStep
@@ -232,7 +336,11 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 groups={config.groups}
                 selections={selections}
                 pricing={pricing}
-                measurementName={selectedProfile?.profileName}
+                measurementName={
+                  usesStandardSize
+                    ? 'Standard size — no measurements needed'
+                    : selectedProfile?.profileName
+                }
                 instructions={instructions}
                 onEditStep={(i) => dispatch(setStepIndex(i))}
               />
@@ -260,69 +368,6 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
               )}
             </div>
           </section>
-
-          <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-2xl bg-white p-5">
-              {productImage && (
-                <div className="relative mb-4 aspect-[3/4] w-full overflow-hidden rounded-lg">
-                  <Image
-                    src={productImage}
-                    alt={config.product?.name ?? ''}
-                    fill
-                    sizes="320px"
-                    className="object-cover"
-                  />
-                </div>
-              )}
-
-              <p className="text-sm text-[#6B6B6B]">Your price</p>
-
-              <p className="mt-1 text-3xl font-bold text-dark">
-                {formatINR((pricing?.total ?? config.basePrice) / 100)}
-              </p>
-
-              {pricing && pricing.adjustments.length > 0 && (
-                <ul className="mt-4 space-y-1.5 text-sm text-[#6B6B6B]">
-                  {pricing.adjustments.map((adjustment) => (
-                    <li key={adjustment.label} className="flex justify-between gap-3">
-                      <span className="truncate">{adjustment.label}</span>
-                      <span>+ {formatINR(adjustment.amount / 100)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={!canAddToCart}
-                className={cn(
-                  'mt-6 h-12 w-full rounded-md text-sm font-medium transition-colors',
-                  canAddToCart
-                    ? 'bg-secondary text-white hover:bg-secondary/90'
-                    : 'cursor-not-allowed bg-[#EDEDED] text-[#B4B4B4]'
-                )}
-              >
-                {isSaving || isAdding ? 'Adding…' : 'Add To Cart'}
-              </button>
-
-              {missingStep !== -1 && (
-                <button
-                  type="button"
-                  onClick={() => dispatch(setStepIndex(missingStep))}
-                  className="mt-3 w-full text-center text-xs text-[#8B6E54] underline"
-                >
-                  Finish{' '}
-                  {steps[missingStep]?.kind === 'option'
-                    ? (steps[missingStep] as { group: { label: string } }).group.label
-                    : 'measurements'}{' '}
-                  to continue
-                </button>
-              )}
-
-              {error && <p className="mt-3 text-sm text-secondary">{error}</p>}
-            </div>
-          </aside>
         </div>
       </div>
     </main>

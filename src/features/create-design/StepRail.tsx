@@ -1,11 +1,13 @@
 'use client';
 
 /**
- * The step list. Replaces the fixed three-icon pill: a garment type can expose
- * any number of steps, so this scrolls and is built from the config.
+ * The styling rail from Stensil — a white pill of circular icons inside the
+ * product card, rather than a sidebar list.
  *
- * Steps ahead of the first incomplete required one are locked, which keeps the
- * customer from reaching Review with gaps.
+ * The Figma shows three fixed icons; a garment type can expose eight or more
+ * steps, so this scrolls vertically while keeping the same shape. Steps ahead
+ * of the first incomplete required one are locked, which stops anyone reaching
+ * Review with gaps.
  */
 
 import { Check } from 'lucide-react';
@@ -23,8 +25,16 @@ interface Props {
 const labelFor = (step: BuilderStep) => {
   if (step.kind === 'option') return step.group.label;
   if (step.kind === 'measurement') return 'Measurements';
-  if (step.kind === 'instructions') return 'Instructions';
+  if (step.kind === 'instructions') return 'Notes';
   return 'Review';
+};
+
+/** Two or three characters that read as an icon at 14px. */
+const glyphFor = (step: BuilderStep, index: number) => {
+  if (step.kind === 'measurement') return '⌗';
+  if (step.kind === 'instructions') return '✎';
+  if (step.kind === 'review') return '✓';
+  return String(index + 1);
 };
 
 export default function StepRail({
@@ -35,46 +45,58 @@ export default function StepRail({
   onSelect,
 }: Props) {
   return (
-    <nav
-      aria-label="Design steps"
-      className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0"
-    >
-      {steps.map((step, index) => {
-        const active = index === activeIndex;
-        const done = isComplete(index);
-        const reachable = isReachable(index);
+    <nav aria-label="Styling steps" className="shrink-0">
+      <p className="mb-2 hidden text-center text-sm font-semibold text-[#1B2B36] md:block">
+        Styling
+      </p>
 
-        return (
-          <button
-            key={`${step.kind}-${index}`}
-            type="button"
-            disabled={!reachable}
-            onClick={() => onSelect(index)}
-            aria-current={active ? 'step' : undefined}
-            className={cn(
-              'flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors lg:w-full',
-              active && 'bg-white font-medium text-secondary shadow-sm',
-              !active && reachable && 'text-dark/70 hover:text-secondary',
-              !reachable && 'cursor-not-allowed text-dark/30'
-            )}
-          >
-            <span
-              className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px]',
-                done
-                  ? 'border-secondary bg-secondary text-white'
-                  : active
-                    ? 'border-secondary text-secondary'
-                    : 'border-[#D5D5D5] text-[#AFAFAF]'
-              )}
+      <div
+        className={cn(
+          'flex gap-4 rounded-full bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.06)]',
+          'flex-row overflow-x-auto md:max-h-[520px] md:flex-col md:overflow-y-auto md:overflow-x-visible'
+        )}
+      >
+        {steps.map((step, index) => {
+          const active = index === activeIndex;
+          const done = isComplete(index);
+          const reachable = isReachable(index);
+
+          return (
+            <button
+              key={`${step.kind}-${index}`}
+              type="button"
+              disabled={!reachable}
+              onClick={() => onSelect(index)}
+              aria-current={active ? 'step' : undefined}
+              className="flex shrink-0 flex-col items-center gap-1.5 focus:outline-none disabled:cursor-not-allowed"
             >
-              {done ? <Check size={13} /> : index + 1}
-            </span>
+              <span
+                className={cn(
+                  'flex h-11 w-11 items-center justify-center rounded-full border text-sm transition-colors',
+                  active
+                    ? 'border-secondary bg-[#FFF4F7] text-secondary'
+                    : done
+                      ? 'border-secondary bg-secondary text-white'
+                      : reachable
+                        ? 'border-[#ECECEC] text-[#1B2B36]/70 hover:border-secondary/40'
+                        : 'border-[#F0F0F0] text-[#CFCFCF]'
+                )}
+              >
+                {done && !active ? <Check size={15} /> : glyphFor(step, index)}
+              </span>
 
-            <span className="whitespace-nowrap">{labelFor(step)}</span>
-          </button>
-        );
-      })}
+              <span
+                className={cn(
+                  'max-w-[72px] truncate text-[10px] leading-tight',
+                  active ? 'text-secondary' : 'text-[#1B2B36]/60'
+                )}
+              >
+                {labelFor(step)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
