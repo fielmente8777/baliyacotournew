@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 
 import PrimaryButton from "@/components/checkout/PrimaryButton";
 import SecondaryButton from "@/components/checkout/SecondaryButton";
-import { useGetOrderByIdQuery } from "@/store/api/orderApi";
+import { useGetMyOrdersQuery, useGetOrderByIdQuery } from "@/store/api/orderApi";
 import { formatINR } from "@/lib/format";
 
 import SuccessHeader from "../../app/(website)/order-success/Components/SuccessHeader";
@@ -20,11 +20,28 @@ import SuccessHeader from "../../app/(website)/order-success/Components/SuccessH
 const PLACEHOLDER = "/Rectangle-23959.png";
 
 export default function OrderSuccessView() {
-  const orderId = useSearchParams().get("order");
+  const param = useSearchParams().get("order");
+  /* A missing push leaves "undefined" in the URL, which is not a valid id. */
+  const orderId = param && param !== "undefined" ? param : null;
 
-  const { data: order, isLoading } = useGetOrderByIdQuery(orderId as string, {
-    skip: !orderId,
-  });
+  const { data: fetched, isLoading, isError } = useGetOrderByIdQuery(
+    orderId as string,
+    { skip: !orderId },
+  );
+
+  /**
+   * Fall back to the newest order.
+   *
+   * The customer has just paid; showing them "we couldn't find that order"
+   * because a query parameter went missing is the worst possible moment to be
+   * unhelpful. Their most recent order is almost certainly the one they want.
+   */
+  const { data: recent = [] } = useGetMyOrdersQuery(
+    { limit: 1 },
+    { skip: Boolean(orderId) && !isError },
+  );
+
+  const order = fetched ?? recent[0];
 
   return (
     <main className="min-h-screen bg-[#F8F6EF]">

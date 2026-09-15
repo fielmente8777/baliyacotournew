@@ -13,7 +13,7 @@ export const metadata: Metadata = {
  */
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-[60vh] bg-[#DDEBD6]" />}>
+    <Suspense fallback={<div className="min-h-[60vh] bg-[#FAF8F0]" />}>
       <LoginView />
     </Suspense>
   );

@@ -1,5 +1,13 @@
 import OrderGallery from './OrderGallery';
-import type { OrderReview as Review } from '../pageData';
+
+/** Shape the card renders — the API review is mapped onto it by OrderCard. */
+interface Review {
+  rating: number;
+  action: string;
+  title?: string;
+  description?: string;
+  images: string[];
+}
 
 interface Props {
   review: Review;

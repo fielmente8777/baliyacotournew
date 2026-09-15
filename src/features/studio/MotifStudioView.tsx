@@ -25,6 +25,17 @@ import {
 import { fileToResizedBase64 } from '@/lib/imageResize';
 import { downloadImage } from '@/lib/downloadImage';
 
+import {
+  useApplyAssetsMutation,
+  useBuildAssetsMutation,
+  useDetectLandmarksMutation,
+  useGetAssetsQuery,
+  usePreviewPlacementMutation,
+} from '@/store/api/embroideryApi';
+import { ACCEPTABLE_CONFIDENCE, type Landmarks } from '@/@types/embroidery';
+
+import AssetReviewPanel from './AssetReviewPanel';
+import LandmarkMarker from './LandmarkMarker';
 import UploadTile from './UploadTile';
 import ViewUploader, { type DonorView } from './ViewUploader';
 import SheetPicker, { type SheetChoice } from './SheetPicker';
@@ -51,6 +62,26 @@ export default function MotifStudioView() {
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyNote, setBusyNote] = useState<string | null>(null);
+
+  /** Collection produced by splitting the last extraction. */
+  const [collectionId, setCollectionId] = useState<string | null>(null);
+  const [colourWarning, setColourWarning] = useState<string | null>(null);
+
+  /** Landmarks for the target garment; marked by hand when detection fails. */
+  const [landmarks, setLandmarks] = useState<Landmarks | null>(null);
+  const [needsMarking, setNeedsMarking] = useState(false);
+
+  const [buildAssets, { isLoading: isBuilding }] = useBuildAssetsMutation();
+  const [detectLandmarks] = useDetectLandmarksMutation();
+  const [applyAssets, { isLoading: isPlacing }] = useApplyAssetsMutation();
+  const [previewPlacement, { isLoading: isPreviewing }] = usePreviewPlacementMutation();
+
+  /** Composite render — free, so it can be refreshed as often as needed. */
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const { data: approvedAssets = [] } = useGetAssetsQuery(
+    collectionId ? { collectionId, approvedOnly: true } : { approvedOnly: true },
+  );
 
   const [extractMotifs, { isLoading: isExtracting }] = useExtractMotifsMutation();
   const [applyMotifs, { isLoading: isApplying }] = useApplyMotifsMutation();
@@ -181,9 +212,112 @@ export default function MotifStudioView() {
 
   const handleDownload = async (url: string, prefix: string) => {
     try {
-      await downloadImage(url, `${prefix}-${Date.now()}.png`);
+      await downloadImage(url, `${prefix}.png`);
     } catch {
       setError('Download failed — open the image in a new tab and save it instead.');
+    }
+  };
+
+  /**
+   * Splits the finished sheet into named assets. No AI cost — the sheet is
+   * separated with image processing, so this is free and repeatable.
+   */
+  const handleBuildAssets = async () => {
+    const job = extractJobs.find((j) => j.status === 'completed');
+    if (!job) return setError('Run an extraction first.');
+
+    setError(null);
+    setColourWarning(null);
+
+    try {
+      const result = await buildAssets({
+        jobId: job._id,
+        collectionName: views[0]?.label || 'Untitled collection',
+      }).unwrap();
+
+      setCollectionId(result.collectionId);
+      if (result.colourWarning) setColourWarning(result.colourWarning);
+    } catch (err) {
+      const message = (err as { data?: { message?: string } }).data?.message;
+      setError(message ?? 'Could not split that sheet into assets.');
+    }
+  };
+
+  /** Checks whether the blank suit can be measured automatically. */
+  const checkLandmarks = async (base64: string) => {
+    try {
+      const result = await detectLandmarks({ image: base64 }).unwrap();
+
+      if (result.confidence >= ACCEPTABLE_CONFIDENCE) {
+        setLandmarks(result);
+        setNeedsMarking(false);
+        return;
+      }
+
+      /* Pale garment against a similar backdrop — the operator must mark it. */
+      setLandmarks(null);
+      setNeedsMarking(true);
+    } catch {
+      setNeedsMarking(true);
+    }
+  };
+
+  /**
+   * Renders where the pieces will land, without generating.
+   *
+   * Checking placement by generating costs a minute and a credit each time,
+   * which makes adjusting an asset impractical. This is instant and free.
+   */
+  const handlePreview = async () => {
+    if (!target) return setError('Upload the plain garment first.');
+    if (approvedAssets.length === 0) {
+      return setError('Approve at least one embroidery piece first.');
+    }
+
+    setError(null);
+
+    try {
+      const result = await previewPlacement({
+        targetImage: target.base64,
+        assetIds: approvedAssets.map((a) => a._id),
+        landmarks: landmarks ?? undefined,
+      }).unwrap();
+
+      setPreview(result.preview);
+      setBusyNote(`${result.placedCount} pieces placed`);
+    } catch (err) {
+      const message = (err as { data?: { message?: string } }).data?.message;
+      setError(message ?? 'Could not render the preview.');
+    }
+  };
+
+  /** Stage 2 with deterministic placement. */
+  const handlePlace = async () => {
+    if (!target) return setError('Upload the plain garment first.');
+    if (approvedAssets.length === 0) {
+      return setError('Approve at least one embroidery piece first.');
+    }
+    if (needsMarking && !landmarks) {
+      return setError('Mark the garment landmarks before placing.');
+    }
+
+    setError(null);
+
+    try {
+      const result = await applyAssets({
+        targetImage: target.base64,
+        assetIds: approvedAssets.map((a) => a._id),
+        instruction: instruction.trim() || undefined,
+        variations,
+        runId: runId ?? undefined,
+        landmarks: landmarks ?? undefined,
+      }).unwrap();
+
+      if (result.jobs[0]) setRunId(result.jobs[0].runId);
+      setBusyNote(`${result.placedCount} pieces placed`);
+    } catch (err) {
+      const message = (err as { data?: { message?: string } }).data?.message;
+      setError(message ?? 'Placement failed.');
     }
   };
 
@@ -195,6 +329,11 @@ export default function MotifStudioView() {
     setInstruction('');
     setRunId(null);
     setError(null);
+    setCollectionId(null);
+    setColourWarning(null);
+    setLandmarks(null);
+    setNeedsMarking(false);
+    setPreview(null);
   };
 
   return (
@@ -314,10 +453,33 @@ export default function MotifStudioView() {
                   : 'Extract embroidery'}
             </button>
 
+            {extractJobs.some((j) => j.status === 'completed') && !collectionId && (
+              <button
+                type="button"
+                onClick={handleBuildAssets}
+                disabled={isBuilding}
+                className="h-11 rounded-md border border-secondary px-6 text-sm font-medium text-secondary disabled:opacity-60"
+              >
+                {isBuilding ? 'Splitting…' : 'Split into named pieces'}
+              </button>
+            )}
+
             <p className="text-xs text-[#9A9A9A]">
               Output varies between runs — extract again if a piece comes back wrong.
             </p>
           </div>
+
+          {colourWarning && (
+            <p className="mt-4 rounded-lg bg-[#FDF0F2] p-3 text-sm text-secondary">
+              {colourWarning}
+            </p>
+          )}
+
+          {collectionId && (
+            <div className="mt-6 border-t border-[#F2EEE8] pt-6">
+              <AssetReviewPanel collectionId={collectionId} />
+            </div>
+          )}
         </section>
 
         {/* ---- Step 2 ---------------------------------------------------- */}
@@ -330,24 +492,80 @@ export default function MotifStudioView() {
           </div>
 
           <div className="grid items-start gap-6 md:grid-cols-2">
+            {preview ? (
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium text-dark">
+                    Placement preview
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setPreview(null)}
+                    className="text-xs text-[#8B6E54] underline"
+                  >
+                    Show the plain garment
+                  </button>
+                </div>
+
+                {/* Data URL from the compositor — nothing for next/image to
+                    optimise, and it would reject a data: source anyway. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview}
+                  alt="Where the embroidery will be placed"
+                  className="w-full rounded-xl"
+                />
+
+                <p className="mt-2 text-xs text-[#9A9A9A]">
+                  Flat and pasted on is expected — the generation blends it into
+                  the fabric. Check only that each piece is in the right place.
+                </p>
+              </div>
+            ) : (
             <UploadTile
               label="Plain garment with no embroidery"
               hint="Its colour, cut and pose are kept exactly"
               preview={target?.preview ?? null}
               onFile={async (file) => {
                 try {
-                  setTarget({
-                    base64: await fileToResizedBase64(file),
-                    preview: URL.createObjectURL(file),
-                  });
+                  const base64 = await fileToResizedBase64(file);
+                  setTarget({ base64, preview: URL.createObjectURL(file) });
+                  /* Decide immediately whether this garment can be measured
+                     automatically, so the operator is not surprised later. */
+                  await checkLandmarks(base64);
                 } catch {
                   setError('That image could not be read.');
                 }
               }}
               onClear={() => setTarget(null)}
             />
+            )}
 
             <div>
+              {needsMarking && target && (
+                <div className="mb-5 rounded-xl bg-[#FDF9F3] p-4">
+                  <p className="mb-3 text-sm text-[#8B6E54]">
+                    This garment is too close in colour to its background to
+                    measure automatically. Mark six points once — they are reused
+                    for every generation on this suit.
+                  </p>
+
+                  <LandmarkMarker
+                    imageSrc={target.preview}
+                    onComplete={(marked) => {
+                      setLandmarks(marked);
+                      setNeedsMarking(false);
+                    }}
+                  />
+                </div>
+              )}
+
+              {landmarks && !needsMarking && (
+                <p className="mb-3 text-xs text-[#3F6B3D]">
+                  Garment measured — landmarks ready.
+                </p>
+              )}
+
               <SheetPicker
                 available={availableSheets}
                 selectedIds={selectedSheetIds}
@@ -394,14 +612,45 @@ export default function MotifStudioView() {
                 </select>
               </label>
 
-              <button
-                type="button"
-                onClick={handleApply}
-                disabled={isApplying || !target || selectedSheetIds.length === 0}
-                className="mt-4 h-11 w-full rounded-md bg-secondary text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
-              >
-                {busyNote ?? (isApplying ? 'Sending…' : 'Generate garment')}
-              </button>
+              {approvedAssets.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={isPreviewing || !target}
+                  className="mt-4 h-11 w-full rounded-md border border-secondary text-sm font-medium text-secondary disabled:opacity-50"
+                >
+                  {isPreviewing ? 'Rendering…' : 'Preview placement (free)'}
+                </button>
+              )}
+
+              {approvedAssets.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={handlePlace}
+                  disabled={isPlacing || !target || (needsMarking && !landmarks)}
+                  className="mt-4 h-11 w-full rounded-md bg-secondary text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
+                >
+                  {isPlacing
+                    ? 'Placing…'
+                    : `Place ${approvedAssets.length} approved piece${approvedAssets.length > 1 ? 's' : ''}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  disabled={isApplying || !target || selectedSheetIds.length === 0}
+                  className="mt-4 h-11 w-full rounded-md bg-secondary text-sm font-medium text-white disabled:bg-[#EDEDED] disabled:text-[#B4B4B4]"
+                >
+                  {busyNote ?? (isApplying ? 'Sending…' : 'Generate garment')}
+                </button>
+              )}
+
+              {approvedAssets.length > 0 && (
+                <p className="mt-2 text-xs text-[#9A9A9A]">
+                  Placement is calculated from each piece&apos;s stored anchor, not
+                  decided by the model.
+                </p>
+              )}
             </div>
           </div>
         </section>

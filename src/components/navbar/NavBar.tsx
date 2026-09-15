@@ -5,11 +5,17 @@ import Image from "next/image";
 import MenuButton from "./MenuButton";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/useAuth";
+import { useCart } from "@/hooks/useCart";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
   const { isAuthenticated, isHydrated, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+
+  /* Skips its own fetch when signed out, so this costs nothing for guests. */
+  const { totals } = useCart();
+  const isSignedIn = isHydrated && isAuthenticated;
 
   return (
     <header className="max_screen_width py-6 bg-white">
@@ -54,13 +60,31 @@ const Navbar = () => {
               </Link>
             )}
           </li>
+          {isSignedIn && (
+            <li>
+              <NotificationBell />
+            </li>
+          )}
+
           <li>
             <Link
-              href={isHydrated && isAuthenticated ? "/cart" : "/login?redirect=%2Fcart"}
-              aria-label="Cart"
-              className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
+              href={isSignedIn ? "/cart" : "/login?redirect=%2Fcart"}
+              aria-label={
+                totals.itemCount > 0
+                  ? `Cart, ${totals.itemCount} item${totals.itemCount > 1 ? "s" : ""}`
+                  : "Cart"
+              }
+              className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer relative"
             >
               <CartIcon />
+
+              {/* Rendered only once hydrated, or the server and client markup
+                  would differ and React would discard the subtree. */}
+              {isSignedIn && totals.itemCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
+                  {totals.itemCount > 9 ? "9+" : totals.itemCount}
+                </span>
+              )}
             </Link>
           </li>
         </ul>

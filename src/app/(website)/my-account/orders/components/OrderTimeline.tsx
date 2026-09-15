@@ -1,4 +1,4 @@
-import type { OrderTimelineItem } from '../pageData';
+import type { TimelineItem as OrderTimelineItem } from '../orderView';
 
 interface Props {
   items: OrderTimelineItem[];

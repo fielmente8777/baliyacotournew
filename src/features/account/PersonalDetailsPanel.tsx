@@ -15,6 +15,7 @@ import AccountContent from '../../app/(website)/my-account/components/AccountCon
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
 import OutlineButton from '../../app/(website)/my-account/components/OutlineButton';
+import PhoneChangeModal from './PhoneChangeModal';
 
 const GENDERS: Array<{ value: Gender; label: string }> = [
   { value: 'female', label: 'Female' },
@@ -49,6 +50,7 @@ export default function PersonalDetailsPanel() {
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', gender: '', dob: '' });
+  const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const startEditing = () => {
@@ -168,12 +170,20 @@ export default function PersonalDetailsPanel() {
           className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
         />
 
-        {/* Read-only: phone is the login identity and only the OTP flow changes it. */}
+        {/* Phone is the login identity, so it changes through its own
+            OTP-verified flow rather than this form. */}
         <div className="flex h-12 items-center rounded-md border border-[#EAE6DF] bg-[#FAF9F7] px-4">
-          <span className="text-sm text-[#8A8A8A]">
+          <span className="text-sm text-[#555]">
             {formatPhone(profile.phone)}
           </span>
-          <span className="ml-auto text-xs text-[#9A9A9A]">Cannot be changed</span>
+
+          <button
+            type="button"
+            onClick={() => setPhoneModalOpen(true)}
+            className="ml-auto text-xs font-medium text-[#A52C45] underline"
+          >
+            {profile.phone ? 'Change' : 'Add number'}
+          </button>
         </div>
 
         <input
@@ -197,15 +207,30 @@ export default function PersonalDetailsPanel() {
           ))}
         </select>
 
+        {/* Clicking anywhere in the field opens the picker, not just the
+            icon. showPicker() is unsupported on Safari and older Firefox, so
+            the call is guarded and those browsers keep the native behaviour. */}
         <input
           type="date"
           value={form.dob}
           max={new Date().toISOString().slice(0, 10)}
           onChange={(e) => setForm({ ...form, dob: e.target.value })}
-          className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm text-[#222] outline-none focus:border-[#A52C45]"
+          onClick={(e) => {
+            const input = e.currentTarget as HTMLInputElement & {
+              showPicker?: () => void;
+            };
+            input.showPicker?.();
+          }}
+          className="h-12 w-full cursor-pointer rounded-md border border-[#EAE6DF] px-4 text-sm text-[#222] outline-none focus:border-[#A52C45]"
         />
 
         {error && <p className="text-sm text-[#A52C45]">{error}</p>}
+
+        <PhoneChangeModal
+          open={isPhoneModalOpen}
+          onClose={() => setPhoneModalOpen(false)}
+          currentPhone={profile.phone ? formatPhone(profile.phone) : undefined}
+        />
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">

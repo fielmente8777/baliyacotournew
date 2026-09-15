@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * The /login screen (Login.pdf). One card, two steps — phone then OTP.
@@ -8,21 +8,21 @@
  * edges. On mobile the card goes full-width and the artwork sits behind it.
  */
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-import { ArrowLeft } from 'lucide-react';
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { resetLoginFlow, setStep } from '@/store/features/authSlice';
-import OtpStep from './OtpStep';
-import PhoneStep from './PhoneStep';
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { resetLoginFlow, setStep } from "@/store/features/authSlice";
+import OtpStep from "./OtpStep";
+import PhoneStep from "./PhoneStep";
 
 /** Only ever redirect to a path on this site — never to an absolute URL. */
 const safeRedirect = (value: string | null) =>
-  value && value.startsWith('/') && !value.startsWith('//')
+  value && value.startsWith("/") && !value.startsWith("//")
     ? value
-    : '/my-account/personal-details';
+    : "/my-account/personal-details";
 
 export default function LoginView() {
   const dispatch = useAppDispatch();
@@ -30,7 +30,7 @@ export default function LoginView() {
   const searchParams = useSearchParams();
   const { step, accessToken } = useAppSelector((s) => s.auth);
 
-  const redirectTo = safeRedirect(searchParams.get('redirect'));
+  const redirectTo = safeRedirect(searchParams.get("redirect"));
 
   /* Never land on the OTP screen from a stale visit. */
   useEffect(() => {
@@ -47,22 +47,23 @@ export default function LoginView() {
   }, [accessToken, redirectTo, router]);
 
   return (
-    <main className="relative min-h-[calc(100vh-96px)] overflow-hidden bg-[#DDEBD6]">
-      <Image
-        src="/auth/peacock-bg.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="pointer-events-none select-none object-cover object-bottom"
-      />
-
-      <div className="relative flex min-h-[calc(100vh-96px)] items-center justify-center px-4 py-10 sm:py-16">
+    <main className=" min-h-[calc(100vh-96px)] overflow-hidden bg-[#FAF8F0]">
+      <div className="relative w-full aspect-[4/1.7] sm:hidden block">
+        <Image
+          src="/bg-1.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="pointer-events-none select-none object-cover object-bottom"
+        />
+      </div>
+      <div className="relative flex py-10 items-center justify-center px-4">
         <div className="w-full max-w-[462px] rounded-2xl bg-white px-6 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)] sm:px-10 sm:py-9">
-          {step === 'otp' && (
+          {step === "otp" && (
             <button
               type="button"
-              onClick={() => dispatch(setStep('phone'))}
+              onClick={() => dispatch(setStep("phone"))}
               className="mb-2 flex items-center gap-2 text-sm text-[#7A868E] transition-colors hover:text-[#1B2B36]"
             >
               <ArrowLeft size={16} />
@@ -70,12 +71,22 @@ export default function LoginView() {
             </button>
           )}
 
-          {step === 'phone' ? (
+          {step === "phone" ? (
             <PhoneStep redirectTo={redirectTo} />
           ) : (
             <OtpStep redirectTo={redirectTo} />
           )}
         </div>
+      </div>
+      <div className="relative w-full aspect-[4/1.2] -mt-25 hidden sm:block">
+        <Image
+          src="/bg-2.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="pointer-events-none select-none object-cover object-bottom"
+        />
       </div>
     </main>
   );

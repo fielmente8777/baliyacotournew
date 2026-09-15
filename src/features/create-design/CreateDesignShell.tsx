@@ -199,6 +199,14 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
         productId,
         name: designName || undefined,
         selections: payloadSelections,
+        /**
+         * Recording the size on the design is what tells order placement this
+         * line is cut to a size chart. Without it the backend treats every
+         * design as made-to-measure and refuses to place the order.
+         */
+        sizeOptionId: usesStandardSize
+          ? (selections[sizeGroup!._id] ?? undefined)
+          : undefined,
         /* Omitted entirely for a standard size — there is no body to fit. */
         measurementProfileId: usesStandardSize
           ? undefined

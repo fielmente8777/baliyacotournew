@@ -114,6 +114,8 @@ export const baseApi = createApi({
     'Profile',
     'Address',
     'Order',
+    'Review',
+    'Notification',
     'Auth',
     'ImageJob',
     'Product',
