@@ -17,7 +17,6 @@ export interface AuthUser {
 }
 
 /** Which screen the auth modal is showing. */
-export type AuthStep = 'phone' | 'otp';
 
 export interface Country {
   name: string;

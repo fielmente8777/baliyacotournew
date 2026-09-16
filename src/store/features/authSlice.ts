@@ -1,24 +1,19 @@
 /**
- * Auth state: who is signed in, plus the in-progress login.
+ * Auth state: who is signed in.
  *
- * `dialCode` and `phone` live here rather than in component state because the
- * OTP screen needs the number the phone screen collected, and a refresh
- * between the two steps should not lose it.
+ * There is no in-progress login state any more. Sign-in happens on Shopify's
+ * hosted page and returns a token, so there are no intermediate steps for this
+ * slice to remember.
  */
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { AuthStep, AuthTokens, AuthUser } from '@/@types/auth';
+import type { AuthTokens, AuthUser } from '@/@types/auth';
 import { clearAuth, loadAuth, saveAuth } from '@/lib/authStorage';
 
 interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   user: AuthUser | null;
-
-  step: AuthStep;
-  /** Dial code + national number, kept between the two login steps. */
-  dialCode: string;
-  phone: string;
 
   /**
    * False until the persisted session has been read from localStorage.
@@ -37,10 +32,6 @@ const initialState: AuthState = {
   refreshToken: null,
   user: null,
 
-  step: 'phone',
-  dialCode: '+91',
-  phone: '',
-
   isHydrated: false,
 };
 
@@ -57,24 +48,6 @@ const authSlice = createSlice({
       state.isHydrated = true;
     },
 
-    /** Called when the login page mounts, so a stale OTP step never shows. */
-    resetLoginFlow(state) {
-      state.step = 'phone';
-      state.phone = '';
-    },
-
-    setStep(state, action: PayloadAction<AuthStep>) {
-      state.step = action.payload;
-    },
-
-    setDialCode(state, action: PayloadAction<string>) {
-      state.dialCode = action.payload;
-    },
-
-    setPhone(state, action: PayloadAction<string>) {
-      state.phone = action.payload;
-    },
-
     setCredentials(
       state,
       action: PayloadAction<{ tokens: AuthTokens; user: AuthUser | null }>
@@ -82,7 +55,6 @@ const authSlice = createSlice({
       state.accessToken = action.payload.tokens.accessToken;
       state.refreshToken = action.payload.tokens.refreshToken;
       state.user = action.payload.user;
-      state.step = 'phone';
       saveAuth({ tokens: action.payload.tokens, user: action.payload.user });
     },
 
@@ -101,8 +73,6 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.user = null;
-      state.step = 'phone';
-      state.phone = '';
       state.isHydrated = true;
       clearAuth();
     },
@@ -111,10 +81,6 @@ const authSlice = createSlice({
 
 export const {
   hydrate,
-  resetLoginFlow,
-  setStep,
-  setDialCode,
-  setPhone,
   setCredentials,
   setUser,
   logOut,

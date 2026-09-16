@@ -1,22 +1,23 @@
 "use client";
 
 /**
- * The /login screen (Login.pdf). One card, two steps — phone then OTP.
+ * The /login screen.
  *
  * The peacock artwork is a page background rather than part of the card, which
  * is why the card is plain white and the illustration bleeds to the viewport
  * edges. On mobile the card goes full-width and the artwork sits behind it.
+ *
+ * Authentication is Shopify's: the card holds a single button that starts the
+ * OAuth redirect. The phone-OTP flow that used to live here is retired — see
+ * ShopifySignIn for why a form is not possible.
  */
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { resetLoginFlow, setStep } from "@/store/features/authSlice";
-import OtpStep from "./OtpStep";
-import PhoneStep from "./PhoneStep";
+import { useAppSelector } from "@/store/hooks";
+import ShopifySignIn from "./ShopifySignIn";
 
 /** Only ever redirect to a path on this site — never to an absolute URL. */
 const safeRedirect = (value: string | null) =>
@@ -25,22 +26,17 @@ const safeRedirect = (value: string | null) =>
     : "/my-account/personal-details";
 
 export default function LoginView() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { step, accessToken } = useAppSelector((s) => s.auth);
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
 
   const redirectTo = safeRedirect(searchParams.get("redirect"));
-
-  /* Never land on the OTP screen from a stale visit. */
-  useEffect(() => {
-    dispatch(resetLoginFlow());
-  }, [dispatch]);
+  const error = searchParams.get("error");
 
   /**
-   * Middleware already bounces signed-in users, but it reads a cookie the
-   * client sets after login — this covers the same-tab moment right after
-   * verifyOtp succeeds, before any navigation happens.
+   * Middleware already bounces signed-in visitors, but it reads a cookie the
+   * client sets after login — this covers the same-tab moment right after the
+   * handoff completes, before any navigation happens.
    */
   useEffect(() => {
     if (accessToken) router.replace(redirectTo);
@@ -58,26 +54,13 @@ export default function LoginView() {
           className="pointer-events-none select-none object-cover object-bottom"
         />
       </div>
+
       <div className="relative flex py-10 items-center justify-center px-4">
         <div className="w-full max-w-[462px] rounded-2xl bg-white px-6 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)] sm:px-10 sm:py-9">
-          {step === "otp" && (
-            <button
-              type="button"
-              onClick={() => dispatch(setStep("phone"))}
-              className="mb-2 flex items-center gap-2 text-sm text-[#7A868E] transition-colors hover:text-[#1B2B36]"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </button>
-          )}
-
-          {step === "phone" ? (
-            <PhoneStep redirectTo={redirectTo} />
-          ) : (
-            <OtpStep redirectTo={redirectTo} />
-          )}
+          <ShopifySignIn redirectTo={redirectTo} error={error} />
         </div>
       </div>
+
       <div className="relative w-full aspect-[4/1.2] -mt-25 hidden sm:block">
         <Image
           src="/bg-2.png"

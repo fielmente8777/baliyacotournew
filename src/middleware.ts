@@ -18,13 +18,12 @@ export function middleware(request: NextRequest) {
   const isSignedIn = request.cookies.get(SIGNED_IN_COOKIE)?.value === '1';
 
   const needsAuth = PROTECTED.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
   if (needsAuth && !isSignedIn) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    /* Bring them back where they were, query string included. */
     url.search = `?redirect=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
@@ -46,6 +45,11 @@ export const config = {
     '/cart/:path*',
     '/shipping/:path*',
     '/order-success/:path*',
+    /**
+     * Exact match only. `/login/complete` must NOT be guarded — it is where
+     * the Shopify callback lands to store the session, and redirecting a
+     * signed-in user away from it would break the sign-in it is completing.
+     */
     '/login',
   ],
 };
