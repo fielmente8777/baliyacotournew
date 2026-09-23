@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { termsContent } from "./pageData";
+
+export const metadata: Metadata = {
+  title: "Terms & Conditions | Baliye Couture",
+  description: "The terms that apply to orders, custom designs and use of the Baliye Couture website.",
+  alternates: { canonical: "/terms-and-conditions" },
+};
 
 export default function TermsPage() {
   return (
