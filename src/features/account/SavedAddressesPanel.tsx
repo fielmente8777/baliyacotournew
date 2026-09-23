@@ -11,7 +11,15 @@ import {
   useUpdateAddressMutation,
 } from '@/store/api/addressApi';
 import type { AddressType } from '@/@types/account';
-import { INDIAN_STATES } from '@/mocks/account.mock';
+import { DEFAULT_COUNTRY_CODE, getAddressCountry } from '@/lib/addressCountries';
+import {
+  CountrySelect,
+  PostalField,
+  StateField,
+  regionResetFor,
+  validateRegion,
+} from '@/components/inputs/AddressRegionFields';
+import PhoneField from '@/components/inputs/PhoneField';
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
@@ -29,8 +37,13 @@ const emptyForm = {
   city: '',
   state: '',
   pincode: '',
+  country: DEFAULT_COUNTRY_CODE,
+  phone: '',
   type: 'home' as AddressType,
 };
+
+const FIELD_CLASS =
+  'h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]';
 
 export default function SavedAddressesPanel() {
   const { data: addresses, isLoading } = useGetAddressesQuery();
@@ -56,6 +69,9 @@ export default function SavedAddressesPanel() {
             city: existing.city,
             state: existing.state,
             pincode: existing.pincode,
+            /* Addresses saved before the country field existed are Indian. */
+            country: existing.country || DEFAULT_COUNTRY_CODE,
+            phone: existing.phone ?? '',
             type: existing.type,
           }
         : emptyForm
@@ -67,13 +83,15 @@ export default function SavedAddressesPanel() {
   const handleSave = async () => {
     if (!form.fullName.trim()) return setError('Please enter a full name.');
     if (!form.street.trim()) return setError('Please enter a street address.');
-    if (!/^\d{6}$/.test(form.pincode)) return setError('Pincode must be 6 digits.');
+    const regionError = validateRegion(form.country, form.state, form.pincode);
+    if (regionError) return setError(regionError);
 
     setError(null);
 
     try {
-      if (editingId) await updateAddress({ id: editingId, body: form }).unwrap();
-      else await createAddress(form).unwrap();
+      const body = { ...form, pincode: form.pincode.trim() };
+      if (editingId) await updateAddress({ id: editingId, body }).unwrap();
+      else await createAddress(body).unwrap();
       setFormOpen(false);
     } catch {
       setError('Could not save this address. Please try again.');
@@ -86,6 +104,12 @@ export default function SavedAddressesPanel() {
         <PageHeader title="Saved Addresses" />
 
         <div className="space-y-4 p-5 md:p-6">
+          <CountrySelect
+            value={form.country}
+            onChange={(country) => setForm({ ...form, ...regionResetFor(country) })}
+            className={FIELD_CLASS}
+          />
+
           <input
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
@@ -108,28 +132,25 @@ export default function SavedAddressesPanel() {
               className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
             />
 
-            <select
+            <StateField
+              country={form.country}
               value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-              className="h-12 w-full rounded-md border border-[#EAE6DF] bg-white px-4 text-sm outline-none focus:border-[#A52C45]"
-            >
-              <option value="">State</option>
-              {INDIAN_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              onChange={(state) => setForm({ ...form, state })}
+              className={FIELD_CLASS}
+            />
           </div>
 
-          <input
-            inputMode="numeric"
+          <PostalField
+            country={form.country}
             value={form.pincode}
-            onChange={(e) =>
-              /^\d{0,6}$/.test(e.target.value) && setForm({ ...form, pincode: e.target.value })
-            }
-            placeholder="Pincode*"
-            className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
+            onChange={(pincode) => setForm({ ...form, pincode })}
+            className={FIELD_CLASS}
+          />
+
+          <PhoneField
+            value={form.phone}
+            onChange={(phone) => setForm({ ...form, phone })}
+            placeholder="Delivery phone (optional)"
           />
 
           <div>
@@ -220,6 +241,9 @@ export default function SavedAddressesPanel() {
                   {a.city}, {a.state}
                 </p>
                 <p>{a.pincode}</p>
+                {a.country && a.country !== DEFAULT_COUNTRY_CODE && (
+                  <p>{getAddressCountry(a.country).name}</p>
+                )}
               </address>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { CLIENT_ID, REDIRECT_URI, SITE_URL, discover } from '@/lib/shopifyAuth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
+const API_URL =
+  process.env.BACKEND_ORIGIN
+    ? `${process.env.BACKEND_ORIGIN}/api/v1`
+    : process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
 
 /**
  * Completes the Shopify sign-in.
@@ -24,8 +27,20 @@ export async function GET(request: NextRequest) {
   const fail = (reason: string) =>
     NextResponse.redirect(`${SITE_URL}/login?error=${encodeURIComponent(reason)}`);
 
-  /* A missing or mismatched state means this callback was not started by us. */
+  /* A missing or mismatched state means this callback was not started by us
+     — usually the sign-in was completed in a different browser context than
+     it started in (e.g. a magic link opened in a mail app's browser instead
+     of the tab that clicked "Continue with email"), or the cookies expired
+     (10 minutes) or were cleared. Logged with specifics because the
+     customer-facing message can't say which without leaking internals. */
   if (!code || !state || !verifier || state !== expectedState) {
+    console.warn('[shopify-callback] PKCE check failed', {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasVerifierCookie: Boolean(verifier),
+      hasExpectedStateCookie: Boolean(expectedState),
+      stateMatches: Boolean(state && expectedState && state === expectedState),
+    });
     return fail('Sign-in could not be completed. Please try again.');
   }
 

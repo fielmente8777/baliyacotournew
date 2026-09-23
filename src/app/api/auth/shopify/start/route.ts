@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import {
   CLIENT_ID,
   REDIRECT_URI,
+  SITE_URL,
   challengeFor,
   createVerifier,
   discover,
@@ -22,6 +23,34 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { message: 'Shopify sign-in is not configured' },
       { status: 500 },
+    );
+  }
+
+  /**
+   * REDIRECT_URI is always built from SITE_URL, not from whatever host
+   * actually served this request — Shopify only has SITE_URL's callback
+   * registered, and that's also where these cookies need to end up being
+   * readable. If the site is reached on a different origin (e.g. localhost
+   * during dev while SITE_URL points at the ngrok tunnel), the verifier and
+   * state cookies would be set here but Shopify would return the customer to
+   * SITE_URL instead — a different domain, so the cookies never arrive and
+   * the callback fails with no clue why. Bounce to the canonical origin
+   * first so the cookies are set on the domain that will actually receive
+   * them back.
+   *
+   * Compares HOST only, not the full origin. ngrok terminates TLS at its
+   * edge and forwards to `next dev` over plain HTTP, so this server sees
+   * the incoming request as http:// even though SITE_URL is (correctly)
+   * https://<tunnel>. Comparing full origins made this condition true on
+   * every request no matter what — an infinite self-redirect loop on the
+   * tunnel host, never actually reaching localhost.
+   */
+  const requestHost = request.headers.get('x-forwarded-host') ?? request.nextUrl.host;
+  const siteHost = new URL(SITE_URL).host;
+
+  if (requestHost !== siteHost) {
+    return NextResponse.redirect(
+      `${SITE_URL}${request.nextUrl.pathname}${request.nextUrl.search}`,
     );
   }
 

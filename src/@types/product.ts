@@ -1,93 +1,83 @@
-/** Product + garment type types. Mirrors baliye-node models/product.ts. */
-
-export type ProductMode = 'predesigned' | 'customizable' | 'both';
-export type ProductStatus = 'draft' | 'active' | 'inactive' | 'archived';
-
-export type ProductImageType =
-  | 'front'
-  | 'back'
-  | 'side'
-  | 'detail'
-  | 'model'
-  | 'fabric'
-  | 'embroidery'
-  | 'guide';
+/** Product types — now sourced from Shopify's Storefront API, not Mongo. */
 
 export interface ProductImage {
   url: string;
   alt?: string;
-  type: ProductImageType;
   position: number;
-  /** Shown only when this colour is selected. */
-  colorOptionId?: string;
 }
 
-export interface OptionConfig {
-  groupId: string;
-  position: number;
-  isRequired: boolean;
-  allowedOptions: string[];
-  defaultOption?: string;
-  dependsOn?: { groupId: string; optionIds: string[] };
+/** One buyable variant — a specific Size/Fabric/Color combination. */
+export interface ProductVariant {
+  id: string;
+  title: string;
+  /** Minor units (paise), matching formatINR's existing (price / 100) callers. */
+  price: number;
+  compareAtPrice?: number;
+  availableForSale: boolean;
+  inventoryQuantity: number | null;
+  selectedOptions: { name: string; value: string }[];
+}
+
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
+/** A labeled spec line for the "Product Detail" bullet list — from metafields. */
+export interface ProductSpec {
+  key: string;
+  label: string;
+  value: string;
 }
 
 export interface Product {
+  /** Shopify's product GID — kept as `_id` so existing React keys / cart calls don't need renaming. */
   _id: string;
-  name: string;
   slug: string;
+  name: string;
   description?: string;
   shortDescription?: string;
 
-  garmentTypeId: string;
-  mode: ProductMode;
-  status: ProductStatus;
-
-  brand?: string;
   tags: string[];
   sku?: string;
 
-  /** Minor units — divide by 100 to display. */
+  /** Minor units. `salePrice`, when set, is what's actually charged; `basePrice` is the crossed-out reference price. */
   basePrice: number;
   salePrice?: number;
   currency: string;
 
   images: ProductImage[];
-  videos: string[];
+  options: ProductOption[];
+  variants: ProductVariant[];
+  specs: ProductSpec[];
 
-  customizableOptions: OptionConfig[];
-  presetSelections: { groupId: string; optionId: string }[];
-
-  trackInventory: boolean;
-  stock: number;
-  isMadeToOrder: boolean;
-  leadTimeDays: number;
+  /** No Shopify-native equivalent yet — reviews live in this app's own system, not wired in here. */
+  ratingAverage: number;
+  ratingCount: number;
 
   isBestseller: boolean;
   isEditorsPick: boolean;
+  isMadeToOrder: boolean;
+  /** Drives the "Customize" CTA — true when the product is tagged `custom` in Shopify. */
+  canCustomize: boolean;
 
-  ratingAverage: number;
-  ratingCount: number;
-  soldCount: number;
+  productType: string | null;
+
+  /* Inventory tracking is per-variant on Shopify; kept as a product-level
+     summary (true if ANY variant is out of stock and trackable) so
+     AddToCartButton's existing check doesn't need reshaping yet. */
+  trackInventory: boolean;
+  stock: number;
 }
 
-export interface GarmentType {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  family: 'indian' | 'western' | 'indo-western';
-  basePrice: number;
-  isDesignable: boolean;
-  position: number;
-}
-
-/** Query params accepted by GET /products. */
+/** Query params accepted by GET products. */
 export interface ProductListQuery {
+  /** No longer filters anything — Collections/garment-type browsing needs
+      its own decision (Shopify Collections vs. product type) before this
+      does something again. Left in the type so CollectionsView still compiles. */
   garmentTypeId?: string;
   tag?: string;
   badge?: 'bestseller' | 'editors-pick';
-  mode?: ProductMode;
   minPrice?: number;
   maxPrice?: number;
   search?: string;
@@ -101,13 +91,20 @@ export interface Paginated<T> {
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
-/**
- * A product is worth opening the design page for when the team has marked it
- * customizable AND configured at least one option group to change.
- */
-export const isCustomizable = (product: Product) =>
-  product.mode !== 'predesigned' && product.customizableOptions.length > 0;
+/** Still backend-owned (Mongo) — garment types aren't a Shopify concept. */
+export interface GarmentType {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  family: 'indian' | 'western' | 'indo-western';
+  basePrice: number;
+  isDesignable: boolean;
+  position: number;
+}
 
-/** Primary image, honouring the admin's ordering. */
+export const isCustomizable = (product: Product) => product.canCustomize;
+
 export const primaryImage = (product: Product) =>
   [...product.images].sort((a, b) => a.position - b.position)[0]?.url ?? '/Rectangle-23959.png';

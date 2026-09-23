@@ -7,7 +7,7 @@
  * five-step timeline.
  */
 
-import type { Order, OrderItem, OrderStatus } from '@/@types/order';
+import type { Order, OrderItem, OrderStatus, ShopifyOrder } from '@/@types/order';
 import type { Review } from '@/@types/review';
 import { formatINR } from '@/lib/format';
 
@@ -20,6 +20,8 @@ export interface TimelineItem {
 
 export interface OrderLineView {
   key: string;
+  /** ISO date the order was placed — used to sort both order sources together. */
+  placedAt: string;
   orderId: string;
   productId?: string;
   customDesignId?: string;
@@ -96,6 +98,7 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
 
       return {
         key: `${order._id}-${index}`,
+        placedAt: order.createdAt,
         orderId: order._id,
         productId: item.productId,
         customDesignId: item.customDesignId,
@@ -109,5 +112,97 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
         review,
       };
     });
+  });
+}
+
+/* ---------------------------------------------------------------------------
+ * Ready-to-wear orders from Shopify.
+ *
+ * Shopify has no stitching or embroidery stage — these garments ship as
+ * they are — so they get a shorter three-step timeline. Reviews stay
+ * limited to baliye-node products/designs (the review API validates
+ * against those ids), so Shopify lines report isDelivered: false purely to
+ * keep the card's review action hidden.
+ * ------------------------------------------------------------------------- */
+
+const SHOPIFY_STEPS: { key: 'placed' | 'shipped' | 'delivered'; title: string }[] = [
+  { key: 'placed', title: 'Order Placed' },
+  { key: 'shipped', title: 'Shipping' },
+  { key: 'delivered', title: 'Delivered' },
+];
+
+const SHOPIFY_COPY: Record<ShopifyOrder['status'], { title: string; description: string }> = {
+  placed: { title: 'Order Placed', description: 'We have received your order.' },
+  shipped: { title: 'On Its Way', description: 'Your order has been shipped.' },
+  delivered: { title: 'Delivered', description: 'Enjoy your new piece.' },
+  cancelled: { title: 'Cancelled', description: 'This order was cancelled.' },
+};
+
+/** Formats in the order's own currency — Shopify orders may be INR, CAD, USD … */
+const formatMoney = (amount: number, currency: string) =>
+  new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: currency === 'INR' ? 0 : 2,
+  }).format(amount);
+
+function buildShopifyTimeline(order: ShopifyOrder): TimelineItem[] {
+  if (order.status === 'cancelled') return [];
+
+  const current = SHOPIFY_STEPS.findIndex((step) => step.key === order.status);
+  const dates: Record<string, string | undefined> = {
+    placed: order.createdAt,
+    shipped: order.shippedAt,
+    delivered: order.deliveredAt,
+  };
+
+  return SHOPIFY_STEPS.map((step, index) => ({
+    id: index + 1,
+    title: step.title,
+    date: index <= current && dates[step.key] ? shortDate(dates[step.key]!) : '',
+    status: index < current ? 'completed' : index === current ? 'current' : 'pending',
+  }));
+}
+
+export function toShopifyOrderLines(orders: ShopifyOrder[]): OrderLineView[] {
+  return orders.flatMap((order) => {
+    const timeline = buildShopifyTimeline(order);
+    const copy = SHOPIFY_COPY[order.status] ?? SHOPIFY_COPY.placed;
+    /* Cash on delivery shows as PENDING until the courier collects. */
+    const paymentNote =
+      order.status !== 'cancelled' && order.paymentStatus === 'PENDING'
+        ? ' Payment due on delivery.'
+        : '';
+
+    /* A single-line order's card shows the full amount payable, so it matches
+       Shopify's order total. A multi-line order keeps each card's own line
+       price (the cards are per line) and states the order total in the
+       description instead, so the total isn't repeated on every card. */
+    const singleLine = order.items.length === 1;
+    const shipping = order.shippingTotal ?? 0;
+    const shippingNote = shipping > 0
+      ? ` incl. ${formatMoney(shipping, order.currencyCode)} shipping`
+      : '';
+    const totalNote = singleLine
+      ? (shippingNote ? `Total${shippingNote} · ` : '')
+      : `Order total ${formatMoney(order.total, order.currencyCode)}${shippingNote} · `;
+
+    return order.items.map((item, index) => ({
+      key: `${order.id}-${index}`,
+      placedAt: order.createdAt,
+      orderId: order.id,
+      productName: [
+        item.title,
+        item.variantTitle && item.variantTitle !== 'Default Title' ? item.variantTitle : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') + (item.quantity > 1 ? ` × ${item.quantity}` : ''),
+      price: formatMoney(singleLine ? order.total : item.lineTotal, order.currencyCode),
+      image: item.image || PLACEHOLDER,
+      statusTitle: copy.title,
+      statusDescription: `Order ${order.orderNumber} · ${totalNote}${copy.description}${paymentNote}`,
+      isDelivered: false,
+      timeline,
+    }));
   });
 }

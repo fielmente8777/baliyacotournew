@@ -17,10 +17,18 @@ import DeliveryBanner from "@/components/checkout/DeliveryBanner";
 import PriceSummary from "@/components/checkout/PriceSummary";
 import PrimaryButton from "@/components/checkout/PrimaryButton";
 import SecondaryButton from "@/components/checkout/SecondaryButton";
+import PhoneField from "@/components/inputs/PhoneField";
+import {
+  CountrySelect,
+  PostalField,
+  StateField,
+  regionResetFor,
+  validateRegion,
+} from "@/components/inputs/AddressRegionFields";
 
 import { useCreateAddressMutation } from "@/store/api/addressApi";
 import { useCart } from "@/hooks/useCart";
-import { INDIAN_STATES } from "@/mocks/account.mock";
+import { DEFAULT_COUNTRY_CODE } from "@/lib/addressCountries";
 import type { AddressType as AddressTypeValue } from "@/@types/account";
 
 import AddressType from "../../app/(website)/shipping/add-address/Components/AddressType";
@@ -32,6 +40,7 @@ const emptyForm = {
   city: "",
   state: "",
   pincode: "",
+  country: DEFAULT_COUNTRY_CODE,
   phone: "",
   type: "home" as AddressTypeValue,
 };
@@ -51,8 +60,8 @@ export default function AddAddressView() {
     if (form.fullName.trim().length < 2) return setError("Please enter a full name.");
     if (form.street.trim().length < 3) return setError("Please enter a street address.");
     if (!form.city.trim()) return setError("Please enter a city.");
-    if (!form.state) return setError("Please select a state.");
-    if (!/^\d{6}$/.test(form.pincode)) return setError("Pincode must be 6 digits.");
+    const regionError = validateRegion(form.country, form.state, form.pincode);
+    if (regionError) return setError(regionError);
 
     setError(null);
 
@@ -63,7 +72,8 @@ export default function AddAddressView() {
         landmark: form.landmark.trim() || undefined,
         city: form.city.trim(),
         state: form.state,
-        pincode: form.pincode,
+        pincode: form.pincode.trim(),
+        country: form.country,
         phone: form.phone.trim() || undefined,
         type: form.type,
       }).unwrap();
@@ -95,6 +105,12 @@ export default function AddAddressView() {
             </div>
 
             <div className="space-y-4 p-6">
+              <CountrySelect
+                value={form.country}
+                onChange={(country) => setForm((f) => ({ ...f, ...regionResetFor(country) }))}
+                className={inputClass}
+              />
+
               <input
                 value={form.fullName}
                 onChange={(e) => set("fullName", e.target.value)}
@@ -124,37 +140,26 @@ export default function AddAddressView() {
                   className={inputClass}
                 />
 
-                <select
+                <StateField
+                  country={form.country}
                   value={form.state}
-                  onChange={(e) => set("state", e.target.value)}
-                  className={`${inputClass} bg-white`}
-                >
-                  <option value="">State*</option>
-                  {INDIAN_STATES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(state) => set("state", state)}
+                  className={inputClass}
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  inputMode="numeric"
+                <PostalField
+                  country={form.country}
                   value={form.pincode}
-                  onChange={(e) =>
-                    /^\d{0,6}$/.test(e.target.value) && set("pincode", e.target.value)
-                  }
-                  placeholder="Pincode*"
+                  onChange={(pincode) => set("pincode", pincode)}
                   className={inputClass}
                 />
 
-                <input
-                  inputMode="tel"
+                <PhoneField
                   value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
+                  onChange={(phone) => set("phone", phone)}
                   placeholder="Delivery phone (optional)"
-                  className={inputClass}
                 />
               </div>
 

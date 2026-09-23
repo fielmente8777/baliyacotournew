@@ -13,7 +13,7 @@ const PROTECTED = ['/my-account', '/cart', '/shipping', '/order-success'];
 
 const SIGNED_IN_COOKIE = 'baliye_signed_in';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const isSignedIn = request.cookies.get(SIGNED_IN_COOKIE)?.value === '1';
 

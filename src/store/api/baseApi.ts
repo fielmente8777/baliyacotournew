@@ -120,6 +120,7 @@ export const baseApi = createApi({
     'ImageJob',
     'Product',
     'GarmentType',
+    'ShopifyCart',
   ],
   endpoints: () => ({}),
 });

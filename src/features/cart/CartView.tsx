@@ -56,7 +56,7 @@ export default function CartView() {
           <div className="mt-10 grid gap-8 lg:grid-cols-[2fr_380px]">
             <div className="space-y-6">
               {items.map((item) => (
-                <CartItem key={item._id} item={item} />
+                <CartItem key={`${item.source}-${item.id}`} item={item} />
               ))}
             </div>
 

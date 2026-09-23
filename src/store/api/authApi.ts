@@ -49,7 +49,14 @@ export const authApi = baseApi.injectEndpoints({
 
     getMe: builder.query<AuthUser, void>({
       query: () => '/auth/me',
-      transformResponse: (res: ApiEnvelope<AuthUser>) => unwrap(res),
+      /* GET /auth/me responds with { role, profile: {...} }, not a flat
+         user object — role lives outside `profile` because the same
+         endpoint also serves admins. Flatten it here so every consumer
+         (navbar, personal details, useAuth.isAdmin) gets one shape. */
+      transformResponse: (res: ApiEnvelope<{ role: AuthUser['role']; profile: AuthUser }>) => {
+        const { role, profile } = unwrap(res);
+        return { ...profile, role };
+      },
       providesTags: ['Auth'],
     }),
 

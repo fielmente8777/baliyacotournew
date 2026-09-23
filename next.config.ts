@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 // const { hostname: apiHost, port: apiPort } = new URL(apiUrl);
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['vivisectible-wava-preshrunk.ngrok-free.dev'],
   images: {
     unoptimized: true,
     // remotePatterns: [
@@ -39,6 +40,15 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [{ source: "/product/:id", destination: "/collections", permanent: false }];
+  },
+
+   async rewrites() {
+    return [
+      {
+        source: '/api/backend/:path*',
+        destination: `${process.env.BACKEND_ORIGIN ?? 'http://localhost:5000'}/api/v1/:path*`,
+      },
+    ];
   },
 };
 

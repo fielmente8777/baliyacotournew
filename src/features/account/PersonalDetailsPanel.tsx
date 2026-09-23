@@ -11,11 +11,11 @@ import {
   useUpdateProfileMutation,
 } from '@/store/api/profileApi';
 import type { Gender, UpdateProfileBody } from '@/@types/account';
+import PhoneField from '@/components/inputs/PhoneField';
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
 import OutlineButton from '../../app/(website)/my-account/components/OutlineButton';
-import PhoneChangeModal from './PhoneChangeModal';
 
 const GENDERS: Array<{ value: Gender; label: string }> = [
   { value: 'female', label: 'Female' },
@@ -49,8 +49,7 @@ export default function PersonalDetailsPanel() {
   const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
 
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', gender: '', dob: '' });
-  const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', gender: '', dob: '' });
   const [error, setError] = useState<string | null>(null);
 
   const startEditing = () => {
@@ -58,6 +57,7 @@ export default function PersonalDetailsPanel() {
     setForm({
       name: profile.name ?? '',
       email: profile.email ?? '',
+      phone: profile.phone ?? '',
       gender: profile.gender ?? '',
       dob: toDateInput(profile.dob),
     });
@@ -72,6 +72,9 @@ export default function PersonalDetailsPanel() {
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
       return setError('Please enter a valid email address.');
     }
+    if (form.phone && form.phone.trim().length < 8) {
+      return setError('Please enter a valid phone number.');
+    }
 
     setError(null);
 
@@ -80,18 +83,18 @@ export default function PersonalDetailsPanel() {
     const body: UpdateProfileBody = {};
     if (form.name.trim()) body.name = form.name.trim();
     if (form.email.trim()) body.email = form.email.trim().toLowerCase();
+    if (form.phone.trim()) body.phone = form.phone.trim();
     if (form.gender) body.gender = form.gender as Gender;
     if (form.dob) body.dob = form.dob;
 
     try {
-      console.log('body', body);
       await updateProfile(body).unwrap();
       setEditing(false);
     } catch (err) {
       const status = (err as { status?: number }).status;
       setError(
         status === 409
-          ? 'That email is already used by another account.'
+          ? 'That phone number or email is already used by another account.'
           : 'Could not save your details. Please try again.'
       );
     }
@@ -170,21 +173,13 @@ export default function PersonalDetailsPanel() {
           className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
         />
 
-        {/* Phone is the login identity, so it changes through its own
-            OTP-verified flow rather than this form. */}
-        <div className="flex h-12 items-center rounded-md border border-[#EAE6DF] bg-[#FAF9F7] px-4">
-          <span className="text-sm text-[#555]">
-            {formatPhone(profile.phone)}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setPhoneModalOpen(true)}
-            className="ml-auto text-xs font-medium text-[#A52C45] underline"
-          >
-            {profile.phone ? 'Change' : 'Add number'}
-          </button>
-        </div>
+        {/* Contact number — no longer the login identity (Shopify email is),
+            so it's a normal field now, kept unique per account server-side. */}
+        <PhoneField
+          value={form.phone}
+          onChange={(phone) => setForm({ ...form, phone })}
+          placeholder="Mobile Number"
+        />
 
         <input
           type="email"
@@ -219,18 +214,19 @@ export default function PersonalDetailsPanel() {
             const input = e.currentTarget as HTMLInputElement & {
               showPicker?: () => void;
             };
-            input.showPicker?.();
+            try {
+              input.showPicker?.();
+            } catch {
+              /* Some browsers throw NotAllowedError here even from a click
+                 handler (seen in practice, not just the documented Safari/
+                 Firefox unsupported case) — the native picker still opens
+                 on its own via the input's default behaviour either way. */
+            }
           }}
           className="h-12 w-full cursor-pointer rounded-md border border-[#EAE6DF] px-4 text-sm text-[#222] outline-none focus:border-[#A52C45]"
         />
 
         {error && <p className="text-sm text-[#A52C45]">{error}</p>}
-
-        <PhoneChangeModal
-          open={isPhoneModalOpen}
-          onClose={() => setPhoneModalOpen(false)}
-          currentPhone={profile.phone ? formatPhone(profile.phone) : undefined}
-        />
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">

@@ -37,13 +37,13 @@ export default function ShopifySignIn({ redirectTo, error }: Props) {
         </p>
       )}
 
-      <Link
+      <a
         href={`/api/auth/shopify/start?redirect=${encodeURIComponent(redirectTo)}`}
         className="mt-6 flex h-12 w-full items-center justify-center gap-2.5 rounded-md bg-[#A52C45] text-sm font-medium text-white transition-colors hover:bg-[#8e2439]"
       >
         <Mail size={17} />
         Continue with email
-      </Link>
+      </a>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-[#9AA3A9]">
         By continuing you agree to our{' '}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { navData } from "./navData";
 import Image from "next/image";
 import MenuButton from "./MenuButton";
+import MobileNav from "./MobileNav";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -26,6 +27,7 @@ const Navbar = () => {
             isOpenNavBar={isOpenNavBar}
             setIsOpenNavBar={setIsOpenNavBar}
           />
+          <MobileNav isOpenNavBar={isOpenNavBar} setIsOpenNavBar={setIsOpenNavBar} />
         </div>
         <ul className="xl:flex hidden items-center gap-6">
           {navData.map((item, index) => (

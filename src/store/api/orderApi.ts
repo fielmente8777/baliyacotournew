@@ -1,6 +1,6 @@
 /** Order endpoints. Never mocked — orders belong to the authenticated user. */
 
-import type { Order, OrderTrackingEntry, PlaceOrderBody } from '@/@types/order';
+import type { Order, OrderTrackingEntry, PlaceOrderBody, ShopifyOrder } from '@/@types/order';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
 export const orderApi = baseApi.injectEndpoints({
@@ -18,6 +18,13 @@ export const orderApi = baseApi.injectEndpoints({
         params: { page: arg?.page ?? 1, limit: arg?.limit ?? 10 },
       }),
       transformResponse: (res: ApiEnvelope<Order[]>) => unwrap(res),
+      providesTags: ['Order'],
+    }),
+
+    /** Ready-to-wear orders placed through Shopify's checkout. */
+    getMyShopifyOrders: builder.query<ShopifyOrder[], void>({
+      query: () => '/orders/shopify',
+      transformResponse: (res: ApiEnvelope<ShopifyOrder[]>) => unwrap(res),
       providesTags: ['Order'],
     }),
 
@@ -49,6 +56,7 @@ export const orderApi = baseApi.injectEndpoints({
 export const {
   usePlaceOrderMutation,
   useGetMyOrdersQuery,
+  useGetMyShopifyOrdersQuery,
   useGetOrderByIdQuery,
   useGetOrderTrackingQuery,
   useCancelOrderMutation,

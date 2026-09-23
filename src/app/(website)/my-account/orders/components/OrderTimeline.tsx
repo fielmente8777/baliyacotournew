@@ -8,7 +8,12 @@ export default function OrderTimeline({ items }: Props) {
   return (
     <div className="mt-5 overflow-x-auto ">
       <div className="min-w-155 w-full border-[#9BA1B04D] box-shadow bg-[#FAFAFB] px-4 py-5">
-        <ol className="grid grid-cols-5">
+        {/* One column per step: custom orders have five, Shopify
+            ready-to-wear orders three. */}
+        <ol
+          className="grid"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => {
             const isDone = item.status === 'completed';
             const isCurrent = item.status === 'current';

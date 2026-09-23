@@ -60,3 +60,35 @@ export interface PlaceOrderBody {
   shippingAddress?: string;
   measurementProfileId?: string;
 }
+
+/* ---- Ready-to-wear orders from Shopify (GET /orders/shopify) ---- */
+
+export type ShopifyOrderStatus = 'placed' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface ShopifyOrderItem {
+  title: string;
+  variantTitle?: string;
+  quantity: number;
+  image?: string;
+  /** Major units (e.g. 4999.00), in the order's currency. Excludes shipping. */
+  lineTotal: number;
+}
+
+export interface ShopifyOrder {
+  id: string;
+  /** "#1001" */
+  orderNumber: string;
+  createdAt: string;
+  status: ShopifyOrderStatus;
+  shippedAt?: string;
+  deliveredAt?: string;
+  cancelledAt?: string;
+  /** PAID, PENDING (e.g. cash on delivery), REFUNDED … */
+  paymentStatus: string;
+  currencyCode: string;
+  /** Major units. Grand total incl. shipping — what the customer pays. */
+  total: number;
+  /** Major units. 0 when shipping was free. */
+  shippingTotal: number;
+  items: ShopifyOrderItem[];
+}

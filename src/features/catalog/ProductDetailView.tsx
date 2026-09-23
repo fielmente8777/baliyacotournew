@@ -9,6 +9,7 @@
  *   pre-designed → "Add to Cart" only.
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { IoIosStar } from 'react-icons/io';
@@ -19,6 +20,7 @@ import {
   useGetRelatedProductsQuery,
 } from '@/store/api/productApi';
 import { isCustomizable } from '@/@types/product';
+import type { ProductVariant } from '@/@types/product';
 import { formatINR } from '@/lib/format';
 
 import ProductGallery from '../../app/(website)/products/[slug]/Components/ProductGallery';
@@ -27,10 +29,16 @@ import DesignProcess from '../../app/(website)/products/[slug]/Components/Design
 import CustomerReviews from '../../app/(website)/products/[slug]/Components/CustomerReviews';
 import ProductGrid from './ProductGrid';
 import AddToCartButton from './AddToCartButton';
+import VariantSelector from './VariantSelector';
+import ProductSpecs from './ProductSpecs';
 
 export default function ProductDetailView({ slug }: { slug: string }) {
   const { data: product, isLoading, isError } = useGetProductBySlugQuery(slug);
   const { data: related = [] } = useGetRelatedProductsQuery(slug, { skip: !product });
+  /* Declared before the early returns below — React's rules of hooks don't
+     allow a conditional useState. Defaults to null while `product` is
+     still loading; resolved to a real variant just below once it's in. */
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   if (isLoading) {
     return (
@@ -54,6 +62,10 @@ export default function ProductDetailView({ slug }: { slug: string }) {
 
   const price = product.salePrice ?? product.basePrice;
   const canCustomize = isCustomizable(product);
+  /* Falls back to the first variant (e.g. the two Bridal items, which have
+     no real options and just one "Default Title" variant) until the
+     customer picks one explicitly. */
+  const activeVariant = selectedVariant ?? product.variants[0] ?? null;
 
   const galleryImages =
     product.images.length > 0
@@ -94,6 +106,12 @@ export default function ProductDetailView({ slug }: { slug: string }) {
               <p className="mt-6 leading-7 text-[#555]">{product.shortDescription}</p>
             )}
 
+            <VariantSelector
+              product={product}
+              selectedVariant={activeVariant}
+              onSelect={setSelectedVariant}
+            />
+
             <div className="mt-10 flex gap-4">
               {canCustomize && (
                 <Link
@@ -104,13 +122,20 @@ export default function ProductDetailView({ slug }: { slug: string }) {
                 </Link>
               )}
 
-              <AddToCartButton product={product} />
+              <AddToCartButton product={product} variant={activeVariant} />
             </div>
 
-            <div className="mt-6 rounded bg-[#EAF6E8] py-3 text-center text-sm text-[#52734D]">
-              Products are Tailored and Delivered in{' '}
-              {Math.ceil(product.leadTimeDays / 7)} weeks
-            </div>
+            {/* TODO(Sachin): leadTimeDays was a Mongo-backend field with no
+                Shopify equivalent yet. Decide: (a) add a `custom.lead_time_days`
+                metafield in Shopify for made-to-order products and read it here,
+                or (b) drop this banner. Only rendering for made-to-order items
+                in the meantime — pre-made stock items showing "tailored and
+                delivered" language didn't make sense anyway. */}
+            {product.isMadeToOrder && (
+              <div className="mt-6 rounded bg-[#EAF6E8] py-3 text-center text-sm text-[#52734D]">
+                This product is made-to-order.
+              </div>
+            )}
 
             {product.description && (
               <section className="mt-10 border-t border-[#E5E5E5] pt-8">
@@ -118,9 +143,12 @@ export default function ProductDetailView({ slug }: { slug: string }) {
                   Product Detail
                 </h3>
 
-                <div className="space-y-4 text-[15px] leading-7 text-[#555] whitespace-pre-line">
-                  {product.description}
-                </div>
+                <div
+                  className="space-y-4 text-[15px] leading-7 text-[#555] [&_p]:mb-4"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+
+                <ProductSpecs specs={product.specs} />
 
                 {product.sku && (
                   <p className="mt-6 text-sm text-[#888]">SKU: {product.sku}</p>

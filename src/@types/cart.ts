@@ -47,6 +47,12 @@ export interface Cart {
 export interface AddToCartBody {
   kind: CartItemKind;
   productId?: string;
+  /** Shopify variant GID (e.g. size S/M/L). When present with kind:'product',
+      useCart.ts routes the whole add() call to Shopify's Cart API instead
+      of this backend — see store/api/cartApi.ts. Kept on this type only so
+      AddToCartButton has one body shape to build regardless of destination;
+      baliye-node's /cart never sees it. */
+  variantId?: string;
   customDesignId?: string;
   quantity?: number;
   measurementProfileId?: string;

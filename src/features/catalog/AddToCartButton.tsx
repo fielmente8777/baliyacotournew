@@ -11,27 +11,42 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useCart } from '@/hooks/useCart';
-import type { Product } from '@/@types/product';
+import type { Product, ProductVariant } from '@/@types/product';
 
 interface Props {
   product: Product;
+  /** The size/option currently picked in VariantSelector, if the product has options. */
+  variant?: ProductVariant | null;
   className?: string;
 }
 
-export default function AddToCartButton({ product, className }: Props) {
+export default function AddToCartButton({ product, variant, className }: Props) {
   const router = useRouter();
   const { add, isAdding } = useCart();
   const [state, setState] = useState<'idle' | 'added'>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const outOfStock = product.trackInventory && product.stock <= 0;
+  /* Per-variant availableForSale is what Shopify actually knows here —
+     product.trackInventory/stock stay false/0 until the Storefront token
+     has the unauthenticated_read_product_inventory scope (see earlier
+     debugging), so they're not reliable yet. */
+  const outOfStock = variant ? !variant.availableForSale : false;
 
   const handleClick = async () => {
     setError(null);
 
+    /* kind:'product' + variantId routes through useCart to Shopify's own
+       Cart API now (see hooks/useCart.ts, store/api/cartApi.ts) — this no
+       longer goes near baliye-node's /cart at all for catalog products.
+       productId is harmless to still send but unused on that path. */
     try {
       const result = await add(
-        { kind: 'product', productId: product._id, quantity: 1 },
+        {
+          kind: 'product',
+          productId: product._id,
+          ...(variant ? { variantId: variant.id } : {}),
+          quantity: 1,
+        },
         `/products/${product.slug}`
       );
 

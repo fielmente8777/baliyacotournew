@@ -26,13 +26,15 @@ export interface UserProfile {
 }
 
 /**
- * Exactly the fields updateProfileSchema accepts on the backend. `phone` is
- * deliberately absent — it is the login identity and can only change through
- * the OTP flow, so sending it here is silently discarded by zod.
+ * Exactly the fields updateProfileSchema accepts on the backend. Email is
+ * deliberately absent from what actually gets applied — Shopify's Customer
+ * Account API owns login identity, so the backend silently drops it even
+ * though it's accepted here for the profile-fetch shape.
  */
 export interface UpdateProfileBody {
   name?: string;
   email?: string;
+  phone?: string;
   gender?: Gender;
   dob?: string;
   address?: string;

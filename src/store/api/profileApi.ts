@@ -23,22 +23,6 @@ export const profileApi = baseApi.injectEndpoints({
       invalidatesTags: ['Profile', 'Auth'],
     }),
 
-    /** Step 1: send a code to the new number. */
-    requestPhoneChange: builder.mutation<{ phone: string }, { phone: string }>({
-      query: (body) => ({ url: '/profile/phone/request', method: 'POST', body }),
-      transformResponse: (res: ApiEnvelope<{ phone: string }>) => unwrap(res),
-    }),
-
-    /** Step 2: confirm the code; the number moves onto the account. */
-    confirmPhoneChange: builder.mutation<
-      UserProfile,
-      { phone: string; code: string }
-    >({
-      query: (body) => ({ url: '/profile/phone/confirm', method: 'POST', body }),
-      transformResponse: (res: ApiEnvelope<UserProfile>) => unwrap(res),
-      invalidatesTags: ['Profile', 'Auth'],
-    }),
-
     uploadProfileImage: builder.mutation<UserProfile, File>({
       query: (file) => {
         /* multipart — do NOT set Content-Type; the browser adds the boundary. */
@@ -54,8 +38,6 @@ export const profileApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useRequestPhoneChangeMutation,
-  useConfirmPhoneChangeMutation,
   useGetProfileQuery,
   useUpdateProfileMutation,
   useUploadProfileImageMutation,

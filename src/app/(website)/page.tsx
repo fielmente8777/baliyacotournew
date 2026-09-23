@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import VideoBanner from "@/components/banners/VideoBanner";
 import BehindTheScenes from "./Home/Components/BehindTheScenes";
 import BestSellers from "./Home/Components/BestSellers";
@@ -7,6 +8,11 @@ import FoundersMessage from "./Home/Components/FoundersMessage";
 import PreMadeDesigns from "./Home/Components/PreMadeDesigns";
 import Steps from "./Home/Components/Steps";
 import { homePageData } from "./Home/pagedata";
+
+/* Title, description and share image are inherited from app/layout.tsx. */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function Home() {
   return (
