@@ -19,3 +19,48 @@
 body {
   font-family: var(--font-fira-sans);  
 }
+
+/* ------------------------------------------------------------------
+ * Motion. One set of easings and durations for the whole site, so
+ * pages, dropdowns and panels all move the same way.
+ * Use as Tailwind classes: animate-page-in, animate-pop-in,
+ * animate-fade-in, animate-slide-down.
+ * ------------------------------------------------------------------ */
+@theme {
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-page-in: page-in 0.4s var(--ease-smooth) both;
+  --animate-pop-in: pop-in 0.18s var(--ease-smooth) both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-slide-down: slide-down 0.25s var(--ease-smooth) both;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Respect the OS "reduce motion" setting: no movement, instant changes. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

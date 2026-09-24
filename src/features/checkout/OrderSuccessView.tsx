@@ -98,7 +98,7 @@ export default function OrderSuccessView() {
         </div>
 
         <div className="mt-14 flex flex-col justify-center gap-5 md:flex-row">
-          <Link href="/collections">
+          <Link href="/products">
             <SecondaryButton className="w-[260px]">Continue Shopping</SecondaryButton>
           </Link>
 

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
+import EmptyState from "@/components/EmptyState";
+import { EmptyBagIllustration } from "@/components/illustrations";
 import DeliveryBanner from "@/components/checkout/DeliveryBanner";
 import PriceSummary from "@/components/checkout/PriceSummary";
 import { useCart } from "@/hooks/useCart";
@@ -41,14 +43,18 @@ export default function CartView() {
         )}
 
         {!isLoading && !isError && items.length === 0 && (
-          <div className="mt-10 rounded bg-white p-12 text-center">
-            <p className="text-lg text-[#555]">Your cart is empty.</p>
-            <Link
-              href="/create-your-own-design"
-              className="mt-4 inline-block font-medium text-[#972E47]"
-            >
-              Start designing
-            </Link>
+          <div className="mt-10 rounded bg-white">
+            <EmptyState
+              illustration={<EmptyBagIllustration />}
+              title="Your cart is empty"
+              message="Pick a ready-made design, or create one that's entirely yours."
+              action={{ label: "Shop designs", href: "/products" }}
+            />
+            <p className="-mt-6 pb-10 text-center text-sm">
+              <Link href="/create-your-own-design" className="font-medium text-[#972E47] hover:underline">
+                or start designing
+              </Link>
+            </p>
           </div>
         )}
 

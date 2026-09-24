@@ -52,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body suppressHydrationWarning={true} className={` ${firaSans.variable} bg-[#FAF8F0] h-full antialiased`}>
         <script
           type="application/ld+json"

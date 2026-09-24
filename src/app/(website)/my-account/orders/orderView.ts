@@ -7,13 +7,17 @@
  * five-step timeline.
  */
 
-import type { Order, OrderItem, OrderStatus, ShopifyOrder } from '@/@types/order';
+import type { Order, OrderItem, OrderStatus, OrderTrackingEntry, ShopifyOrder } from '@/@types/order';
 import type { Review } from '@/@types/review';
 import { formatINR } from '@/lib/format';
+
+/** Which icon a timeline step shows (see OrderTimeline). */
+export type StepIcon = 'placed' | 'stitching' | 'embroidery' | 'shipping' | 'delivered';
 
 export interface TimelineItem {
   id: number;
   title: string;
+  icon: StepIcon;
   date: string;
   status: 'completed' | 'current' | 'pending';
 }
@@ -23,6 +27,8 @@ export interface OrderLineView {
   /** ISO date the order was placed — used to sort both order sources together. */
   placedAt: string;
   orderId: string;
+  /** Link to the order's own page: /my-account/orders/<id>. */
+  detailHref: string;
   productId?: string;
   customDesignId?: string;
   productName: string;
@@ -31,20 +37,29 @@ export interface OrderLineView {
   statusTitle: string;
   statusDescription: string;
   isDelivered: boolean;
+  /** Where the order came from — drives the "Type" filter. */
+  source: 'custom' | 'shopify';
+  /** Coarse status for the "Status" filter. */
+  stage: OrderStage;
   timeline: TimelineItem[];
   review?: Review;
 }
 
+export type OrderStage = 'active' | 'delivered' | 'cancelled';
+
+const toStage = (status: string): OrderStage =>
+  status === 'delivered' ? 'delivered' : status === 'cancelled' ? 'cancelled' : 'active';
+
 /** The five steps the design shows, in order. */
-const STEPS: { status: OrderStatus; title: string }[] = [
-  { status: 'confirmed', title: 'Order Placed' },
-  { status: 'stitching', title: 'Stitching' },
-  { status: 'embroidery', title: 'Embroidery' },
-  { status: 'shipped', title: 'Shipping' },
-  { status: 'delivered', title: 'Delivered' },
+const STEPS: { status: OrderStatus; title: string; icon: StepIcon }[] = [
+  { status: 'confirmed', title: 'Order Placed', icon: 'placed' },
+  { status: 'stitching', title: 'Stitching', icon: 'stitching' },
+  { status: 'embroidery', title: 'Embroidery', icon: 'embroidery' },
+  { status: 'shipped', title: 'Shipping', icon: 'shipping' },
+  { status: 'delivered', title: 'Delivered', icon: 'delivered' },
 ];
 
-const COPY: Record<OrderStatus, { title: string; description: string }> = {
+export const COPY: Record<OrderStatus, { title: string; description: string }> = {
   pending: { title: 'Order Placed', description: 'We have received your order.' },
   confirmed: { title: 'Order Confirmed', description: 'Your order is being prepared.' },
   stitching: { title: 'In Production', description: 'Your garment is being stitched.' },
@@ -54,7 +69,7 @@ const COPY: Record<OrderStatus, { title: string; description: string }> = {
   cancelled: { title: 'Cancelled', description: 'This order was cancelled.' },
 };
 
-const shortDate = (iso: string) =>
+export const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
@@ -65,8 +80,13 @@ const shortDate = (iso: string) =>
  * A cancelled order has no position on the production timeline, so it gets an
  * empty one rather than a misleading half-finished bar.
  */
-function buildTimeline(order: Order): TimelineItem[] {
+export function buildTimeline(order: Order, tracking: OrderTrackingEntry[] = []): TimelineItem[] {
   if (order.status === 'cancelled') return [];
+
+  /* When the tracking history is available (order detail page), each step
+     gets the date it was actually reached. */
+  const reachedAt = (status: OrderStatus) =>
+    tracking.find((entry) => entry.status === status)?.createdAt;
 
   const reached = STEPS.findIndex((step) => step.status === order.status);
   /* 'pending' precedes every step but the first is still "placed". */
@@ -75,9 +95,15 @@ function buildTimeline(order: Order): TimelineItem[] {
   return STEPS.map((step, index) => ({
     id: index + 1,
     title: step.title,
-    /* Only the placement date is known; later steps get one when the admin
-       moves the order, which the tracking endpoint will supply later. */
-    date: index === 0 ? shortDate(order.createdAt) : index <= current ? shortDate(order.updatedAt) : '',
+    icon: step.icon,
+    /* Placement date is always known; later steps use the tracking entry
+       when there is one, otherwise the order's last update. */
+    date:
+      index === 0
+        ? shortDate(order.createdAt)
+        : index <= current
+          ? shortDate(reachedAt(step.status) ?? order.updatedAt)
+          : '',
     status: index < current ? 'completed' : index === current ? 'current' : 'pending',
   }));
 }
@@ -100,6 +126,7 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
         key: `${order._id}-${index}`,
         placedAt: order.createdAt,
         orderId: order._id,
+        detailHref: `/my-account/orders/${order._id}`,
         productId: item.productId,
         customDesignId: item.customDesignId,
         productName: item.itemSnapshot?.name ?? 'Custom Design',
@@ -108,6 +135,8 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
         statusTitle: copy.title,
         statusDescription: copy.description,
         isDelivered: order.status === 'delivered',
+        source: 'custom' as const,
+        stage: toStage(order.status),
         timeline,
         review,
       };
@@ -125,13 +154,24 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
  * keep the card's review action hidden.
  * ------------------------------------------------------------------------- */
 
-const SHOPIFY_STEPS: { key: 'placed' | 'shipped' | 'delivered'; title: string }[] = [
-  { key: 'placed', title: 'Order Placed' },
-  { key: 'shipped', title: 'Shipping' },
-  { key: 'delivered', title: 'Delivered' },
+const SHOPIFY_STEPS: { key: 'placed' | 'shipped' | 'delivered'; title: string; icon: StepIcon }[] = [
+  { key: 'placed', title: 'Order Placed', icon: 'placed' },
+  { key: 'shipped', title: 'Shipping', icon: 'shipping' },
+  { key: 'delivered', title: 'Delivered', icon: 'delivered' },
 ];
 
-const SHOPIFY_COPY: Record<ShopifyOrder['status'], { title: string; description: string }> = {
+/**
+ * Shopify order ids are GIDs ("gid://shopify/Order/6412…"), which don't
+ * belong in a URL. The detail page uses "shopify-6412…" instead.
+ */
+export const shopifyOrderSlug = (gid: string) => `shopify-${gid.split('/').pop()}`;
+
+export const isShopifySlug = (slug: string) => slug.startsWith('shopify-');
+
+export const findShopifyOrder = (orders: ShopifyOrder[], slug: string) =>
+  orders.find((o) => shopifyOrderSlug(o.id) === slug);
+
+export const SHOPIFY_COPY: Record<ShopifyOrder['status'], { title: string; description: string }> = {
   placed: { title: 'Order Placed', description: 'We have received your order.' },
   shipped: { title: 'On Its Way', description: 'Your order has been shipped.' },
   delivered: { title: 'Delivered', description: 'Enjoy your new piece.' },
@@ -139,14 +179,14 @@ const SHOPIFY_COPY: Record<ShopifyOrder['status'], { title: string; description:
 };
 
 /** Formats in the order's own currency — Shopify orders may be INR, CAD, USD … */
-const formatMoney = (amount: number, currency: string) =>
+export const formatMoney = (amount: number, currency: string) =>
   new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en', {
     style: 'currency',
     currency,
     maximumFractionDigits: currency === 'INR' ? 0 : 2,
   }).format(amount);
 
-function buildShopifyTimeline(order: ShopifyOrder): TimelineItem[] {
+export function buildShopifyTimeline(order: ShopifyOrder): TimelineItem[] {
   if (order.status === 'cancelled') return [];
 
   const current = SHOPIFY_STEPS.findIndex((step) => step.key === order.status);
@@ -159,6 +199,7 @@ function buildShopifyTimeline(order: ShopifyOrder): TimelineItem[] {
   return SHOPIFY_STEPS.map((step, index) => ({
     id: index + 1,
     title: step.title,
+    icon: step.icon,
     date: index <= current && dates[step.key] ? shortDate(dates[step.key]!) : '',
     status: index < current ? 'completed' : index === current ? 'current' : 'pending',
   }));
@@ -191,6 +232,7 @@ export function toShopifyOrderLines(orders: ShopifyOrder[]): OrderLineView[] {
       key: `${order.id}-${index}`,
       placedAt: order.createdAt,
       orderId: order.id,
+      detailHref: `/my-account/orders/${shopifyOrderSlug(order.id)}`,
       productName: [
         item.title,
         item.variantTitle && item.variantTitle !== 'Default Title' ? item.variantTitle : null,
@@ -202,6 +244,8 @@ export function toShopifyOrderLines(orders: ShopifyOrder[]): OrderLineView[] {
       statusTitle: copy.title,
       statusDescription: `Order ${order.orderNumber} · ${totalNote}${copy.description}${paymentNote}`,
       isDelivered: false,
+      source: 'shopify' as const,
+      stage: toStage(order.status),
       timeline,
     }));
   });

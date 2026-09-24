@@ -111,7 +111,7 @@ export default async function ProductPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Collections", item: `${SITE_URL}/collections` },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/products` },
       { "@type": "ListItem", position: 3, name: product.title, item: `${SITE_URL}/products/${product.handle}` },
     ],
   };

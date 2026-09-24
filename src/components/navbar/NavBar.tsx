@@ -19,8 +19,10 @@ const Navbar = () => {
   const isSignedIn = isHydrated && isAuthenticated;
 
   return (
-    <header className="max_screen_width py-6 bg-white">
-      <nav className="max_width flex items-center justify-between">
+    <header className="max_screen_width py-4 md:py-6 bg-white">
+      {/* relative: the logo is centred on this box, and on phones the
+          notification panel spans it instead of hanging off one icon. */}
+      <nav className="max_width relative flex min-h-10 items-center justify-between">
         <div className="xl:hidden block">
           <MenuButton
             color="dark"
@@ -43,12 +45,13 @@ const Navbar = () => {
         </ul>
         <Link
           href="/"
-          className="lg:w-[152.47px] w-[100px] mr-26 relative aspect-[4/1.7] self-center"
+          aria-label="Baliye Couture home"
+          className="absolute left-1/2 top-1/2 w-[92px] -translate-x-1/2 -translate-y-1/2 aspect-[4/1.7] sm:w-[110px] lg:w-[152.47px]"
         >
-          <Image src="/logo.png" alt="logo" fill className="object-cover" />
+          <Image src="/logo.png" alt="Baliye Couture" fill priority sizes="153px" className="object-contain" />
         </Link>
 
-        <ul className="flex items-center gap-4">
+        <ul className="flex items-center gap-2.5 sm:gap-4">
           <li>
             {isAuthenticated ? (
               <AccountMenu onSignOut={signOut} open={open} setOpen={setOpen} />
@@ -215,7 +218,7 @@ const AccountMenu = ({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+12px)] z-9999 w-52 overflow-hidden rounded-lg bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+          className="absolute right-0 top-[calc(100%+12px)] z-9999 w-52 origin-top-right animate-pop-in overflow-hidden rounded-lg bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
         >
           <Link
             href="/my-account/personal-details"

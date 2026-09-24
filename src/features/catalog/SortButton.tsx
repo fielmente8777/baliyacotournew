@@ -28,7 +28,7 @@ export default function SortButton() {
   const ref = useRef<HTMLDivElement>(null);
 
   const current = searchParams.get('sort');
-  const label = SORT_OPTIONS.find((o) => o.value === current)?.label ?? 'Sort By';
+  const label = SORT_OPTIONS.find((o) => o.value === current)?.label ?? 'Sort by';
 
   useEffect(() => {
     if (!open) return;
@@ -56,22 +56,22 @@ export default function SortButton() {
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="box-shadow flex items-center gap-3 rounded-sm bg-white px-5 py-3 text-sm"
+        className="box-shadow flex items-center gap-2 whitespace-nowrap rounded-sm bg-white px-3 py-2.5 text-sm sm:gap-3 sm:px-5 sm:py-3"
       >
         {label}
-        <ChevronDown size={18} className={`duration-300 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={18} aria-hidden="true" className={`shrink-0 duration-300 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 z-30 mt-3 w-64 overflow-hidden rounded-xl border bg-white shadow-xl"
+          className="absolute right-0 z-30 mt-3 w-[min(16rem,calc(100vw-2rem))] origin-top-right animate-pop-in overflow-hidden rounded-xl border bg-white shadow-xl"
         >
           {SORT_OPTIONS.map((option) => (
             <button

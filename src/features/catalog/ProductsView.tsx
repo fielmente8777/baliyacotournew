@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Pre-designed Collections grid.
+ * The /products listing (all ready-made designs).
  *
  * Filters live in the URL, so the query is derived from searchParams and RTK
  * Query caches each combination. The navbar's "Bestsellers" link is just
- * /collections?badge=bestseller, so it lands on the same state as the chip.
+ * /products?badge=bestseller, so it lands on the same state as the chip.
  * Every product is reachable through the page links under the grid.
  */
 
@@ -15,8 +15,8 @@ import { Section } from '@/components/sectionComponants';
 import { useGetProductsQuery } from '@/store/api/productApi';
 import type { ProductListQuery } from '@/@types/product';
 
-import Breadcrumb from '../../app/(website)/collections/Components/Breadcrumb';
-import CollectionFilters, { activeFilter } from './CollectionFilters';
+import Breadcrumb from './Breadcrumb';
+import ProductFilters, { activeFilter } from './ProductFilters';
 import Pagination from './Pagination';
 import ProductGrid from './ProductGrid';
 import SortButton from './SortButton';
@@ -24,7 +24,7 @@ import SortButton from './SortButton';
 /** Divides evenly into the 2-, 3- and 4-column grids. */
 const PAGE_SIZE = 24;
 
-export default function CollectionsView() {
+export default function ProductsView() {
   const searchParams = useSearchParams();
   const filter = activeFilter(new URLSearchParams(searchParams.toString()));
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
@@ -59,11 +59,11 @@ export default function CollectionsView() {
           )}
         </div>
 
-        <CollectionFilters />
+        <ProductFilters />
 
         {isError ? (
           <div className="py-20 text-center">
-            <p className="text-secondary">We couldn&apos;t load the collection.</p>
+            <p className="text-secondary">We couldn&apos;t load the products.</p>
             <button type="button" onClick={() => refetch()} className="mt-4 underline">
               Try again
             </button>

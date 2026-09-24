@@ -40,8 +40,8 @@ export const websiteFooterData: WebsiteFooterData = {
     {
       title: "QUICK LINKS",
       links: [
-        { label: "Pre-made Designs", href: "/collections" },
-        { label: "Bestsellers", href: "/collections" },
+        { label: "Pre-made Designs", href: "/products" },
+        { label: "Bestsellers", href: "/products?badge=bestseller" },
         { label: "Terms & Conditions", href: "/terms-and-conditions" },
       ],
     },

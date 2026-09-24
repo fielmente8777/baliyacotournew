@@ -186,19 +186,23 @@ const SORT_KEYS: Record<string, { sortKey: string; reverse: boolean }> = {
 };
 
 function buildSearchQuery(query: ProductListQuery, excludeHandle?: string) {
-  const clauses = ['status:active'];
+  /* Storefront only ever returns products published to this sales channel,
+     so no status filter is needed (and `status` isn't a Storefront search
+     field — unknown fields can quietly narrow the results). */
+  const clauses: string[] = [];
   if (query.tag) clauses.push(`tag:'${query.tag}'`);
   if (query.badge) clauses.push(`tag:'${query.badge}'`);
-  if (query.search) clauses.push(`title:*${query.search}*`);
+  /* Shopify search supports trailing wildcards only. */
+  if (query.search) clauses.push(`title:${query.search.replace(/['"*]/g, '')}*`);
   if (excludeHandle) clauses.push(`-handle:'${excludeHandle}'`);
-  return clauses.join(' AND ');
+  return clauses.length ? clauses.join(' AND ') : undefined;
 }
 
 async function fetchProducts(query: ProductListQuery, excludeHandle?: string, productType?: string) {
   const { sortKey, reverse } = SORT_KEYS[query.sort ?? 'newest'] ?? SORT_KEYS.newest;
-  const searchQuery = productType
-    ? `${buildSearchQuery(query, excludeHandle)} AND product_type:'${productType}'`
-    : buildSearchQuery(query, excludeHandle);
+  const base = buildSearchQuery(query, excludeHandle);
+  const typeClause = productType ? `product_type:'${productType}'` : undefined;
+  const searchQuery = [base, typeClause].filter(Boolean).join(' AND ') || undefined;
 
   const data = await shopifyStorefrontFetch<{ products: { edges: { node: ShopifyProductNode }[] } }>(
     LIST_PRODUCTS,

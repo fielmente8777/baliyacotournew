@@ -8,8 +8,9 @@
  * not to an order that may contain three garments.
  */
 
-import Link from 'next/link';
-import { useMemo } from 'react';
+import EmptyState from '@/components/EmptyState';
+import { EmptyOrdersIllustration, NoProductsIllustration } from '@/components/illustrations';
+import { useMemo, useState } from 'react';
 
 import { useGetMyOrdersQuery, useGetMyShopifyOrdersQuery } from '@/store/api/orderApi';
 
@@ -21,6 +22,12 @@ import {
 } from '../../app/(website)/my-account/orders/orderView';
 import { useGetMyReviewsQuery } from '@/store/api/reviewApi';
 import OrdersHeader from '../../app/(website)/my-account/orders/components/OrdersHeader';
+import OrdersFilterPanel, {
+  DEFAULT_ORDER_FILTERS,
+  countActiveFilters,
+  timeFilterStart,
+  type OrderFilters,
+} from '../../app/(website)/my-account/orders/components/OrdersFilterPanel';
 
 export default function OrdersView() {
   /* Two sources: custom-design orders from baliye-node, and ready-to-wear
@@ -49,6 +56,20 @@ export default function OrdersView() {
     [orders, shopifyOrders, reviews]
   );
 
+  const [filters, setFilters] = useState<OrderFilters>(DEFAULT_ORDER_FILTERS);
+  const [isFilterOpen, setFilterOpen] = useState(false);
+  const activeCount = countActiveFilters(filters);
+
+  const visibleLines = useMemo(() => {
+    const since = timeFilterStart(filters.time);
+    return lines.filter(
+      (line) =>
+        (filters.status === 'all' || line.stage === filters.status) &&
+        (filters.type === 'all' || line.source === filters.type) &&
+        (!since || new Date(line.placedAt) >= since)
+    );
+  }, [lines, filters]);
+
   const isLoading = customLoading || shopifyLoading;
   /* Full error state only when BOTH sources failed; one failing gets a note. */
   const isError = customError && shopifyError;
@@ -60,10 +81,28 @@ export default function OrdersView() {
 
   return (
     <AccountContent>
-      <OrdersHeader />
+      <OrdersHeader
+        onFilterClick={() => setFilterOpen((open) => !open)}
+        isFilterOpen={isFilterOpen}
+        activeCount={activeCount}
+        resultCount={isLoading || isError ? undefined : visibleLines.length}
+      />
+
+      {isFilterOpen && <OrdersFilterPanel filters={filters} onChange={setFilters} />}
 
       {isLoading && (
-        <p className="px-5 py-8 text-sm text-[#8A8A8A] md:px-6">Loading your orders…</p>
+        <div className="divide-y divide-[#F2EEE8]" aria-busy="true" aria-label="Loading your orders">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex animate-pulse gap-4 px-4 py-6 sm:px-6">
+              <div className="h-32 w-24 shrink-0 bg-black/5 sm:h-40 sm:w-[149px]" />
+              <div className="flex-1 space-y-3 pt-1">
+                <div className="h-4 w-2/3 rounded bg-black/5" />
+                <div className="h-4 w-1/4 rounded bg-black/5" />
+                <div className="h-3 w-1/2 rounded bg-black/5" />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {isError && (
@@ -85,19 +124,25 @@ export default function OrdersView() {
       )}
 
       {!isLoading && !isError && !partialError && lines.length === 0 && (
-        <div className="px-5 py-12 text-center md:px-6">
-          <p className="text-sm text-[#8A8A8A]">You haven&apos;t placed any orders yet.</p>
-          <Link
-            href="/collections"
-            className="mt-3 inline-block text-sm font-medium text-[#A52C45]"
-          >
-            Browse the collection
-          </Link>
-        </div>
+        <EmptyState
+          illustration={<EmptyOrdersIllustration />}
+          title="No orders yet"
+          message="When you place an order, you can follow every step of it here, from stitching to your doorstep."
+          action={{ label: 'Start shopping', href: '/products' }}
+        />
+      )}
+
+      {!isLoading && lines.length > 0 && visibleLines.length === 0 && (
+        <EmptyState
+          illustration={<NoProductsIllustration className="w-32" />}
+          title="No orders match these filters"
+          message="Try a different status or time range."
+          action={{ label: 'Clear filters', onClick: () => setFilters(DEFAULT_ORDER_FILTERS) }}
+        />
       )}
 
       <div className="divide-y divide-[#F2EEE8]">
-        {lines.map((line) => (
+        {visibleLines.map((line) => (
           <OrderCard key={line.key} order={line} />
         ))}
       </div>

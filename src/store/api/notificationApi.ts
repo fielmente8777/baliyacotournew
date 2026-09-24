@@ -5,9 +5,14 @@ import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
 export const notificationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** Returns items and the unread count together, so the badge is one call. */
-    getNotifications: builder.query<NotificationFeed, void>({
-      query: () => '/notifications',
+    /** Returns items and the unread count together, so the badge is one call.
+        The bell asks for the default (latest 10); the notifications page asks
+        for up to 100, the most the API returns in one page. */
+    getNotifications: builder.query<NotificationFeed, { limit?: number } | void>({
+      query: (arg) => ({
+        url: '/notifications',
+        params: arg?.limit ? { limit: arg.limit } : undefined,
+      }),
       transformResponse: (res: ApiEnvelope<NotificationFeed>) => unwrap(res),
       providesTags: ['Notification'],
     }),

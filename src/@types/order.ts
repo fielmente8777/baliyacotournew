@@ -52,6 +52,8 @@ export interface OrderTrackingEntry {
   orderId: string;
   status: OrderStatus;
   note?: string;
+  /** What baliye-node actually sends (models/tracking.ts). */
+  remarks?: string;
   createdAt: string;
 }
 

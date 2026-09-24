@@ -1,50 +1,42 @@
 'use client';
 
 /**
- * Notification bell with an unread badge and a dropdown feed.
+ * Notification bell with an unread badge and a dropdown of the latest few.
  *
- * Opening the panel does not mark everything read — the customer may only be
- * glancing. Reading one marks that one; "Mark all read" is explicit.
+ * Tapping a notification marks it read and opens what it's about (usually
+ * that order's detail page). "Show all notifications" opens the full page.
+ * Opening the panel alone doesn't mark anything read — the customer may only
+ * be glancing; "Mark all read" is explicit.
  */
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Bell } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, ChevronRight } from 'lucide-react';
 
+import type { AppNotification } from '@/@types/notification';
+import { NotificationsIllustration } from '@/components/illustrations';
+import { NotificationIcon, notificationHref, timeAgo } from '@/features/notifications/notificationUtils';
 import {
   useGetNotificationsQuery,
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '@/store/api/notificationApi';
 
-/** Relative time without pulling in a date library for one label. */
-const timeAgo = (iso: string) => {
-  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-
-  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-};
+/** How many the dropdown shows; the rest are on the notifications page. */
+const PREVIEW_COUNT = 5;
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
-  /* Only poll while the tab is being used; the badge is not worth a
-     background request every 30s forever. */
+  /* Polls once a minute so new order updates show up without a refresh. */
   const { data } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAllRead] = useMarkAllNotificationsReadMutation();
 
-  const items = data?.items ?? [];
+  const items = (data?.items ?? []).slice(0, PREVIEW_COUNT);
   const unread = data?.unread ?? 0;
 
   useEffect(() => {
@@ -63,8 +55,14 @@ export default function NotificationBell() {
     };
   }, [open]);
 
+  const openNotification = (item: AppNotification) => {
+    if (!item.isRead) markRead(item._id);
+    setOpen(false);
+    router.push(notificationHref(item));
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="sm:relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -75,69 +73,62 @@ export default function NotificationBell() {
         <Bell size={22} />
 
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 animate-pop-in items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-3 w-80 overflow-hidden rounded-xl border border-[#EFEBE4] bg-white shadow-xl sm:w-96">
+        <div className="absolute inset-x-4 top-full z-50 mt-3 origin-top-right animate-pop-in overflow-hidden rounded-xl border border-[#EFEBE4] bg-white shadow-xl sm:inset-x-auto sm:right-0 sm:top-auto sm:w-96">
           <div className="flex items-center justify-between border-b border-[#F2EEE8] px-4 py-3">
             <h3 className="text-sm font-semibold text-[#222]">Notifications</h3>
 
             {unread > 0 && (
-              <button
-                type="button"
-                onClick={() => markAllRead()}
-                className="text-xs text-secondary"
-              >
+              <button type="button" onClick={() => markAllRead()} className="text-xs text-secondary hover:underline">
                 Mark all read
               </button>
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto sm:max-h-96">
             {items.length === 0 && (
-              <p className="px-4 py-10 text-center text-sm text-[#9A9A9A]">
-                Nothing here yet.
-              </p>
+              <div className="flex flex-col items-center px-4 py-8 text-center">
+                <NotificationsIllustration className="w-24" />
+                <p className="mt-2 text-sm text-[#9A9A9A]">You&apos;re all caught up.</p>
+              </div>
             )}
 
             {items.map((item) => (
               <button
                 key={item._id}
                 type="button"
-                onClick={() => !item.isRead && markRead(item._id)}
-                className={`block w-full border-b border-[#F7F4EF] px-4 py-3 text-left last:border-none ${
+                onClick={() => openNotification(item)}
+                className={`flex w-full items-start gap-3 border-b border-[#F7F4EF] px-4 py-3 text-left transition-colors duration-200 last:border-none hover:bg-[#FAF7F2] ${
                   item.isRead ? 'bg-white' : 'bg-[#FDF8F9]'
                 }`}
               >
-                <div className="flex items-start gap-2">
-                  {!item.isRead && (
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-secondary" />
-                  )}
+                <NotificationIcon notification={item} size="sm" />
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-[#222]">{item.title}</p>
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#6B6B6B]">
-                      {item.message}
-                    </p>
-                    <p className="mt-1 text-[11px] text-[#A9A9A9]">
-                      {timeAgo(item.createdAt)}
-                    </p>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-[13px] font-medium text-[#222]">
+                    <span className="truncate">{item.title}</span>
+                    {!item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-secondary" aria-label="unread" />}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-[13px] leading-relaxed text-[#6B6B6B]">{item.message}</p>
+                  <p className="mt-1 text-[11px] text-[#A9A9A9]">{timeAgo(item.createdAt)}</p>
                 </div>
               </button>
             ))}
           </div>
 
           <Link
-            href="/my-account/orders"
+            href="/my-account/notifications"
             onClick={() => setOpen(false)}
-            className="block border-t border-[#F2EEE8] px-4 py-3 text-center text-xs font-medium text-secondary"
+            className="flex items-center justify-center gap-1 border-t border-[#F2EEE8] px-4 py-3 text-xs font-medium text-secondary transition-colors hover:bg-[#FBF6F7]"
           >
-            View my orders
+            Show all notifications
+            <ChevronRight size={14} aria-hidden="true" />
           </Link>
         </div>
       )}

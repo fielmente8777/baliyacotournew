@@ -1,6 +1,9 @@
+import { Bell, MapPin, Package, Ruler, UserRound, type LucideIcon } from "lucide-react";
+
 export interface AccountMenuItem {
   title: string;
   href: string;
+  icon: LucideIcon;
 }
 
 export interface AccountMenuGroup {
@@ -12,27 +15,16 @@ export const accountMenu: AccountMenuGroup[] = [
   {
     title: "Profile",
     items: [
-      {
-        title: "Personal Details",
-        href: "/my-account/personal-details",
-      },
-      {
-        title: "Saved Measurements",
-        href: "/my-account/saved-measurements",
-      },
-      {
-        title: "Saved Addresses",
-        href: "/my-account/saved-addresses",
-      },
+      { title: "Personal Details", href: "/my-account/personal-details", icon: UserRound },
+      { title: "Saved Measurements", href: "/my-account/saved-measurements", icon: Ruler },
+      { title: "Saved Addresses", href: "/my-account/saved-addresses", icon: MapPin },
     ],
   },
   {
     title: "Order Details",
     items: [
-      {
-        title: "All Orders",
-        href: "/my-account/orders",
-      },
+      { title: "All Orders", href: "/my-account/orders", icon: Package },
+      { title: "Notifications", href: "/my-account/notifications", icon: Bell },
     ],
   },
 ];

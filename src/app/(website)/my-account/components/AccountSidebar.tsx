@@ -37,18 +37,22 @@ export default function AccountSidebar() {
 
           <nav className="py-3">
             {group.items.map((item) => {
-              const isActive = pathname === item.href;
+              /* Prefix match keeps "All Orders" highlighted on an order's own page. */
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon;
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-4 py-1.5 text-sm transition-colors ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={`relative flex items-center gap-2.5 px-4 py-2 text-sm transition-colors duration-200 ${
                     isActive
-                      ? "font-medium text-[#A52C45]"
+                      ? "font-medium text-[#A52C45] before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:rounded-full before:bg-[#A52C45] before:content-['']"
                       : "text-[#666] hover:text-[#A52C45]"
                   }`}
                 >
+                  <Icon size={16} aria-hidden="true" className="shrink-0" />
                   {item.title}
                 </Link>
               );

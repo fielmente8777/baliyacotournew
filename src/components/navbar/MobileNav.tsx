@@ -10,7 +10,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { LogOut, Package, User } from "lucide-react";
+import { Bell, LogOut, Package, User } from "lucide-react";
 
 import { navData } from "./navData";
 import { useAuth } from "@/features/auth/useAuth";
@@ -63,8 +63,9 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
               <Link
                 href={item.href}
                 onClick={close}
-                className="block py-3 text-base text-[#333] transition-colors hover:text-secondary"
+                className="flex items-center gap-3 py-3 text-base text-[#333] transition-colors hover:text-secondary"
               >
+                <item.icon size={18} aria-hidden="true" />
                 {item.name}
               </Link>
             </li>
@@ -82,6 +83,16 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
                 >
                   <User size={18} />
                   My Account
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/my-account/notifications"
+                  onClick={close}
+                  className="flex items-center gap-3 py-3 text-base text-[#333] hover:text-secondary"
+                >
+                  <Bell size={18} />
+                  Notifications
                 </Link>
               </li>
               <li>
