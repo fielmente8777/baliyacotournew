@@ -106,7 +106,7 @@ export const homePageData = {
     ],
     button: {
       label: "View All Designs",
-      link: "/designs",
+      link: "/products",
     },
   },
 
