@@ -116,3 +116,30 @@ export function LostThreadIllustration({ className = 'w-48' }: Props) {
     </svg>
   );
 }
+
+/**
+ * Kurta silhouette for the design builder when there's no product photo.
+ * `fill` tints the garment with the colour the customer picked, so the
+ * preview reacts as they design.
+ */
+export function GarmentPreviewIllustration({ className = 'w-full', fill = '#FFFFFF' }: Props & { fill?: string }) {
+  return (
+    <svg viewBox="0 0 240 320" fill="none" aria-hidden="true" className={className}>
+      <ellipse cx="120" cy="306" rx="80" ry="8" fill={STONE} opacity="0.6" />
+      <path
+        d="M96 22c3 14 12 22 24 22s21-8 24-22l40 16 26 78-26 10-14-40 8 206H62l8-206-14 40-26-10 26-78 40-16Z"
+        fill={fill}
+        stroke={MAROON}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+        style={{ transition: 'fill 400ms ease' }}
+      />
+      <path d="M96 22c3 14 12 22 24 22s21-8 24-22" stroke={MAROON} strokeWidth="2.5" />
+      <path d="M120 44v48" stroke={MAROON} strokeWidth="2" opacity="0.5" />
+      <circle cx="120" cy="58" r="2" fill={MAROON} opacity="0.6" />
+      <circle cx="120" cy="72" r="2" fill={MAROON} opacity="0.6" />
+      <path d="M72 250h96" stroke={MAROON} strokeWidth="2" strokeDasharray="3 5" opacity="0.45" />
+      <path d="M44 106l26 10M196 106l-26 10" stroke={MAROON} strokeWidth="2" strokeDasharray="3 4" opacity="0.45" />
+    </svg>
+  );
+}

@@ -25,8 +25,11 @@ export default function ReviewStep({
   instructions,
   onEditStep,
 }: Props) {
+  /* `index` is the group's position among the visible steps, taken before
+     dropping unselected ones, so "Change" opens the right step even when an
+     optional step earlier on was skipped. */
   const chosen = groups
-    .filter((g) => g.isVisible && selections[g._id])
+    .filter((g) => g.isVisible)
     .map((group, index) => {
       const option = group.options.find((o) => o._id === selections[group._id]);
       return { group, option, index };

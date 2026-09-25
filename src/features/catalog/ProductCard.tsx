@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Scissors, Star } from 'lucide-react';
 
 import type { Product } from '@/@types/product';
 import { isCustomizable, primaryImage } from '@/@types/product';
@@ -30,26 +31,31 @@ export default function ProductCard({ product, priority }: Props) {
             className="object-cover duration-500 group-hover:scale-105"
           />
 
+          {/* Badges sit on the photo, so a long product name always gets
+              the full card width underneath (on a phone, a badge beside the
+              title squeezed it to one word per line). */}
+          {product.isEditorsPick && (
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[9px] font-medium uppercase tracking-[1.5px] text-white shadow-sm sm:left-3 sm:top-3 sm:text-[10px]">
+              <Star size={10} fill="currentColor" aria-hidden="true" />
+              Editor&apos;s Pick
+            </span>
+          )}
+
           {isCustomizable(product) && (
-            <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] uppercase tracking-[1.5px] text-[#262626]">
+            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[9px] uppercase tracking-[1.5px] text-[#262626] backdrop-blur-sm sm:bottom-3 sm:left-3 sm:text-[10px]">
+              <Scissors size={10} aria-hidden="true" />
               Customisable
             </span>
           )}
         </div>
       </div>
 
-      <div className="pt-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-[15px] font-medium text-[#262626]">{product.name}</h3>
+      <div className="pt-3 sm:pt-4">
+        <h3 className="line-clamp-2 text-sm font-medium leading-snug text-[#262626] transition-colors duration-300 group-hover:text-secondary sm:text-[15px]">
+          {product.name}
+        </h3>
 
-          {product.isEditorsPick && (
-            <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-[10px] uppercase tracking-[2px] text-white">
-              Editor&apos;s Pick
-            </span>
-          )}
-        </div>
-
-        <p className="mt-2 flex items-center gap-2 text-sm text-[#8B6E54]">
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] text-[#8B6E54] sm:mt-2 sm:text-sm">
           {/* "Starting from" because options add to this at design time. */}
           <span>From {formatINR(price / 100)}</span>
 

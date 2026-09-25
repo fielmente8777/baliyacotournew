@@ -15,23 +15,35 @@ interface Props {
   group: DesignGroup;
   selectedId?: string;
   onSelect: (optionId: string) => void;
+  /** Shown under the heading, e.g. "Designs that suit your Boat Neck". */
+  note?: string;
+  /** Shown instead of the grid when this step needs an earlier choice first. */
+  blockedMessage?: string;
 }
 
-export default function OptionStep({ group, selectedId, onSelect }: Props) {
+export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage }: Props) {
   const isColour = group.inputType === 'color_select';
   const isSize = group.inputType === 'size_select';
 
   return (
     <div>
-      <div className="mb-6 flex items-baseline gap-3 md:mb-8">
-        <h2 className="text-2xl font-semibold text-dark md:text-3xl">{group.label}</h2>
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-2xl font-semibold text-dark md:text-3xl">{group.label}</h2>
 
-        {!group.isRequired && (
-          <span className="text-sm text-[#9A9A9A]">Optional</span>
-        )}
+          {!group.isRequired && (
+            <span className="text-sm text-[#9A9A9A]">Optional</span>
+          )}
+        </div>
+
+        {note && <p className="mt-1.5 text-sm text-[#8B6E54]">{note}</p>}
       </div>
 
-      {group.options.length === 0 && (
+      {blockedMessage && (
+        <p className="animate-fade-in rounded-xl bg-white p-6 text-sm text-[#6B6B6B]">{blockedMessage}</p>
+      )}
+
+      {!blockedMessage && group.options.length === 0 && (
         <p className="rounded-xl bg-white p-6 text-sm text-[#6B6B6B]">
           No options are configured for this step yet.
         </p>

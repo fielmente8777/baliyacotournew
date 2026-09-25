@@ -29,8 +29,9 @@ import {
 } from '@/store/api/designApi';
 import { useGetMeasurementProfilesQuery } from '@/store/api/measurementApi';
 import { useCart } from '@/hooks/useCart';
-import type { BuilderStep, PriceBreakdown } from '@/@types/design';
+import type { BuilderStep, DesignGroup, DesignOption, PriceBreakdown } from '@/@types/design';
 import { cn } from '@/lib/format';
+import { GarmentPreviewIllustration } from '@/components/illustrations';
 
 import StepRail from './StepRail';
 import PriceSummary from './PriceSummary';
@@ -50,6 +51,30 @@ interface Props {
  */
 const CUSTOM_SIZE_LABEL = 'Custom Measurement';
 
+/**
+ * Steps that must come before another, whatever order the dashboard stored:
+ * Embroidery designs are chosen to suit the neckline, so Neck Type always
+ * comes first. [before, after] by option-group code.
+ */
+const MUST_PRECEDE: [string, string][] = [['neck', 'embroidery']];
+
+function orderGroups(groups: DesignGroup[]): DesignGroup[] {
+  const ordered = [...groups].sort((a, b) => a.position - b.position);
+  for (const [first, second] of MUST_PRECEDE) {
+    const i = ordered.findIndex((g) => g.code === first);
+    const j = ordered.findIndex((g) => g.code === second);
+    if (i > j && j !== -1) {
+      const [moved] = ordered.splice(i, 1);
+      ordered.splice(j, 0, moved);
+    }
+  }
+  return ordered;
+}
+
+/** An option with a pairing rule is offered only once a paired option is chosen. */
+const isOptionAvailable = (option: DesignOption, chosenIds: Set<string>) =>
+  !option.availableWith?.length || option.availableWith.some((id) => chosenIds.has(id));
+
 export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -60,6 +85,9 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
   const [pricing, setPricing] = useState<PriceBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /* The fallback preview file may not exist; show the illustration instead
+     of a broken-image icon. */
+  const [previewFailed, setPreviewFailed] = useState(false);
 
   const { data: config, isLoading } = useGetDesignConfigQuery({ garmentTypeId, productId });
   const { data: profiles = [] } = useGetMeasurementProfilesQuery();
@@ -119,10 +147,30 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     return Boolean(chosen && chosen.label !== CUSTOM_SIZE_LABEL);
   }, [sizeGroup, selections]);
 
+  /** Every option id currently chosen, across all groups. */
+  const chosenIds = useMemo(() => new Set(Object.values(selections).filter(Boolean)), [selections]);
+
+  /**
+   * Groups in step order, with visibility worked out from the live selections
+   * (so "Full Sleeve" reveals Sleeve Cuff the moment it's picked, rather than
+   * only after a reload) and each group's options narrowed by pairing rules
+   * (Embroidery → only designs that suit the chosen Neck Type).
+   */
+  const groups = useMemo(() => {
+    if (!config) return [];
+    return orderGroups(config.groups).map((group) => ({
+      ...group,
+      isVisible: group.dependsOn
+        ? group.dependsOn.optionIds.includes(selections[group.dependsOn.groupId] ?? '')
+        : group.isVisible,
+      options: group.options.filter((option) => isOptionAvailable(option, chosenIds)),
+    }));
+  }, [config, selections, chosenIds]);
+
   const steps: BuilderStep[] = useMemo(() => {
     if (!config) return [];
 
-    const optionSteps: BuilderStep[] = config.groups
+    const optionSteps: BuilderStep[] = groups
       .filter((group) => group.isVisible)
       .map((group) => ({ kind: 'option', group }));
 
@@ -132,7 +180,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
       { kind: 'instructions' },
       { kind: 'review' },
     ];
-  }, [config, usesStandardSize]);
+  }, [config, groups, usesStandardSize]);
 
   /* Dropping the measurement step can leave the pointer past the end. */
   useEffect(() => {
@@ -148,12 +196,18 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   useEffect(() => {
     if (!config) return;
 
-    const orphaned = config.groups
-      .filter((group) => !group.isVisible && selections[group._id])
+    const orphaned = groups
+      .filter((group) => {
+        const chosen = selections[group._id];
+        if (!chosen) return false;
+        /* Hidden group, or its choice no longer pairs with the rest — e.g.
+           the neck was changed and the old embroidery doesn't suit it. */
+        return !group.isVisible || !group.options.some((option) => option._id === chosen);
+      })
       .map((group) => group._id);
 
     if (orphaned.length) dispatch(clearSelections(orphaned));
-  }, [config, selections, dispatch]);
+  }, [config, groups, selections, dispatch]);
 
   /* Re-price on every change. The backend is the source of truth for price. */
   useEffect(() => {
@@ -238,9 +292,38 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   }
 
   const activeStep = steps[Math.min(stepIndex, steps.length - 1)];
+
+  /**
+   * For a group whose options pair with another group (Embroidery with Neck
+   * Type): a note naming the choice it's filtered by, or — if that choice
+   * hasn't been made yet — a message sending the customer back to make it.
+   */
+  const pairingCopy = (group: DesignGroup): { note?: string; blockedMessage?: string } => {
+    const raw = config.groups.find((g) => g._id === group._id);
+    const pairedIds = new Set(raw?.options.flatMap((o) => o.availableWith ?? []) ?? []);
+    if (pairedIds.size === 0) return {};
+
+    /* The group those ids belong to — Neck Type, for Embroidery. */
+    const source = config.groups.find(
+      (g) => g._id !== group._id && g.options.some((o) => pairedIds.has(o._id))
+    );
+    if (!source) return {};
+
+    const choice = source.options.find((o) => o._id === selections[source._id]);
+    if (!choice) {
+      return {
+        blockedMessage: `Choose your ${source.label} first. ${group.label} designs are matched to it.`,
+      };
+    }
+    return { note: `${group.label} designs that suit your ${choice.label}` };
+  };
+
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);
-  const previewImage =
-    config.product?.images?.[0]?.url ?? '/customization/kurta-preview.png';
+  const previewImage = config.product?.images?.[0]?.url;
+
+  /* Tint the illustrated preview with the chosen colour, if there is one. */
+  const colourGroup = config.groups.find((g) => g.inputType === 'color_select');
+  const chosenHex = colourGroup?.options.find((o) => o._id === selections[colourGroup._id])?.hex;
 
   return (
     <main className="min-h-screen bg-[#FAF7F2]">
@@ -270,14 +353,21 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
                 <div className="flex flex-1 items-center justify-center">
                   <div className="relative aspect-[3/4] w-full max-w-[380px]">
-                    <Image
-                      src={previewImage}
-                      alt={config.product?.name ?? config.garmentType.name}
-                      fill
-                      sizes="(max-width: 768px) 80vw, 380px"
-                      className="object-contain"
-                      priority
-                    />
+                    {previewImage && !previewFailed ? (
+                      <Image
+                        src={previewImage}
+                        alt={config.product?.name ?? config.garmentType.name}
+                        fill
+                        sizes="(max-width: 768px) 80vw, 380px"
+                        className="animate-fade-in object-contain"
+                        priority
+                        onError={() => setPreviewFailed(true)}
+                      />
+                    ) : (
+                      <div className="flex h-full animate-fade-in items-center justify-center p-6">
+                        <GarmentPreviewIllustration className="h-full w-auto max-w-full" fill={chosenHex ?? '#FFFFFF'} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -322,7 +412,9 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           <section className="min-w-0">
             {activeStep?.kind === 'option' && (
               <OptionStep
+                key={activeStep.group._id}
                 group={activeStep.group}
+                {...pairingCopy(activeStep.group)}
                 selectedId={selections[activeStep.group._id]}
                 onSelect={(optionId) =>
                   dispatch(selectOption({ groupId: activeStep.group._id, optionId }))
@@ -341,7 +433,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
             {activeStep?.kind === 'review' && (
               <ReviewStep
-                groups={config.groups}
+                groups={groups}
                 selections={selections}
                 pricing={pricing}
                 measurementName={

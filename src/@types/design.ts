@@ -21,6 +21,13 @@ export interface DesignOption {
   hex?: string;
   /** Minor units, added to the base price when chosen. */
   priceModifier: number;
+  /**
+   * Pairing rule: when set, this option is only offered once one of these
+   * option ids (from another group) is selected. Used so each Embroidery
+   * design only appears for the Neck Types it suits. Missing or empty means
+   * "always offered".
+   */
+  availableWith?: string[];
 }
 
 /**
