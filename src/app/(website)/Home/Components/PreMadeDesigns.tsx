@@ -1,5 +1,6 @@
 "use client";
 
+import LinkButton from "@/components/buttons/LinkButton";
 import { Container, Section } from "@/components/sectionComponants";
 import SwiperCarousel from "@/components/sliders/SwiperCarousel";
 import { SectionHeading } from "@/components/typography";
@@ -28,7 +29,7 @@ const PreMadeDesigns: React.FC<PreMadeDesignsProps> = ({
         <SectionHeading title={title} textCenter titleColor="white" />
         <p className="text-white/50 text-center">{description}</p>
       </Container>
-      <div className="xl:max-w-[1440px] w-full ml-auto">
+      <div className="xl:max-w-360 w-full ml-auto">
         <SwiperCarousel
           data={images}
           slidesPerView={2.5}
@@ -64,6 +65,12 @@ const PreMadeDesigns: React.FC<PreMadeDesignsProps> = ({
           )}
         />
       </div>
+      <LinkButton
+        href={button.link}
+        label={button.label}
+        arrowIcon
+        className="rounded-full bg-dark gap-4 text-white self-center"
+      />
     </Section>
   );
 };

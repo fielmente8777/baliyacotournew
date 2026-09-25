@@ -111,9 +111,9 @@ export const homePageData = {
   },
 
   bestSellers: {
-    title: "The “Bestsellers”",
+    title: "Shop our Bestsellers",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
+      "Discover the custom-made pieces everyone is talking about.",
     products: [
       {
         name: "",

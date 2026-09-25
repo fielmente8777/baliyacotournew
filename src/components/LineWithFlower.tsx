@@ -1,75 +1,17 @@
-import Link from "next/link";
-import { Container } from "../sectionComponants";
-import { websiteFooterData } from "./footerData";
-import Image from "next/image";
-import clsx from "clsx";
-
-const Footer = () => {
-  return (
-    <footer className="bg-primary text-dark">
-      <div className="flex flex-col gap-16 py-10">
-        {/* line */}
-        <Line />
-        <Container className="grid md:grid-cols-3 grid-cols-1 max-xl:gap-6">
-          <div className="w-[200px] text-center">
-            <div className="relative w-[200px] aspect-4/1.5">
-              <Image
-                src={websiteFooterData.logo}
-                alt="logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="mt-4">{websiteFooterData.description}</p>
-          </div>
-          {websiteFooterData.lists.map((list, index) => (
-            <div
-              key={index}
-              className={clsx(
-                "flex flex-col gap-4",
-                index === 1 && "w-fit xl:ml-auto",
-                index === 0 && "w-fit xl:ml-40"
-              )}
-            >
-              <h3 className="text-2xl text-[#16161699]">{list.title}</h3>
-              <ul className="flex flex-col gap-2">
-                {list.links.map((item, index) => (
-                  <li key={index}>
-                    <Link href={item.href}>{item.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </Container>
-        <Line />
-      </div>
-      <div className="bg-dark">
-        <Container className="py-4">
-          <div className="flex max-md:flex-col items-center justify-between gap-2 text-white ">
-            {" "}
-            <p className="">© Baliye Couture. All rights reserved.</p>
-            <p className="">Powered by Fielmente</p>
-          </div>
-        </Container>
-      </div>
-    </footer>
-  );
-};
-
-export default Footer;
-
-export const Line = () => {
+import clsx from 'clsx';
+    const LineWithFlower: React.FC<{bgColor?: string}> = ({bgColor="bg-[#2E323B]"}) => {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
-      <div className="h-px bg-secondary"></div>
+      <div className={clsx(`h-px`, bgColor)}></div>
       <span>
         <Foo />
       </span>
-      <div className="h-px bg-secondary"></div>
+      <div className={clsx(`h-px`, bgColor)}></div>
     </div>
   );
 };
+
+export default LineWithFlower;
 
 export const Foo = () => (
   <svg

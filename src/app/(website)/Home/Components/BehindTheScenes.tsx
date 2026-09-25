@@ -1,5 +1,6 @@
 "use client";
-import { SectionWithContainer } from "@/components/sectionComponants";
+import LineWithFlower from "@/components/LineWithFlower";
+import { Container, Section } from "@/components/sectionComponants";
 import SwiperCarousel from "@/components/sliders/SwiperCarousel";
 import { SectionHeading } from "@/components/typography";
 import Image from "next/image";
@@ -26,45 +27,49 @@ const BehindTheScenes: React.FC<BehindTheScenesProps> = ({
   ];
 
   return (
-    <SectionWithContainer sectionClassName="bg-secondary">
-      <div className="text-center space-y-2">
-        <SectionHeading title={title} titleColor="white" />
-        <p className="text-white">{description}</p>
-      </div>
-      <div className="mt-10">
-        <SwiperCarousel
-          data={images}
-          slidesPerView={1}
-          spaceBetween={30}
-          autoplay={{
-            delay: 3000,
-            disableOnInteraction: false,
-          }}
-          modules={[Autoplay, EffectFade]}
-          effect="fade"
-          renderSlide={(images) => (
-            <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 grid-flow-row auto-rows-23 gap-4">
-              {images.map((image, index) => (
-                <div
-                  key={index}
-                  className={`${
-                    gridPattern[index % gridPattern.length]
-                  } overflow-hidden relative aspect-auto`}
-                >
-                  <Image
-                    src={image}
-                    alt={title}
-                    fill
-                    className="object-cover rounded-sm"
-                  />
-                  {/* <div className="absolute inset-0 bg-black/40 z-10 text-white">{index}</div> */}
-                </div>
-              ))}
-            </div>
-          )}
-        />
-      </div>
-    </SectionWithContainer>
+    <Section className="bg-secondary space-y-10 ">
+      <LineWithFlower bgColor="bg-white" />
+      <Container>
+        <div className="text-center space-y-2">
+          <SectionHeading title={title} titleColor="white" />
+          <p className="text-white">{description}</p>
+        </div>
+        <div className="mt-10">
+          <SwiperCarousel
+            data={images}
+            slidesPerView={1}
+            spaceBetween={30}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false,
+            }}
+            modules={[Autoplay, EffectFade]}
+            effect="fade"
+            renderSlide={(images) => (
+              <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 grid-flow-row auto-rows-23 gap-4">
+                {images.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`${
+                      gridPattern[index % gridPattern.length]
+                    } overflow-hidden relative aspect-auto`}
+                  >
+                    <Image
+                      src={image}
+                      alt={title}
+                      fill
+                      className="object-cover rounded-sm"
+                    />
+                    {/* <div className="absolute inset-0 bg-black/40 z-10 text-white">{index}</div> */}
+                  </div>
+                ))}
+              </div>
+            )}
+          />
+        </div>
+      </Container>
+      <LineWithFlower bgColor="bg-white" />
+    </Section>
   );
 };
 

@@ -38,7 +38,7 @@ export const websiteFooterData: WebsiteFooterData = {
 
   lists: [
     {
-      title: "QUICK LINKS",
+      title: "Quick Links",
       links: [
         { label: "Pre-made Designs", href: "/products" },
         { label: "Bestsellers", href: "/products?badge=bestseller" },
@@ -47,7 +47,7 @@ export const websiteFooterData: WebsiteFooterData = {
     },
 
     {
-      title: "Contact",
+      title: "Connect With Us On",
       links: [
         // {
         //   label: "Address: " + contact.address,

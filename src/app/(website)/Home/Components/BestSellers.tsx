@@ -1,9 +1,9 @@
 "use client";
 
-import { SectionWithContainer } from "@/components/sectionComponants";
+import { Container, Section } from "@/components/sectionComponants";
 import { SectionHeading } from "@/components/typography";
-import { useGetProductsQuery } from "@/store/api/productApi";
 import ProductCard from "@/features/catalog/ProductCard";
+import { useGetProductsQuery } from "@/store/api/productApi";
 
 interface BestSellersProps {
   title: string;
@@ -27,23 +27,25 @@ const BestSellers: React.FC<BestSellersProps> = ({ title, description }) => {
   if (!isLoading && products.length === 0) return null;
 
   return (
-    <SectionWithContainer sectionClassName="">
-      <div className="space-y-4 text-center">
-        <SectionHeading title={title} />
-        <p className="text-light">{description}</p>
-      </div>
+    <Section>
+      <Container>
+        <div className="space-y-4 text-center">
+          <SectionHeading title={title} />
+          <p className="text-light">{description}</p>
+        </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-4">
-        {isLoading &&
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="aspect-4/5.25 animate-pulse bg-black/5" />
+        <div className="mt-8 grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-4">
+          {isLoading &&
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-4/5.25 animate-pulse bg-black/5" />
+            ))}
+
+          {products.map((product) => (
+            <ProductCard key={product._id} product={product} />
           ))}
-
-        {products.map((product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
-      </div>
-    </SectionWithContainer>
+        </div>
+      </Container>
+    </Section>
   );
 };
 
