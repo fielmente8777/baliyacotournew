@@ -7,6 +7,7 @@ import { Scissors, Star } from 'lucide-react';
 import type { Product } from '@/@types/product';
 import { isCustomizable, primaryImage } from '@/@types/product';
 import { formatINR } from '@/lib/format';
+import WishlistButton from '@/features/wishlist/WishlistButton';
 
 interface Props {
   product: Product;
@@ -40,6 +41,8 @@ export default function ProductCard({ product, priority }: Props) {
               Editor&apos;s Pick
             </span>
           )}
+
+          <WishlistButton product={product} className="absolute right-2 top-2 sm:right-3 sm:top-3" />
 
           {isCustomizable(product) && (
             <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[9px] uppercase tracking-[1.5px] text-[#262626] backdrop-blur-sm sm:bottom-3 sm:left-3 sm:text-[10px]">

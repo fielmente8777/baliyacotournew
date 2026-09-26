@@ -1,4 +1,4 @@
-import { Bell, MapPin, Package, Ruler, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Heart, MapPin, Package, Ruler, UserRound, type LucideIcon } from "lucide-react";
 
 export interface AccountMenuItem {
   title: string;
@@ -24,6 +24,7 @@ export const accountMenu: AccountMenuGroup[] = [
     title: "Order Details",
     items: [
       { title: "All Orders", href: "/my-account/orders", icon: Package },
+      { title: "Wishlist", href: "/my-account/wishlist", icon: Heart },
       { title: "Notifications", href: "/my-account/notifications", icon: Bell },
     ],
   },

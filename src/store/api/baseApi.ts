@@ -121,6 +121,7 @@ export const baseApi = createApi({
     'Product',
     'GarmentType',
     'ShopifyCart',
+    'Wishlist',
   ],
   endpoints: () => ({}),
 });

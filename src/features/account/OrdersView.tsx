@@ -116,7 +116,9 @@ export default function OrdersView() {
 
       {!isLoading && partialError && (
         <p className="px-5 pt-5 text-sm text-[#A52C45] md:px-6">
-          Some of your orders couldn&apos;t be loaded.{' '}
+          {shopifyError
+            ? 'Your ready-to-wear orders couldn\u2019t be loaded right now.'
+            : 'Your custom-design orders couldn\u2019t be loaded right now.'}{' '}
           <button type="button" onClick={refetch} className="underline">
             Try again
           </button>

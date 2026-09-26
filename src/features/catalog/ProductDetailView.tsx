@@ -31,6 +31,7 @@ import ProductGrid from './ProductGrid';
 import AddToCartButton from './AddToCartButton';
 import VariantSelector from './VariantSelector';
 import ProductSpecs from './ProductSpecs';
+import WishlistButton from '@/features/wishlist/WishlistButton';
 
 export default function ProductDetailView({ slug }: { slug: string }) {
   const { data: product, isLoading, isError } = useGetProductBySlugQuery(slug);
@@ -123,6 +124,7 @@ export default function ProductDetailView({ slug }: { slug: string }) {
               )}
 
               <AddToCartButton product={product} variant={activeVariant} />
+              <WishlistButton product={product} variant="inline" />
             </div>
 
             {/* TODO(Sachin): leadTimeDays was a Mongo-backend field with no

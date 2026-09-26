@@ -12,7 +12,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 import {
   ArrowLeft,
   CalendarDays,
@@ -29,21 +28,20 @@ import EmptyState from '@/components/EmptyState';
 import { LostThreadIllustration } from '@/components/illustrations';
 import { formatINR } from '@/lib/format';
 import {
-  useCancelOrderMutation,
-  useGetMyShopifyOrdersQuery,
+  useGetShopifyOrderQuery,
   useGetOrderByIdQuery,
   useGetOrderTrackingQuery,
 } from '@/store/api/orderApi';
 import type { Order, ShopifyOrder } from '@/@types/order';
 
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
+import { CustomOrderActions, ShopifyOrderActions } from './order-actions';
 import OrderTimeline from '../../app/(website)/my-account/orders/components/OrderTimeline';
 import {
   COPY,
   SHOPIFY_COPY,
   buildShopifyTimeline,
   buildTimeline,
-  findShopifyOrder,
   formatMoney,
   isShopifySlug,
   shortDate,
@@ -205,13 +203,9 @@ function NotFound() {
 /* ------------------------------------------------------ custom-design order */
 
 function CustomOrderDetail({ order, tracking }: { order: Order; tracking: Parameters<typeof buildTimeline>[1] }) {
-  const [cancelOrder, { isLoading: cancelling, error: cancelError }] = useCancelOrderMutation();
-  const [confirming, setConfirming] = useState(false);
 
   const copy = COPY[order.status] ?? COPY.pending;
   const itemsTotal = order.items.reduce((sum, item) => sum + item.subtotal, 0);
-  /* Garments already in production can't be cancelled from here. */
-  const canCancel = order.status === 'pending' || order.status === 'confirmed';
 
   return (
     <AccountContent>
@@ -280,50 +274,7 @@ function CustomOrderDetail({ order, tracking }: { order: Order; tracking: Parame
         </Panel>
       </div>
 
-      {canCancel && (
-        <div className="border-t border-[#E9E4DC] px-4 py-5 sm:px-6">
-          {!confirming ? (
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              className="text-sm font-medium text-[#9B1C14] underline underline-offset-2"
-            >
-              Cancel this order
-            </button>
-          ) : (
-            <div className="animate-slide-down rounded-lg border border-[#F1D4D2] bg-[#FDF6F5] p-4">
-              <p className="text-sm text-[#222]">Cancel this order? This can&apos;t be undone.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={cancelling}
-                  onClick={async () => {
-                    try {
-                      await cancelOrder({ id: order._id, reason: 'Cancelled by customer' }).unwrap();
-                      setConfirming(false);
-                    } catch {
-                      /* error shown below */
-                    }
-                  }}
-                  className="h-9 rounded-md bg-[#9B1C14] px-4 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
-                >
-                  {cancelling ? 'Cancelling…' : 'Yes, cancel order'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirming(false)}
-                  className="h-9 rounded-md border border-[#DDD6CC] px-4 text-sm text-[#444] transition hover:bg-white"
-                >
-                  Keep order
-                </button>
-              </div>
-              {cancelError && (
-                <p className="mt-2 text-sm text-[#9B1C14]">We couldn&apos;t cancel this order. Please try again.</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      <CustomOrderActions order={order} />
     </AccountContent>
   );
 }
@@ -392,6 +343,8 @@ function ShopifyOrderDetail({ order }: { order: ShopifyOrder }) {
           <p className="mt-2 text-xs text-[#8A8A8A]">Taxes included · {paymentLabel}</p>
         </Panel>
       </div>
+
+      <ShopifyOrderActions order={order} />
     </AccountContent>
   );
 }
@@ -403,12 +356,12 @@ export default function OrderDetailView({ orderId }: { orderId: string }) {
 
   const custom = useGetOrderByIdQuery(orderId, { skip: shopify });
   const tracking = useGetOrderTrackingQuery(orderId, { skip: shopify });
-  const shopifyOrders = useGetMyShopifyOrdersQuery(undefined, { skip: !shopify });
+  /* "shopify-6412…" → 6412…, loaded on its own with the full return detail. */
+  const shopifyOrder = useGetShopifyOrderQuery(orderId.replace(/^shopify-/, ''), { skip: !shopify });
 
   if (shopify) {
-    if (shopifyOrders.isLoading) return <LoadingSkeleton />;
-    const order = shopifyOrders.data ? findShopifyOrder(shopifyOrders.data, orderId) : undefined;
-    return order ? <ShopifyOrderDetail order={order} /> : <NotFound />;
+    if (shopifyOrder.isLoading) return <LoadingSkeleton />;
+    return shopifyOrder.data ? <ShopifyOrderDetail order={shopifyOrder.data} /> : <NotFound />;
   }
 
   if (custom.isLoading) return <LoadingSkeleton />;
