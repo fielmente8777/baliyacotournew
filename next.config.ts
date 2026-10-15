@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['vivisectible-wava-preshrunk.ngrok-free.dev'],
+  experimental: {
+    proxyClientMaxBodySize: "25mb",
+  },
+
+  allowedDevOrigins: ["vivisectible-wava-preshrunk.ngrok-free.dev"],
   images: {
     unoptimized: true,
   },
@@ -33,8 +37,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/backend/:path*',
-        destination: `${process.env.BACKEND_ORIGIN ?? 'http://localhost:5000'}/api/v1/:path*`,
+        source: "/api/backend/:path*",
+        destination: `${process.env.BACKEND_ORIGIN ?? "http://localhost:5000"}/api/v1/:path*`,
       },
     ];
   },

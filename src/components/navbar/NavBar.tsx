@@ -100,7 +100,7 @@ const Navbar = () => {
 
 export default Navbar;
 
-export const ProfileIcon = () => (
+const ProfileIcon = () => (
   <svg
     width={20}
     height={20}
@@ -130,7 +130,7 @@ export const ProfileIcon = () => (
   </svg>
 );
 
-export const CartIcon = () => (
+const CartIcon = () => (
   <svg
     width={20}
     height={20}

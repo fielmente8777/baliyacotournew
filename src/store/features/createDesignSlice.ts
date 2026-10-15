@@ -107,7 +107,6 @@ export const {
   setMeasurementProfile,
   setInstructions,
   setDesignName,
-  resetDesign,
 } = createDesignSlice.actions;
 
 export default createDesignSlice.reducer;

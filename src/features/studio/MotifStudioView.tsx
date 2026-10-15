@@ -22,7 +22,7 @@ import {
   useExtractMotifsMutation,
   useGetRunQuery,
 } from '@/store/api/studioApi';
-import { fileToResizedBase64 } from '@/lib/imageResize';
+import { MAX_UPLOAD_BYTES, base64Bytes, fileToResizedBase64 } from '@/lib/imageResize';
 import { downloadImage } from '@/lib/downloadImage';
 
 import {
@@ -134,6 +134,15 @@ export default function MotifStudioView() {
 
   const handleExtract = async () => {
     if (views.length === 0) return setError('Add at least one photo of the garment.');
+
+    /* Over the limit, the upload is silently cut in half on its way to the
+       server — say so instead of failing mysteriously. */
+    const totalBytes = views.reduce((sum, view) => sum + base64Bytes(view.base64), 0);
+    if (totalBytes > MAX_UPLOAD_BYTES) {
+      return setError(
+        `These photos add up to ${(totalBytes / 1024 / 1024).toFixed(1)} MB — the limit is 9 MB. Remove a photo or use smaller ones.`,
+      );
+    }
     setError(null);
 
     try {
@@ -148,7 +157,7 @@ export default function MotifStudioView() {
       setRunId(job.runId);
     } catch (err) {
       const message = (err as { data?: { message?: string } }).data?.message;
-      setError(message ?? 'Extraction failed. Check the API key and credits.');
+      setError(message ?? 'Extraction failed. Please try again.');
     }
   };
 
@@ -413,9 +422,11 @@ export default function MotifStudioView() {
                 ) : (
                   <span className="px-6 text-center text-xs text-[#9A9A9A]">
                     {isExtractPending
-                      ? 'Extracting… usually 20–60 seconds'
+                      ? 'Extracting… usually under 2 minutes'
                       : extractJobs.some((j) => j.status === 'failed')
-                        ? 'Extraction failed — try different photos'
+                        ? /* The server's reason: bad key, no credit, safety filter… */
+                          extractJobs.find((j) => j.status === 'failed')?.error ??
+                          'Extraction failed — try different photos'
                         : 'Every border found across your photos will appear here'}
                   </span>
                 )}
@@ -696,7 +707,11 @@ export default function MotifStudioView() {
                         key={job._id}
                         className="flex aspect-[3/4] items-center justify-center rounded-xl bg-white text-xs text-[#9A9A9A] ring-1 ring-[#EEE]"
                       >
-                        {job.status === 'failed' ? 'Failed' : 'Generating…'}
+                        {job.status === 'failed' ? (
+                          <span className="px-4 text-center text-[#A52C45]">{job.error ?? 'Failed'}</span>
+                        ) : (
+                          'Generating…'
+                        )}
                       </div>,
                     ]
               )}

@@ -19,6 +19,7 @@ import {
   useGetProductBySlugQuery,
   useGetRelatedProductsQuery,
 } from '@/store/api/productApi';
+import { useGetReviewsQuery } from '@/store/api/reviewApi';
 import { isCustomizable } from '@/@types/product';
 import type { ProductVariant } from '@/@types/product';
 import { formatINR } from '@/lib/format';
@@ -40,6 +41,10 @@ export default function ProductDetailView({ slug }: { slug: string }) {
      allow a conditional useState. Defaults to null while `product` is
      still loading; resolved to a real variant just below once it's in. */
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  /* Reviews come from Shopify; the same cached list feeds CustomerReviews. */
+  /* Always fresh on opening a product: a review written moments ago on
+     Order History must not be hidden behind a cached (empty) list. */
+  const { data: allReviews = [] } = useGetReviewsQuery(undefined, { refetchOnMountOrArgChange: true });
 
   if (isLoading) {
     return (
@@ -61,12 +66,19 @@ export default function ProductDetailView({ slug }: { slug: string }) {
   /* A missing or unpublished product is a 404, not an error page. */
   if (isError || !product) notFound();
 
-  const price = product.salePrice ?? product.basePrice;
   const canCustomize = isCustomizable(product);
   /* Falls back to the first variant (e.g. the two Bridal items, which have
      no real options and just one "Default Title" variant) until the
      customer picks one explicitly. */
   const activeVariant = selectedVariant ?? product.variants[0] ?? null;
+
+  /* Variants can be priced differently (e.g. a colour costs more): once the
+     customer picks one, show its price. Until then, the product's lowest. */
+  const price = selectedVariant ? selectedVariant.price : (product.salePrice ?? product.basePrice);
+
+  const reviews = allReviews.filter((r) => r.productId === product._id);
+  const ratingCount = reviews.length;
+  const ratingAverage = ratingCount ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount : 0;
 
   const galleryImages =
     product.images.length > 0
@@ -75,11 +87,18 @@ export default function ProductDetailView({ slug }: { slug: string }) {
           .map((image) => ({ src: image.url, alt: image.alt ?? product.name }))
       : [{ src: '/Rectangle-23959.png', alt: product.name }];
 
+  /* A variant photo that isn't in the product's own images is added, so
+     selecting it still shows it. */
+  const variantImage = activeVariant?.image;
+  if (variantImage && !galleryImages.some((img) => img.src === variantImage)) {
+    galleryImages.push({ src: variantImage, alt: `${product.name} — ${activeVariant.title}` });
+  }
+
   return (
     <main className="bg-[#FAF7F2]">
       <Section className="px-4 md:px-10">
         <div className="grid gap-12 lg:grid-cols-2">
-          <ProductGallery images={galleryImages} />
+          <ProductGallery images={galleryImages} activeSrc={selectedVariant?.image} />
 
           <div>
             <h1 className="text-5xl font-semibold">{product.name}</h1>
@@ -90,15 +109,15 @@ export default function ProductDetailView({ slug }: { slug: string }) {
 
             <h2 className="mt-2 text-4xl font-bold">{formatINR(price / 100)}</h2>
 
-            {product.ratingCount > 0 && (
+            {ratingCount > 0 && (
               <div className="mt-4 flex items-center gap-3">
                 <div className="flex items-center gap-2 rounded-lg bg-[#E0F1DC] px-2 py-1 text-[#426340]">
-                  <span>{product.ratingAverage.toFixed(1)}</span>
+                  <span>{ratingAverage.toFixed(1)}</span>
                   <IoIosStar size={20} fill="currentColor" />
                 </div>
 
                 <span className="text-sm text-gray-500">
-                  {product.ratingCount.toLocaleString('en-IN')} ratings
+                  {ratingCount.toLocaleString('en-IN')} ratings
                 </span>
               </div>
             )}
@@ -164,7 +183,7 @@ export default function ProductDetailView({ slug }: { slug: string }) {
       {/* Static marketing content, shared with the homepage. */}
       <DesignProcess {...homePageData.designProcess} />
 
-      <CustomerReviews />
+      <CustomerReviews reviews={reviews} />
 
       {related.length > 0 && (
         <Section className="px-4 md:px-10">

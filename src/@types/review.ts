@@ -1,25 +1,15 @@
-/** Reviews. Mirrors baliye-node models/review.ts. */
+/** Reviews. Stored in Shopify as "Product Review" metaobjects — see lib/shopifyReviews.ts. */
 
-export interface Review {
-  _id: string;
-  userId: string;
-  orderId: string;
-  productId?: string;
-  customDesignId?: string;
-  rating: number;
-  title?: string;
-  body?: string;
-  images: string[];
-  isApproved: boolean;
-  createdAt: string;
-}
+export type { ShopifyReview as Review } from '@/lib/shopifyReviews';
 
 export interface SaveReviewBody {
+  /** Shopify Order GID. */
   orderId: string;
-  productId?: string;
-  customDesignId?: string;
+  /** Shopify Product GID. */
+  productId: string;
   rating: number;
   title?: string;
   body?: string;
+  /** Base64 JPEGs (no data: prefix), at most two. */
   images?: string[];
 }

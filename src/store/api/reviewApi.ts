@@ -1,56 +1,59 @@
 /**
- * Reviews. The backend verifies the customer bought the item and that it has
- * been delivered, so nothing here needs to guard that — but the UI still only
- * offers the action on delivered orders, to avoid a pointless round trip.
+ * Reviews live in Shopify (metaobjects), not in baliye-node.
+ *
+ * Reading goes straight to Shopify's Storefront API from the browser. Saving
+ * goes through this app's /api/reviews route, which holds the Admin token and
+ * checks the item was delivered to this customer.
  */
 
 import type { Review, SaveReviewBody } from '@/@types/review';
-import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
+import { fetchAllReviews } from '@/lib/shopifyReviews';
+import type { RootState } from '@/store';
+import { baseApi } from './baseApi';
 
-export const reviewApi = baseApi.injectEndpoints({
+const reviewApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** Every review I have written — Order History uses this to show which
-     *  lines are already reviewed. */
-    getMyReviews: builder.query<Review[], void>({
-      query: () => '/reviews/mine',
-      transformResponse: (res: ApiEnvelope<Review[]>) => unwrap(res),
+    /** Every visible review — product pages and Order History filter client-side. */
+    getReviews: builder.query<Review[], void>({
+      queryFn: async () => {
+        try {
+          return { data: await fetchAllReviews() };
+        } catch (err) {
+          return { error: { status: 'CUSTOM_ERROR', error: (err as Error).message } };
+        }
+      },
       providesTags: ['Review'],
     }),
 
-    getProductReviews: builder.query<Review[], string>({
-      query: (productId) => `/reviews/product/${productId}`,
-      transformResponse: (res: ApiEnvelope<Review[]>) => unwrap(res),
-      providesTags: ['Review'],
-    }),
-
-    createReview: builder.mutation<Review, SaveReviewBody>({
-      query: (body) => ({ url: '/reviews', method: 'POST', body }),
-      transformResponse: (res: ApiEnvelope<Review>) => unwrap(res),
-      /* Product tags too: a new review moves ratingAverage. */
-      invalidatesTags: ['Review', 'Product'],
-    }),
-
-    updateReview: builder.mutation<
-      Review,
-      { id: string; body: Partial<SaveReviewBody> }
-    >({
-      query: ({ id, body }) => ({ url: `/reviews/${id}`, method: 'PUT', body }),
-      transformResponse: (res: ApiEnvelope<Review>) => unwrap(res),
-      invalidatesTags: ['Review', 'Product'],
-    }),
-
-    deleteReview: builder.mutation<unknown, string>({
-      query: (id) => ({ url: `/reviews/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Review', 'Product'],
+    createReview: builder.mutation<{ id: string }, SaveReviewBody>({
+      queryFn: async (body, api) => {
+        const token = (api.getState() as RootState).auth?.accessToken;
+        const response = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+        });
+        const json = (await response.json().catch(() => ({}))) as { data?: { id: string }; message?: string };
+        if (!response.ok) return { error: { status: response.status, data: json } };
+        return { data: json.data! };
+      },
+      /* Shopify takes a moment to serve a new metaobject; refetching at once
+         can return the old list, so wait briefly before invalidating. */
+      async onQueryStarted(_body, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          setTimeout(() => dispatch(reviewApi.util.invalidateTags(['Review'])), 2500);
+        } catch {
+          /* save failed — nothing to refresh */
+        }
+      },
+      invalidatesTags: ['Review'],
     }),
   }),
   overrideExisting: false,
 });
 
-export const {
-  useGetMyReviewsQuery,
-  useGetProductReviewsQuery,
-  useCreateReviewMutation,
-  useUpdateReviewMutation,
-  useDeleteReviewMutation,
-} = reviewApi;
+export const { useGetReviewsQuery, useCreateReviewMutation } = reviewApi;

@@ -3,7 +3,7 @@
 import type { AppNotification, NotificationFeed } from '@/@types/notification';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const notificationApi = baseApi.injectEndpoints({
+const notificationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** Returns items and the unread count together, so the badge is one call.
         The bell asks for the default (latest 10); the notifications page asks

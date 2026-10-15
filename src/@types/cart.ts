@@ -72,12 +72,6 @@ export interface CartTotals {
   total: number;
 }
 
-/** Narrows a populated reference, falling back when population failed. */
-export const cartProduct = (item: CartItem): Product | null =>
-  item.kind === 'product' && item.productId && typeof item.productId !== 'string'
-    ? item.productId
-    : null;
-
 export const cartDesign = (item: CartItem): CartDesign | null =>
   item.kind === 'design' && item.customDesignId && typeof item.customDesignId !== 'string'
     ? item.customDesignId

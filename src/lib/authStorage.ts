@@ -18,7 +18,7 @@ import type { AuthTokens, AuthUser } from '@/@types/auth';
  * change (cookie + CORS credentials), so this is the step until then.
  */
 const KEY = 'baliye.auth';
-export const AUTH_COOKIE = 'baliye_signed_in';
+const AUTH_COOKIE = 'baliye_signed_in';
 
 /** Matches the refresh-token lifetime on the backend. */
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;

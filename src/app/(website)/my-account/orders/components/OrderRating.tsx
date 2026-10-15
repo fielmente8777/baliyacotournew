@@ -4,8 +4,8 @@ import { Star } from 'lucide-react';
 
 interface Props {
   rating: number;
-  /** "Edit a review" once one exists, "Add a review" when it doesn't. */
-  action: string;
+  /** "Add a review" until one exists; omitted afterwards (one review per item). */
+  action?: string;
   onAction?: () => void;
 }
 
@@ -22,13 +22,15 @@ export default function OrderRating({ rating, action, onAction }: Props) {
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={onAction}
-        className="text-[13px] font-medium text-[#A52C45] hover:underline"
-      >
-        {action}
-      </button>
+      {action && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="text-[13px] font-medium text-[#A52C45] hover:underline"
+        >
+          {action}
+        </button>
+      )}
     </div>
   );
 }

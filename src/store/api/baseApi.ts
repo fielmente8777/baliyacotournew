@@ -17,12 +17,6 @@ import type { AuthTokens } from '@/@types/auth';
 import { logOut, setCredentials } from '@/store/features/authSlice';
 import type { RootState } from '@/store';
 
-/** Demo mode for catalog data only — auth always talks to the real API. */
-export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false';
-
-export const MOCK_DELAY_MS = 300;
-export const mockDelay = () => new Promise((r) => setTimeout(r, MOCK_DELAY_MS));
-
 /** The backend wraps every payload as { success, message, data }. */
 export interface ApiEnvelope<T> {
   success: boolean;
@@ -51,7 +45,7 @@ const rawBaseQuery = fetchBaseQuery({
  */
 const mutex = new Mutex();
 
-export const baseQueryWithReauth: BaseQueryFn<
+const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError

@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * forged cookie gains nothing but an empty page.
  */
 
-const PROTECTED = ['/my-account', '/cart', '/shipping', '/order-success'];
+const PROTECTED = ['/my-account', '/cart', '/shipping'];
 
 const SIGNED_IN_COOKIE = 'baliye_signed_in';
 
@@ -44,7 +44,6 @@ export const config = {
     '/my-account/:path*',
     '/cart/:path*',
     '/shipping/:path*',
-    '/order-success/:path*',
     /**
      * Exact match only. `/login/complete` must NOT be guarded — it is where
      * the Shopify callback lands to store the session, and redirecting a

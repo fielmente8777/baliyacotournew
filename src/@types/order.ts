@@ -102,17 +102,13 @@ export interface OrderTrackingEntry {
   createdAt: string;
 }
 
-export interface PlaceOrderBody {
-  shippingAddressId?: string;
-  shippingAddress?: string;
-  measurementProfileId?: string;
-}
-
 /* ---- Ready-to-wear orders from Shopify (GET /orders/shopify) ---- */
 
 export type ShopifyOrderStatus = 'placed' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface ShopifyOrderItem {
+  /** Shopify product GID — reviews are keyed to it. Absent if the product was deleted. */
+  productId?: string;
   /** gid://shopify/LineItem/… — sent back when requesting a return. */
   lineItemId: string;
   /** Shipped and not already in a return. */

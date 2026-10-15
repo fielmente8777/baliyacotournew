@@ -19,7 +19,7 @@ export interface ProductFilter {
   params: { badge?: string; tag?: string };
 }
 
-export const PRODUCT_FILTERS: ProductFilter[] = [
+const PRODUCT_FILTERS: ProductFilter[] = [
   { key: 'all', label: 'All', heading: 'Pre-made Designs', params: {} },
   { key: 'bestseller', label: 'Bestsellers', heading: 'Bestsellers', params: { badge: 'bestseller' } },
   { key: 'editors-pick', label: "Editor's Picks", heading: "Editor's Picks", params: { badge: 'editors-pick' } },

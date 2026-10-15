@@ -19,11 +19,11 @@ const CART_ID_KEY = 'baliye_shopify_cart_id';
 export const getStoredCartId = (): string | null =>
   typeof window === 'undefined' ? null : window.localStorage.getItem(CART_ID_KEY);
 
-export const setStoredCartId = (id: string) => {
+const setStoredCartId = (id: string) => {
   if (typeof window !== 'undefined') window.localStorage.setItem(CART_ID_KEY, id);
 };
 
-export const clearStoredCartId = () => {
+const clearStoredCartId = () => {
   if (typeof window !== 'undefined') window.localStorage.removeItem(CART_ID_KEY);
 };
 

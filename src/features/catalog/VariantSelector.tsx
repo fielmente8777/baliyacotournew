@@ -9,6 +9,10 @@
  * placeholder for products with no real options — see the two Bridal items)
  * is filtered out upstream in productApi.ts, so this component only ever
  * sees options worth choosing between.
+ *
+ * Values with a Shopify swatch (Color linked to the category metafield) show
+ * as colour circles; the rest — sizes, or a colour without a swatch — stay
+ * as text buttons.
  */
 
 import type { Product, ProductVariant } from '@/@types/product';
@@ -50,7 +54,7 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
               {currentValue ? `: ${currentValue}` : ''}
             </p>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {option.values.map((value) => {
                 /* Is there any variant at all with this value for this option?
                    Used to grey out combinations that don't exist rather than
@@ -60,6 +64,35 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
                 );
 
                 const isSelected = currentValue === value;
+                const swatch = option.swatches?.[value];
+
+                if (swatch) {
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={!variantExists}
+                      onClick={() => selectOption(option.name, value)}
+                      title={value}
+                      aria-label={`${option.name}: ${value}${variantExists ? '' : ' (unavailable)'}`}
+                      aria-pressed={isSelected}
+                      className={`relative h-10 w-10 rounded-full p-0.5 transition ${
+                        isSelected ? 'ring-2 ring-black ring-offset-2' : 'hover:ring-1 hover:ring-[#999] hover:ring-offset-2'
+                      } ${variantExists ? '' : 'cursor-not-allowed opacity-40'}`}
+                    >
+                      <span
+                        className="block h-full w-full rounded-full border border-black/10 bg-cover bg-center"
+                        style={{
+                          backgroundColor: swatch.color,
+                          backgroundImage: swatch.image ? `url(${swatch.image})` : undefined,
+                        }}
+                      />
+                      {!variantExists && (
+                        <span className="absolute left-1/2 top-1/2 h-px w-11 -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-[#666]" />
+                      )}
+                    </button>
+                  );
+                }
 
                 return (
                   <button
@@ -85,7 +118,7 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
       })}
 
       {selectedVariant && !selectedVariant.availableForSale && (
-        <p className="text-sm text-secondary">This size is currently out of stock.</p>
+        <p className="text-sm text-secondary">This option is currently out of stock.</p>
       )}
     </div>
   );

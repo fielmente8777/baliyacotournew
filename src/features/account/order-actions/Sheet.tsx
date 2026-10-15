@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -44,7 +45,10 @@ export default function Sheet({ open, onClose, title, step, children, footer }: 
 
   if (!open) return null;
 
-  return (
+  /* Rendered into <body>: the account page's fade-in animates `transform`,
+     which makes its wrapper the containing block for position:fixed and
+     would pin the sheet inside the page instead of the screen. */
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 animate-fade-in bg-black/40" />
 
@@ -82,6 +86,7 @@ export default function Sheet({ open, onClose, title, step, children, footer }: 
 
         {footer && <div className="flex gap-3 border-t border-[#F0EBE3] px-5 py-4">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

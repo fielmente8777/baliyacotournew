@@ -27,7 +27,7 @@ const DesignProcess: React.FC<DesignProcessProps> = ({ title, steps }) => {
 
 export default DesignProcess;
 
-export const StepsCards: React.FC<DesignProcessProps["steps"][0]> = ({
+const StepsCards: React.FC<DesignProcessProps["steps"][0]> = ({
   title,
   description,
   image,

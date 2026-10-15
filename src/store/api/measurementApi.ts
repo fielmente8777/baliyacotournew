@@ -14,7 +14,7 @@ import type {
 import { uiMetaFor } from '@/mocks/measurement.mock';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const measurementApi = baseApi.injectEndpoints({
+const measurementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** The configured fields, joined with local hotspot/illustration metadata. */
     getMeasurementFields: builder.query<MeasurementField[], void>({

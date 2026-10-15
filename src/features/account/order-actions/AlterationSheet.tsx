@@ -213,7 +213,7 @@ export default function AlterationSheet({ open, onClose, orderId, items }: Props
               {photos.map((p, i) => (
                 <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-[#EFEAE2]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`data:image/png;base64,${p}`} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                  <img src={`data:image/jpeg;base64,${p}`} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setPhotos((all) => all.filter((_, n) => n !== i))}

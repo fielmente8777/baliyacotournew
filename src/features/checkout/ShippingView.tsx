@@ -10,7 +10,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
 import CheckoutCard from "@/components/checkout/CheckoutCard";
@@ -19,7 +18,7 @@ import PriceSummary from "@/components/checkout/PriceSummary";
 import PrimaryButton from "@/components/checkout/PrimaryButton";
 
 import { useGetAddressesQuery } from "@/store/api/addressApi";
-import { usePlaceOrderMutation } from "@/store/api/orderApi";
+import { useStartDesignCheckoutMutation } from "@/store/api/orderApi";
 import { useCart } from "@/hooks/useCart";
 import { useAppSelector } from "@/store/hooks";
 import { useGetProfileQuery } from "@/store/api/profileApi";
@@ -27,7 +26,6 @@ import { DEFAULT_COUNTRY_CODE, getAddressCountry } from "@/lib/addressCountries"
 import { prepareShopifyCheckout } from "@/lib/shopifyAddress";
 
 export default function ShippingView() {
-  const router = useRouter();
   const {
     totals,
     isLoading: cartLoading,
@@ -36,7 +34,7 @@ export default function ShippingView() {
     hasDesignItems,
   } = useCart();
   const { data: addresses, isLoading } = useGetAddressesQuery();
-  const [placeOrder, { isLoading: isPlacing }] = usePlaceOrderMutation();
+  const [startDesignCheckout, { isLoading: isPlacing }] = useStartDesignCheckoutMutation();
   /* Prefills Shopify checkout's Contact step. The live profile comes first:
      s.auth.user is a copy saved to localStorage at sign-in, so it can be
      stale or email-less (e.g. a session from before the profile had one). */
@@ -101,14 +99,20 @@ export default function ShippingView() {
       return;
     }
 
-    /* Design-only cart: unchanged, still baliye-node's own order flow. */
+    /* Design-only cart: paid on Shopify too. The backend turns the designs
+       into a Shopify draft order (priced server-side) and returns its
+       checkout; paying there creates the order in Shopify. */
+    setIsRedirecting(true);
     try {
-      const order = await placeOrder({ shippingAddressId: selectedAddress._id }).unwrap();
-      router.push(`/order-success?order=${order._id}`);
+      const { checkoutUrl: designCheckoutUrl } = await startDesignCheckout({
+        shippingAddressId: selectedAddress._id,
+      }).unwrap();
+      window.location.href = designCheckoutUrl;
     } catch (err) {
+      setIsRedirecting(false);
       const message = (err as { data?: { message?: string } }).data?.message;
-      /* The backend rejects an order with no measurements — say which. */
-      setError(message ?? "We couldn't place your order. Please try again.");
+      /* The backend rejects a design with no measurements — say which. */
+      setError(message ?? "We couldn't start checkout. Please try again.");
     }
   };
 

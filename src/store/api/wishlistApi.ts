@@ -7,7 +7,7 @@
 import type { AddShopifyWishlistBody, Wishlist, WishlistRefs } from '@/@types/wishlist';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const wishlistApi = baseApi.injectEndpoints({
+const wishlistApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getWishlist: builder.query<Wishlist, void>({
       query: () => '/wishlist',

@@ -32,7 +32,7 @@ function Svg({ size = 20, children, ...rest }: IconProps & { children: React.Rea
 }
 
 /** Bolt of fabric: a roll with cloth unrolling from it. */
-export const FabricIcon = (p: IconProps) => (
+const FabricIcon = (p: IconProps) => (
   <Svg {...p}>
     <ellipse cx="6.5" cy="7" rx="3.5" ry="3.5" />
     <circle cx="6.5" cy="7" r="1" />
@@ -42,7 +42,7 @@ export const FabricIcon = (p: IconProps) => (
 );
 
 /** Five-petal floral motif with a needle — embroidery. */
-export const EmbroideryIcon = (p: IconProps) => (
+const EmbroideryIcon = (p: IconProps) => (
   <Svg {...p}>
     <circle cx="10" cy="13" r="1.6" />
     <path d="M10 11.4c-1.6-2.4-.8-4.4 0-5 .8.6 1.6 2.6 0 5Z" />
@@ -56,7 +56,7 @@ export const EmbroideryIcon = (p: IconProps) => (
 );
 
 /** Shoulders with a scooped neckline. */
-export const NeckIcon = (p: IconProps) => (
+const NeckIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M2.5 9.5C5 7.5 7.5 6 9 5.5c.3 2.8 1.4 4.8 3 4.8s2.7-2 3-4.8c1.5.5 4 2 6.5 4" />
     <path d="M5 8v12.5h14V8" />
@@ -65,7 +65,7 @@ export const NeckIcon = (p: IconProps) => (
 );
 
 /** Kurta body with one long sleeve drawn out. */
-export const SleeveIcon = (p: IconProps) => (
+const SleeveIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M9 3.5c.4 1.4 1.5 2.2 3 2.2s2.6-.8 3-2.2" />
     <path d="M9 3.5 5 5.5 2 15.5l3 1 2.5-6.5v11h9V8" />
@@ -75,7 +75,7 @@ export const SleeveIcon = (p: IconProps) => (
 );
 
 /** Sleeve end with a buttoned cuff band. */
-export const CuffIcon = (p: IconProps) => (
+const CuffIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M8 3h8l1.5 11h-11L8 3Z" />
     <rect x="6" y="14" width="12" height="6" rx="1" />
@@ -84,7 +84,7 @@ export const CuffIcon = (p: IconProps) => (
 );
 
 /** Salwar / trousers. */
-export const LowerIcon = (p: IconProps) => (
+const LowerIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M6 3h12" />
     <path d="M6 3 4.5 21h5L12 9l2.5 12h5L18 3" />
@@ -93,7 +93,7 @@ export const LowerIcon = (p: IconProps) => (
 );
 
 /** A dupatta draped in a loop. */
-export const DupattaIcon = (p: IconProps) => (
+const DupattaIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4 4c2 5 5 7 8 7s6-2 8-7" />
     <path d="M4 4c.5 6 1.5 11 1 16l3-1.5L10 20c.5-3 1-6 2-9" />
@@ -102,7 +102,7 @@ export const DupattaIcon = (p: IconProps) => (
 );
 
 /** Garment outline with a length marker beside it. */
-export const LengthIcon = (p: IconProps) => (
+const LengthIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M7 3.5c.4 1.3 1.3 2 2.5 2s2.1-.7 2.5-2" />
     <path d="M7 3.5 4 5.5v2.5l2-.5L5 20.5h9l-1-13 2 .5V5.5l-3-2" />
@@ -111,7 +111,7 @@ export const LengthIcon = (p: IconProps) => (
 );
 
 /** Kurta outline — used for any group without its own icon. */
-export const GarmentIcon = (p: IconProps) => (
+const GarmentIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M9 3c.4 1.5 1.5 2.3 3 2.3S14.6 4.5 15 3" />
     <path d="M9 3 5 5l-1.5 5.5 2.5.8L7 8.5V21h10V8.5l1 2.8 2.5-.8L19 5l-4-2" />

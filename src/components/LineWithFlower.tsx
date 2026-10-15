@@ -13,7 +13,7 @@ import clsx from 'clsx';
 
 export default LineWithFlower;
 
-export const Foo = () => (
+const Foo = () => (
   <svg
     width={33}
     height={32}

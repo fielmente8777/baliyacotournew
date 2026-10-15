@@ -53,7 +53,7 @@ const LinkButton: React.FC<LinkButtonProps> = ({
 
 export default LinkButton;
 
-export const ArrowIcon = () => (
+const ArrowIcon = () => (
   <svg
     width={25}
     height={8}
@@ -68,7 +68,7 @@ export const ArrowIcon = () => (
   </svg>
 );
 
-export const WhatsAppIcon = () => (
+const WhatsAppIcon = () => (
   <svg
     width={24}
     height={24}
@@ -83,7 +83,7 @@ export const WhatsAppIcon = () => (
   </svg>
 );
 
-export const CallIcon = () => (
+const CallIcon = () => (
   <svg
     width={24}
     height={24}
@@ -98,7 +98,7 @@ export const CallIcon = () => (
   </svg>
 );
 
-export const CalendarIcon = () => (
+const CalendarIcon = () => (
   <svg
     width={24}
     height={24}

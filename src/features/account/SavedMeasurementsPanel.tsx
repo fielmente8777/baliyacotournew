@@ -23,7 +23,7 @@ import OutlineButton from '../../app/(website)/my-account/components/OutlineButt
 
 export default function SavedMeasurementsPanel() {
   const { data: profiles, isLoading } = useGetMeasurementProfilesQuery();
-  const { data: fields = [], isLoading: fieldsLoading } = useGetMeasurementFieldsQuery();
+  const { data: fields = [] } = useGetMeasurementFieldsQuery();
 
   const [createProfile, { isLoading: isCreating }] = useCreateMeasurementProfileMutation();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMeasurementProfileMutation();

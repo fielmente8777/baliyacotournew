@@ -26,7 +26,7 @@ export interface ImageJob {
   createdAt: string;
 }
 
-export const studioApi = baseApi.injectEndpoints({
+const studioApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** Stage 1 — isolate embroidery from a donor garment. */
     extractMotifs: builder.mutation<
@@ -62,7 +62,7 @@ export const studioApi = baseApi.injectEndpoints({
       invalidatesTags: ['ImageJob'],
     }),
 
-    /** Polls Magnific for every pending job in the run before returning. */
+    /** Refreshes every pending job in the run before returning. */
     getRun: builder.query<ImageJob[], string>({
       query: (runId) => `/ai/runs/${runId}`,
       transformResponse: (res: ApiEnvelope<ImageJob[]>) => unwrap(res),
@@ -82,5 +82,4 @@ export const {
   useExtractMotifsMutation,
   useApplyMotifsMutation,
   useGetRunQuery,
-  useGetRunHistoryQuery,
 } = studioApi;

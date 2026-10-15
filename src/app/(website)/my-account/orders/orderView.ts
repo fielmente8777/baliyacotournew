@@ -37,6 +37,10 @@ export interface OrderLineView {
   statusTitle: string;
   statusDescription: string;
   isDelivered: boolean;
+  /** Delivered Shopify item linked to a product — offers "Add a review". */
+  canReview: boolean;
+  /** "#1001" for Shopify orders — shown in the review popup. */
+  orderNumber?: string;
   /** Where the order came from — drives the "Type" filter. */
   source: 'custom' | 'shopify';
   /** Coarse status for the "Status" filter. */
@@ -110,18 +114,14 @@ export function buildTimeline(order: Order, tracking: OrderTrackingEntry[] = [])
 
 const PLACEHOLDER = '/Rectangle-23959.png';
 
-export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[] {
+/* Custom designs have no Shopify product, so they are not reviewable —
+   reviews live in Shopify and are keyed to a product. */
+export function toOrderLines(orders: Order[]): OrderLineView[] {
   return orders.flatMap((order) => {
     const timeline = buildTimeline(order);
     const copy = COPY[order.status] ?? COPY.pending;
 
     return order.items.map((item: OrderItem, index: number) => {
-      const review = reviews.find(
-        (r) =>
-          r.orderId === order._id &&
-          (item.productId ? r.productId === item.productId : r.customDesignId === item.customDesignId)
-      );
-
       return {
         key: `${order._id}-${index}`,
         placedAt: order.createdAt,
@@ -135,10 +135,10 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
         statusTitle: copy.title,
         statusDescription: copy.description,
         isDelivered: order.status === 'delivered',
+        canReview: false,
         source: 'custom' as const,
         stage: toStage(order.status),
         timeline,
-        review,
       };
     });
   });
@@ -148,10 +148,9 @@ export function toOrderLines(orders: Order[], reviews: Review[]): OrderLineView[
  * Ready-to-wear orders from Shopify.
  *
  * Shopify has no stitching or embroidery stage — these garments ship as
- * they are — so they get a shorter three-step timeline. Reviews stay
- * limited to baliye-node products/designs (the review API validates
- * against those ids), so Shopify lines report isDelivered: false purely to
- * keep the card's review action hidden.
+ * they are — so they get a shorter three-step timeline. A delivered line
+ * can be reviewed once; its review (a Shopify metaobject) is matched by
+ * order and product.
  * ------------------------------------------------------------------------- */
 
 const SHOPIFY_STEPS: { key: 'placed' | 'shipped' | 'delivered'; title: string; icon: StepIcon }[] = [
@@ -164,12 +163,9 @@ const SHOPIFY_STEPS: { key: 'placed' | 'shipped' | 'delivered'; title: string; i
  * Shopify order ids are GIDs ("gid://shopify/Order/6412…"), which don't
  * belong in a URL. The detail page uses "shopify-6412…" instead.
  */
-export const shopifyOrderSlug = (gid: string) => `shopify-${gid.split('/').pop()}`;
+const shopifyOrderSlug = (gid: string) => `shopify-${gid.split('/').pop()}`;
 
 export const isShopifySlug = (slug: string) => slug.startsWith('shopify-');
-
-export const findShopifyOrder = (orders: ShopifyOrder[], slug: string) =>
-  orders.find((o) => shopifyOrderSlug(o.id) === slug);
 
 export const SHOPIFY_COPY: Record<ShopifyOrder['status'], { title: string; description: string }> = {
   placed: { title: 'Order Placed', description: 'We have received your order.' },
@@ -205,7 +201,7 @@ export function buildShopifyTimeline(order: ShopifyOrder): TimelineItem[] {
   }));
 }
 
-export function toShopifyOrderLines(orders: ShopifyOrder[]): OrderLineView[] {
+export function toShopifyOrderLines(orders: ShopifyOrder[], reviews: Review[] = []): OrderLineView[] {
   return orders.flatMap((order) => {
     const timeline = buildShopifyTimeline(order);
     const copy = SHOPIFY_COPY[order.status] ?? SHOPIFY_COPY.placed;
@@ -243,7 +239,13 @@ export function toShopifyOrderLines(orders: ShopifyOrder[]): OrderLineView[] {
       image: item.image || PLACEHOLDER,
       statusTitle: copy.title,
       statusDescription: `Order ${order.orderNumber} · ${totalNote}${copy.description}${paymentNote}`,
-      isDelivered: false,
+      isDelivered: order.status === 'delivered',
+      canReview: order.status === 'delivered' && Boolean(item.productId),
+      orderNumber: order.orderNumber,
+      productId: item.productId,
+      review: item.productId
+        ? reviews.find((r) => r.orderId === order.id && r.productId === item.productId)
+        : undefined,
       source: 'shopify' as const,
       stage: toStage(order.status),
       timeline,

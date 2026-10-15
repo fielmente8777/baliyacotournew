@@ -14,7 +14,7 @@ const API_VERSION = '2026-01';
 const STORE_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ?? '';
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN ?? '';
 
-export const isStorefrontConfigured = () => Boolean(STORE_DOMAIN && STOREFRONT_TOKEN);
+const isStorefrontConfigured = () => Boolean(STORE_DOMAIN && STOREFRONT_TOKEN);
 
 interface GraphQLResponse<T> {
   data?: T;

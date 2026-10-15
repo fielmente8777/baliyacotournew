@@ -5,7 +5,6 @@ import type {
   Order,
   OrderStatus,
   OrderTrackingEntry,
-  PlaceOrderBody,
   ReplacementRequest,
   ShopifyOrder,
   ShopifyReturnBody,
@@ -40,13 +39,13 @@ const normaliseOrder = (order: Order): Order => ({ ...order, status: normaliseSt
 /** Shopify GID → the numeric id the backend routes take. */
 const shopifyNumericId = (gid: string) => gid.split('/').pop() ?? gid;
 
-export const orderApi = baseApi.injectEndpoints({
+const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    placeOrder: builder.mutation<Order, PlaceOrderBody>({
-      query: (body) => ({ url: '/orders', method: 'POST', body }),
-      transformResponse: (res: ApiEnvelope<Order>) => unwrap(res),
-      /* Placing an order empties the cart server-side. */
-      invalidatesTags: ['Order', 'Cart'],
+    /** Custom designs are paid for on Shopify: the backend turns the cart's
+        designs into a Shopify draft order and returns its checkout URL. */
+    startDesignCheckout: builder.mutation<{ checkoutUrl: string }, { shippingAddressId: string }>({
+      query: (body) => ({ url: '/orders/shopify/checkout', method: 'POST', body }),
+      transformResponse: (res: ApiEnvelope<{ checkoutUrl: string }>) => unwrap(res),
     }),
 
     getMyOrders: builder.query<Order[], { page?: number; limit?: number } | void>({
@@ -150,7 +149,7 @@ export const orderApi = baseApi.injectEndpoints({
 });
 
 export const {
-  usePlaceOrderMutation,
+  useStartDesignCheckoutMutation,
   useGetMyOrdersQuery,
   useGetMyShopifyOrdersQuery,
   useGetShopifyOrderQuery,

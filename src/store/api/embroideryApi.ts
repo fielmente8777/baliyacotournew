@@ -22,7 +22,7 @@ interface BuildResult {
   colourWarning?: string;
 }
 
-export const embroideryApi = baseApi.injectEndpoints({
+const embroideryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** Splits a finished extraction into named assets. No AI cost. */
     buildAssets: builder.mutation<
@@ -120,7 +120,6 @@ export const embroideryApi = baseApi.injectEndpoints({
 export const {
   usePreviewPlacementMutation,
   useBuildAssetsMutation,
-  useGetCollectionsQuery,
   useGetAssetsQuery,
   useUpdateAssetMutation,
   useApproveAssetMutation,

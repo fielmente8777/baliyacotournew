@@ -6,7 +6,7 @@
 import type { Address, SaveAddressBody } from '@/@types/account';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const addressApi = baseApi.injectEndpoints({
+const addressApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAddresses: builder.query<Address[], void>({
       query: () => '/addresses',

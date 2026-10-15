@@ -56,11 +56,4 @@ export const flagEmoji = (iso: string) =>
   iso
     .toUpperCase()
     .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
-
-export const searchCountries = (query: string) => {
-  const q = query.trim().toLowerCase();
-  if (!q) return COUNTRIES;
-  return COUNTRIES.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.dial.includes(q)
-  );
-};
+

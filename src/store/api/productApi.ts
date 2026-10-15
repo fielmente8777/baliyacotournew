@@ -41,7 +41,11 @@ const PRODUCT_FIELDS = `
   compareAtPriceRange {
     minVariantPrice { amount currencyCode }
   }
-  options { name values }
+  options {
+    name
+    values
+    optionValues { name swatch { color image { previewImage { url } } } }
+  }
   variants(first: 50) {
     edges {
       node {
@@ -52,6 +56,7 @@ const PRODUCT_FIELDS = `
         availableForSale
         quantityAvailable
         selectedOptions { name value }
+        image { url altText }
       }
     }
   }
@@ -85,6 +90,7 @@ interface ShopifyVariantNode {
   availableForSale: boolean;
   quantityAvailable: number | null;
   selectedOptions: { name: string; value: string }[];
+  image: { url: string; altText: string | null } | null;
 }
 
 interface ShopifyProductNode {
@@ -98,7 +104,14 @@ interface ShopifyProductNode {
   images: { edges: { node: { url: string; altText: string | null } }[] };
   priceRange: { minVariantPrice: ShopifyMoney };
   compareAtPriceRange: { minVariantPrice: ShopifyMoney } | null;
-  options: { name: string; values: string[] }[];
+  options: {
+    name: string;
+    values: string[];
+    optionValues?: {
+      name: string;
+      swatch: { color: string | null; image: { previewImage: { url: string } | null } | null } | null;
+    }[];
+  }[];
   variants: { edges: { node: ShopifyVariantNode }[] };
   /* Storefront's metafields(identifiers:) returns a plain array aligned to
      the identifiers list, not a connection — entries are null when that
@@ -138,9 +151,20 @@ function mapStorefrontProduct(node: ShopifyProductNode): Product {
     availableForSale: v.availableForSale,
     inventoryQuantity: v.quantityAvailable,
     selectedOptions: v.selectedOptions.filter((o) => o.name !== 'Title'),
+    image: v.image?.url,
   }));
 
-  const options: ProductOption[] = node.options.filter((o) => o.name !== 'Title');
+  const options: ProductOption[] = node.options
+    .filter((o) => o.name !== 'Title')
+    .map(({ name, values, optionValues = [] }) => {
+      const swatches: NonNullable<ProductOption['swatches']> = {};
+      for (const v of optionValues) {
+        const color = v.swatch?.color ?? undefined;
+        const image = v.swatch?.image?.previewImage?.url ?? undefined;
+        if (color || image) swatches[v.name] = { color, image };
+      }
+      return Object.keys(swatches).length ? { name, values, swatches } : { name, values };
+    });
 
   const specs: ProductSpec[] = node.metafields
     .filter((m): m is { key: string; namespace: string; value: string } => m !== null)
@@ -219,7 +243,7 @@ async function fetchProducts(query: ProductListQuery, excludeHandle?: string, pr
 
 /* ---- RTK Query slice ---- */
 
-export const productApi = baseApi.injectEndpoints({
+const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProducts: builder.query<Paginated<Product>, ProductListQuery | void>({
       queryFn: async (query) => {
@@ -308,5 +332,4 @@ export const {
   useGetProductBySlugQuery,
   useGetRelatedProductsQuery,
   useGetGarmentTypesQuery,
-  useGetGarmentTypeBySlugQuery,
 } = productApi;

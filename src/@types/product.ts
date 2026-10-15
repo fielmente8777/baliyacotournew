@@ -16,11 +16,16 @@ export interface ProductVariant {
   availableForSale: boolean;
   inventoryQuantity: number | null;
   selectedOptions: { name: string; value: string }[];
+  /** The variant's own photo (e.g. the red one) — the gallery jumps to it. */
+  image?: string;
 }
 
 export interface ProductOption {
   name: string;
   values: string[];
+  /** Shopify swatch per value (from the Color category metafield): a hex
+   *  colour and/or a pattern image. Values without one are absent. */
+  swatches?: Record<string, { color?: string; image?: string }>;
 }
 
 /** A labeled spec line for the "Product Detail" bullet list — from metafields. */

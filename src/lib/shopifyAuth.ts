@@ -8,7 +8,7 @@
 
 import { createHash, randomBytes } from 'crypto';
 
-export const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? '';
+const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? '';
 export const CLIENT_ID = process.env.SHOPIFY_CUSTOMER_CLIENT_ID ?? '';
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 

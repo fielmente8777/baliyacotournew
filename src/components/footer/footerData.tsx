@@ -1,6 +1,3 @@
-import { FacebookIcon, InstagramIcon, TwitterIcon } from "@/utils/icon";
-import { JSX } from "react/jsx-runtime";
-
 interface WebsiteFooterData {
   logo: string;
   description: string;
@@ -13,24 +10,6 @@ interface WebsiteFooterData {
     }[];
   }[];
 }
-
-export const socialData: { icon: JSX.Element; href: string; label: string }[] = [
-  {
-    icon: <InstagramIcon />,
-    href: "",
-    label: "Instagram",
-  },
-  {
-    icon: <TwitterIcon />,
-    href: "",
-    label: "Twitter",
-  },
-  {
-    icon: <FacebookIcon />,
-    href: "",
-    label: "Facebook",
-  },
-];
 
 export const websiteFooterData: WebsiteFooterData = {
   logo: "/logo.png",

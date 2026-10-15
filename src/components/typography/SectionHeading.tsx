@@ -99,7 +99,7 @@ const SectionHeading: React.FC<SectionHeadingDescProps> = ({
 
 export default SectionHeading;
 
-export const LineRight = () => (
+const LineRight = () => (
   <svg
     width={84}
     height={11}
@@ -112,7 +112,7 @@ export const LineRight = () => (
   </svg>
 );
 
-export const LineLeft = () => (
+const LineLeft = () => (
   <svg
     width={84}
     height={11}
@@ -125,7 +125,7 @@ export const LineLeft = () => (
   </svg>
 );
 
-export const BottomLine = () => (
+const BottomLine = () => (
   <svg
     width={180}
     height={11}

@@ -59,7 +59,7 @@ const Footer = () => {
 
 export default Footer;
 
-export const Line = () => {
+const Line = () => {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
       <div className="h-px bg-secondary"></div>
@@ -71,7 +71,7 @@ export const Line = () => {
   );
 };
 
-export const Foo = () => (
+const Foo = () => (
   <svg
     width={33}
     height={32}

@@ -9,7 +9,7 @@
 import type { UpdateProfileBody, UserProfile } from '@/@types/account';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const profileApi = baseApi.injectEndpoints({
+const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
       query: () => '/profile',
@@ -40,5 +40,4 @@ export const profileApi = baseApi.injectEndpoints({
 export const {
   useGetProfileQuery,
   useUpdateProfileMutation,
-  useUploadProfileImageMutation,
 } = profileApi;

@@ -75,12 +75,13 @@ export default function OrderCard({ order }: Props) {
           </div>
 
           {/* Stars sit beside the thumbnail, below the title block. Offered
-              only once delivered — the API rejects anything earlier. */}
-          {order.isDelivered && (
+              only once delivered — /api/reviews rejects anything earlier.
+              One review per item: once written, the stars just show it. */}
+          {(order.review || order.canReview) && (
             <div className="mt-auto pt-5">
               <OrderRating
                 rating={order.review?.rating ?? 0}
-                action={order.review ? 'Edit a review' : 'Add a review'}
+                action={order.review ? undefined : 'Add a review'}
                 onAction={() => setReviewOpen(true)}
               />
             </div>
@@ -94,23 +95,25 @@ export default function OrderCard({ order }: Props) {
         <OrderReview
           review={{
             rating: order.review.rating,
-            action: 'Edit a review',
+            action: '',
             title: order.review.title,
-            description: order.review.body,
+            description: order.review.body ?? '',
             images: order.review.images,
           }}
         />
       )}
 
-      <ReviewModal
-        open={isReviewOpen}
-        onClose={() => setReviewOpen(false)}
-        orderId={order.orderId}
-        productId={order.productId}
-        customDesignId={order.customDesignId}
-        productName={order.productName}
-        existing={order.review}
-      />
+      {isReviewOpen && order.canReview && !order.review && (
+        <ReviewModal
+          open
+          onClose={() => setReviewOpen(false)}
+          orderId={order.orderId}
+          orderNumber={order.orderNumber}
+          productId={order.productId}
+          productName={order.productName}
+          productImage={order.image}
+        />
+      )}
     </article>
   );
 }

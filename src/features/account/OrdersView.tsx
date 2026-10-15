@@ -20,7 +20,7 @@ import {
   toOrderLines,
   toShopifyOrderLines,
 } from '../../app/(website)/my-account/orders/orderView';
-import { useGetMyReviewsQuery } from '@/store/api/reviewApi';
+import { useGetReviewsQuery } from '@/store/api/reviewApi';
 import OrdersHeader from '../../app/(website)/my-account/orders/components/OrdersHeader';
 import OrdersFilterPanel, {
   DEFAULT_ORDER_FILTERS,
@@ -46,11 +46,11 @@ export default function OrdersView() {
     refetch: refetchShopify,
   } = useGetMyShopifyOrdersQuery();
   /* Reviews are fetched once and matched client-side, rather than per card. */
-  const { data: reviews = [] } = useGetMyReviewsQuery();
+  const { data: reviews = [] } = useGetReviewsQuery();
 
   const lines = useMemo(
     () =>
-      [...toOrderLines(orders, reviews), ...toShopifyOrderLines(shopifyOrders)].sort(
+      [...toOrderLines(orders), ...toShopifyOrderLines(shopifyOrders, reviews)].sort(
         (a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()
       ),
     [orders, shopifyOrders, reviews]

@@ -10,10 +10,22 @@ interface ImageItem {
 
 interface Props {
   images: ImageItem[];
+  /** The selected variant's photo — the gallery jumps to it when it changes. */
+  activeSrc?: string;
 }
 
-export default function ProductGallery({ images }: Props) {
+export default function ProductGallery({ images, activeSrc }: Props) {
   const [active, setActive] = useState(0);
+
+  /* Follow the selected variant (e.g. picking a colour shows that colour).
+     Adjusted during render, as React recommends for state derived from a
+     changing prop, rather than in an effect. */
+  const [followedSrc, setFollowedSrc] = useState<string | undefined>(undefined);
+  if (activeSrc !== followedSrc) {
+    setFollowedSrc(activeSrc);
+    const index = activeSrc ? images.findIndex((img) => img.src === activeSrc) : -1;
+    if (index >= 0) setActive(index);
+  }
 
   const prev = () =>
     setActive((prev) =>

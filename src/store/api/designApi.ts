@@ -13,7 +13,7 @@ import type {
 import type { GarmentType } from '@/@types/product';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const designApi = baseApi.injectEndpoints({
+const designApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /**
      * The steps for a garment type, or for a customizable product. Passing
@@ -46,17 +46,6 @@ export const designApi = baseApi.injectEndpoints({
       transformResponse: (res: ApiEnvelope<SavedDesign>) => unwrap(res),
       invalidatesTags: ['Design'],
     }),
-
-    getMyDesigns: builder.query<SavedDesign[], void>({
-      query: () => '/designs',
-      transformResponse: (res: ApiEnvelope<SavedDesign[]>) => unwrap(res),
-      providesTags: ['Design'],
-    }),
-
-    deleteDesign: builder.mutation<unknown, string>({
-      query: (id) => ({ url: `/designs/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Design'],
-    }),
   }),
   overrideExisting: false,
 });
@@ -65,8 +54,6 @@ export const {
   useGetDesignConfigQuery,
   useQuotePriceMutation,
   useCreateDesignMutation,
-  useGetMyDesignsQuery,
-  useDeleteDesignMutation,
 } = designApi;
 
 /** Re-exported so the picker doesn't need to import from two API slices. */

@@ -26,7 +26,7 @@ import type { ShopifyCart } from '@/@types/shopifyCart';
 import * as shopifyCart from '@/lib/shopifyCart';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
-export const cartApi = baseApi.injectEndpoints({
+const cartApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCart: builder.query<Cart, void>({
       query: () => '/cart',
@@ -112,7 +112,6 @@ export const {
   useAddToCartMutation,
   useUpdateCartItemMutation,
   useRemoveCartItemMutation,
-  useClearCartMutation,
   useGetShopifyCartQuery,
   useAddToShopifyCartMutation,
   useUpdateShopifyCartLineMutation,
