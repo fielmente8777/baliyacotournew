@@ -25,12 +25,14 @@ import {
 import {
   useCreateDesignMutation,
   useGetDesignConfigQuery,
+  useGetDesignImagesQuery,
   useQuotePriceMutation,
 } from '@/store/api/designApi';
 import { useGetMeasurementProfilesQuery } from '@/store/api/measurementApi';
 import { useCart } from '@/hooks/useCart';
 import type { BuilderStep, DesignGroup, DesignOption, PriceBreakdown } from '@/@types/design';
 import { cn } from '@/lib/format';
+import { designImageKey } from '@/lib/designImages';
 import { GarmentPreviewIllustration } from '@/components/illustrations';
 
 import StepRail from './StepRail';
@@ -90,6 +92,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const [previewFailed, setPreviewFailed] = useState(false);
 
   const { data: config, isLoading } = useGetDesignConfigQuery({ garmentTypeId, productId });
+  const { data: designImages = {} } = useGetDesignImagesQuery();
   const { data: profiles = [] } = useGetMeasurementProfilesQuery();
   const [quotePrice] = useQuotePriceMutation();
   const [createDesign, { isLoading: isSaving }] = useCreateDesignMutation();
@@ -319,9 +322,12 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   };
 
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);
-  const previewImage = config.product?.images?.[0]?.url;
+  /* A pre-designed product shows its own photo; otherwise the garment's
+     preview image from Shopify (key preview/<slug>). */
+  const previewImage =
+    config.product?.images?.[0]?.url ?? designImages[designImageKey.preview(config.garmentType.slug)];
 
-  /* Tint the illustrated preview with the chosen colour, if there is one. */
+  /* The chosen colour tints every drawing that stands in for a missing photo. */
   const colourGroup = config.groups.find((g) => g.inputType === 'color_select');
   const chosenHex = colourGroup?.options.find((o) => o._id === selections[colourGroup._id])?.hex;
 
@@ -415,6 +421,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 key={activeStep.group._id}
                 group={activeStep.group}
                 {...pairingCopy(activeStep.group)}
+                tint={chosenHex}
                 selectedId={selections[activeStep.group._id]}
                 onSelect={(optionId) =>
                   dispatch(selectOption({ groupId: activeStep.group._id, optionId }))

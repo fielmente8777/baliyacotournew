@@ -11,10 +11,23 @@ import type {
   SelectionInput,
 } from '@/@types/design';
 import type { GarmentType } from '@/@types/product';
+import { fetchDesignImages, type DesignImageMap } from '@/lib/designImages';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
 const designApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    /** Garment, preview and option images — straight from Shopify. */
+    getDesignImages: builder.query<DesignImageMap, void>({
+      queryFn: async () => {
+        try {
+          return { data: await fetchDesignImages() };
+        } catch (error) {
+          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
+        }
+      },
+      keepUnusedDataFor: 600,
+    }),
+
     /**
      * The steps for a garment type, or for a customizable product. Passing
      * `productId` returns the product's garment type and preset selections, so
@@ -51,6 +64,7 @@ const designApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetDesignImagesQuery,
   useGetDesignConfigQuery,
   useQuotePriceMutation,
   useCreateDesignMutation,

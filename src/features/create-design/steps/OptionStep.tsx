@@ -9,7 +9,10 @@
 import Image from 'next/image';
 
 import type { DesignGroup } from '@/@types/design';
+import { OptionIllustration } from '@/components/illustrations/optionIllustrations';
+import { designImageKey } from '@/lib/designImages';
 import { cn, formatINR } from '@/lib/format';
+import { useGetDesignImagesQuery } from '@/store/api/designApi';
 
 interface Props {
   group: DesignGroup;
@@ -19,11 +22,14 @@ interface Props {
   note?: string;
   /** Shown instead of the grid when this step needs an earlier choice first. */
   blockedMessage?: string;
+  /** The chosen colour — tints the drawings shown for options with no photo. */
+  tint?: string;
 }
 
-export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage }: Props) {
+export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage, tint }: Props) {
   const isColour = group.inputType === 'color_select';
   const isSize = group.inputType === 'size_select';
+  const { data: images = {} } = useGetDesignImagesQuery();
 
   return (
     <div>
@@ -59,6 +65,7 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
       >
         {group.options.map((option) => {
           const active = selectedId === option._id;
+          const image = images[designImageKey.option(group.code, option.value)] ?? option.image;
 
           /* Colour swatches are square chips; everything else is a card. */
           if (isColour) {
@@ -114,13 +121,20 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
               )}
             >
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F1EDE6]">
-                {option.image && (
+                {image ? (
                   <Image
-                    src={option.image}
+                    src={image}
                     alt={option.label}
                     fill
                     sizes="(max-width: 640px) 45vw, 220px"
                     className="object-cover duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <OptionIllustration
+                    groupCode={group.code}
+                    value={option.value}
+                    tint={tint}
+                    className="absolute inset-0 h-full w-full p-3 transition-transform duration-300 group-hover:scale-105"
                   />
                 )}
               </div>

@@ -10,11 +10,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { useGetGarmentTypesQuery } from '@/store/api/productApi';
+import { useGetDesignImagesQuery } from '@/store/api/designApi';
+import { designImageKey } from '@/lib/designImages';
 import { formatINR } from '@/lib/format';
 
 export default function GarmentTypePicker() {
   const router = useRouter();
   const { data: types = [], isLoading } = useGetGarmentTypesQuery();
+  const { data: images = {} } = useGetDesignImagesQuery();
 
   return (
     <main className="min-h-[70vh] bg-[#FAF7F2] px-4 py-16 md:px-10">
@@ -34,7 +37,9 @@ export default function GarmentTypePicker() {
             <div key={i} className="h-48 animate-pulse rounded-xl bg-black/5" />
           ))}
 
-        {types.map((type) => (
+        {types.map((type) => {
+          const image = images[designImageKey.garment(type.slug)] ?? type.image;
+          return (
           <button
             key={type._id}
             type="button"
@@ -43,10 +48,10 @@ export default function GarmentTypePicker() {
             }
             className="group overflow-hidden rounded-xl bg-white text-left transition-shadow hover:shadow-lg"
           >
-            <div className="relative aspect-[4/3] w-full bg-[#F1EDE6]">
-              {type.image && (
+            <div className="relative aspect-[3/4] w-full bg-[#F1EDE6]">
+              {image && (
                 <Image
-                  src={type.image}
+                  src={image}
                   alt={type.name}
                   fill
                   sizes="(max-width: 768px) 45vw, 240px"
@@ -62,7 +67,8 @@ export default function GarmentTypePicker() {
               </p>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {!isLoading && types.length === 0 && (
