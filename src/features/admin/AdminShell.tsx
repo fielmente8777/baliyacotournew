@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Coins, FileText, Home, LayoutGrid, LogOut, Menu, PanelBottom, Ruler, X } from 'lucide-react';
+import { Coins, FileText, Home, LayoutGrid, LogOut, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react';
 
 import { useAppDispatch } from '@/store/hooks';
 import { adminApi, useGetAdminMeQuery } from '@/store/api/adminApi';
@@ -12,8 +12,10 @@ import { cn } from '@/lib/format';
 
 const NAV = [
   { href: '/admin/design-builder', label: 'Design Builder', icon: LayoutGrid },
+  { href: '/admin/ai-studio', label: 'AI Studio', icon: Sparkles },
   { href: '/admin/measurements', label: 'Measurement fields', icon: Ruler },
   { href: '/admin/content/home', label: 'Home page', icon: Home },
+  { href: '/admin/content/products', label: 'Pre-made Designs page', icon: ShoppingBag },
   { href: '/admin/content/footer', label: 'Footer', icon: PanelBottom },
   { href: '/admin/content/terms', label: 'Terms & Conditions', icon: FileText },
   /* Always here: the on/off switch for credits lives on this page. */

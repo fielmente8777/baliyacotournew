@@ -1,0 +1,35 @@
+step,option_name,extra_price_inr,colour_hex,image_file,description,only_with,only_for_garments,show_on_website
+Fabric,Cotton,0,,fabric-cotton.jpg,"Soft, breathable everyday cotton.",,,yes
+Fabric,Cotton Silk,200,,fabric-cotton-silk.jpg,"Cotton comfort with a soft silk sheen.",,,yes
+Fabric,Chanderi,300,,fabric-chanderi.jpg,"Light, sheer weave with a subtle shine.",,,yes
+Fabric,Georgette,250,,fabric-georgette.jpg,"Flowing and light, drapes beautifully.",,Anarkali|Sharara Set,yes
+Fabric,Velvet,600,,fabric-velvet.jpg,"Rich velvet for winter and bridal wear.",,Anarkali|Sharara Set,yes
+Colour,Wine,0,#722F37,,,,,yes
+Colour,Bottle Green,0,#0B5345,,,,,yes
+Colour,Powder Blue,0,#B0D0E8,,,,,yes
+Colour,Ivory,0,#F5EFE0,,,,,yes
+Neck Type,Round Neck,0,,neck-round.png,,,,yes
+Neck Type,V Neck,0,,neck-v.png,,,,yes
+Neck Type,Boat Neck,100,,neck-boat.png,,,,yes
+Neck Type,Sweetheart Neck,150,,neck-sweetheart.png,,,Anarkali|Sharara Set,yes
+Embroidery,No Embroidery,0,,embroidery-none.png,"Clean, plain finish.",,,yes
+Embroidery,Thread Work Yoke,600,,embroidery-thread-yoke.jpg,"Fine thread work across the yoke.",Round Neck|Boat Neck,,yes
+Embroidery,Zari V Border,900,,embroidery-zari-v.jpg,"Gold zari border along a V neckline.",V Neck,,yes
+Sleeve Type,Sleeveless,0,,sleeve-sleeveless.png,,,,yes
+Sleeve Type,Three-quarter,0,,sleeve-three-quarter.png,,,,yes
+Sleeve Type,Full Sleeve,100,,sleeve-full.png,,,,yes
+Sleeve Cuff,Plain Cuff,0,,cuff-plain.png,"Shown only with Full Sleeve.",Full Sleeve,,yes
+Sleeve Cuff,Embroidered Cuff,250,,cuff-embroidered.jpg,"Shown only with Full Sleeve.",Full Sleeve,,yes
+Lower,Patiala Salwar,0,,lower-patiala.png,,,Patiala Suit,yes
+Lower,Straight Pants,0,,lower-straight-pants.png,,,Kurti|Patiala Suit,yes
+Dupatta,No Dupatta,0,,dupatta-none.png,,,,yes
+Dupatta,Matching Chiffon Dupatta,400,,dupatta-chiffon.jpg,,,,yes
+Dupatta,Banarasi Dupatta,900,,dupatta-banarasi.jpg,,,,yes
+Length,Hip Length,0,,length-hip.png,,,Kurti,yes
+Length,Knee Length,0,,length-knee.png,,,Kurti,yes
+Size,XS,0,,,,,,yes
+Size,S,0,,,,,,yes
+Size,M,0,,,,,,yes
+Size,L,0,,,,,,yes
+Size,XL,0,,,,,,yes
+Size,Custom Measurement,0,,,"Stitched to the customer's own measurements.",,,yes

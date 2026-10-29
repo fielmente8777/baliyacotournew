@@ -4,6 +4,19 @@ import { websiteFooterData as defaults } from "./footerData";
 import { getSiteContent } from "@/lib/siteContent";
 import Image from "next/image";
 
+/**
+ * Links typed in the admin often miss their scheme — "name@gmail.com" as the
+ * href opens a 404 page. An email address becomes mailto:, a phone number
+ * becomes tel:, so a contact link always works whatever was saved.
+ */
+function contactHref(href: string, label: string) {
+  const value = (href || label).trim();
+  if (/^(https?:|mailto:|tel:|\/|#)/i.test(value)) return value;
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) return `mailto:${value}`;
+  if (/^\+?[\d\s()-]{7,}$/.test(value)) return `tel:${value.replace(/[^\d+]/g, "")}`;
+  return value;
+}
+
 /* Edited in the admin panel; footerData.tsx holds the defaults. */
 const Footer = async () => {
   const websiteFooterData = await getSiteContent("footer", defaults);
@@ -21,7 +34,7 @@ const Footer = async () => {
             <div className="relative w-[200px] aspect-4/1.5">
               <Image
                 src={websiteFooterData.logo}
-                alt="logo"
+                alt="Baliye Couture"
                 fill
                 className="object-contain"
               />
@@ -31,10 +44,14 @@ const Footer = async () => {
           {websiteFooterData.lists.map((list, index) => (
             <div key={index} className="flex min-w-0 flex-col gap-3 md:mx-auto md:w-fit md:gap-4">
               <h3 className="text-lg text-dark/60 md:text-2xl">{list.title}</h3>
-              <ul className="flex flex-col gap-2 text-sm md:text-base">
+              <ul className="flex flex-col text-sm md:text-base">
                 {list.links.map((item, index) => (
                   <li key={index} className="wrap-break-word">
-                    <Link href={item.href} className="transition-colors hover:text-secondary">
+                    {/* py-2.5: a comfortable tap target on phones. */}
+                    <Link
+                      href={contactHref(item.href, item.label)}
+                      className="inline-block py-2.5 transition-colors hover:text-secondary md:py-1.5"
+                    >
                       {item.label}
                     </Link>
                   </li>

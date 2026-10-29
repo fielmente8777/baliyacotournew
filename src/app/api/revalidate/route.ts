@@ -2,7 +2,7 @@ import { revalidateTag } from 'next/cache';
 import { NextResponse, type NextRequest } from 'next/server';
 import { contentTag, serverApiBase, type ContentPage } from '@/lib/siteContent';
 
-const PAGES: ContentPage[] = ['home', 'footer', 'terms'];
+const PAGES: ContentPage[] = ['home', 'footer', 'terms', 'products'];
 
 /**
  * Called by the admin panel right after it saves a page, so the edit shows

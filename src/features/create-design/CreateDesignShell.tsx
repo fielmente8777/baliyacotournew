@@ -88,6 +88,36 @@ function orderGroups(groups: DesignGroup[]): DesignGroup[] {
 const isOptionAvailable = (option: DesignOption, chosenIds: Set<string>) =>
   !option.availableWith?.length || option.availableWith.some((id) => chosenIds.has(id));
 
+/**
+ * Shown while the design options load. Usually a second; after a quiet spell
+ * the server has to wake up first, which can take much longer — so after a
+ * few seconds it says so, rather than leaving grey boxes that look frozen.
+ */
+function BuilderLoading() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-[#FAF7F2] px-4 py-10 md:px-8">
+      <div className="mx-auto max-w-375">
+        <p className="mb-6 flex items-center gap-2 text-sm text-[#6B6B6B]" role="status">
+          <span className="size-4 animate-spin rounded-full border-2 border-secondary/30 border-t-secondary" aria-hidden />
+          {slow
+            ? 'Still loading — the first visit after a quiet spell can take up to a minute. Thanks for waiting.'
+            : 'Loading the designer…'}
+        </p>
+        <div className="grid animate-pulse gap-8 lg:grid-cols-2">
+          <div className="h-140 rounded-2xl bg-black/5" />
+          <div className="h-140 rounded-2xl bg-black/5" />
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -230,22 +260,54 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   }, [config, groups, selections, dispatch]);
 
   /* Re-price on every change. The backend is the source of truth for price. */
+  const selectionKey = JSON.stringify(payloadSelections);
+  const [pricedFor, setPricedFor] = useState<string | null>(null);
   useEffect(() => {
     if (!config) return;
 
     quotePrice({ garmentTypeId, productId, selections: payloadSelections })
       .unwrap()
-      .then(setPricing)
-      /* A partial selection fails validation mid-flow; keep the last good price. */
+      .then((quote) => {
+        setPricing(quote);
+        setPricedFor(JSON.stringify(payloadSelections));
+      })
+      /* A partial selection fails validation mid-flow — the local estimate
+         below covers it. */
       .catch(() => undefined);
   }, [payloadSelections, config, garmentTypeId, productId, quotePrice]);
+
+  /**
+   * The price shown. The server's quote when it matches the current choices;
+   * otherwise base price plus each chosen option, worked out here. Before,
+   * a half-finished design (which the server won't quote) froze the price at
+   * its last value — picking Cotton Silk (+₹200) left it at the base price.
+   */
+  const shownPricing: PriceBreakdown | null = useMemo(() => {
+    if (!config) return null;
+    if (pricing && pricedFor === selectionKey) return pricing;
+
+    const adjustments = groups.flatMap((group) => {
+      const option = group.options.find((o) => o._id === selections[group._id]);
+      return option && option.priceModifier > 0 ? [{ label: `${group.label}: ${option.label}`, amount: option.priceModifier }] : [];
+    });
+    const base = pricing?.basePrice ?? config.basePrice;
+    return {
+      basePrice: base,
+      adjustments,
+      discount: 0,
+      total: base + adjustments.reduce((sum, a) => sum + a.amount, 0),
+      currency: pricing?.currency ?? 'INR',
+    };
+  }, [config, pricing, pricedFor, selectionKey, groups, selections]);
 
   const isStepComplete = (index: number) => {
     const step = steps[index];
     if (!step) return false;
     if (step.kind === 'option') return Boolean(selections[step.group._id]);
     if (step.kind === 'measurement') return Boolean(measurementProfileId);
-    if (step.kind === 'instructions') return true;
+    /* Optional notes count as done once written or passed — not before, or
+       the rail said "3 of 10 done" on step 2. */
+    if (step.kind === 'instructions') return Boolean(instructions?.trim()) || stepIndex > index;
     return false;
   };
 
@@ -350,16 +412,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   /* Back to this exact design after signing in. */
   const signIn = () => openLogin(window.location.pathname + window.location.search);
 
-  if (isLoading || !config) {
-    return (
-      <main className="min-h-screen bg-[#FAF7F2] px-4 py-10 md:px-8">
-        <div className="mx-auto grid max-w-[1500px] animate-pulse gap-8 lg:grid-cols-2">
-          <div className="h-[560px] rounded-2xl bg-black/5" />
-          <div className="h-[560px] rounded-2xl bg-black/5" />
-        </div>
-      </main>
-    );
-  }
+  if (isLoading || !config) return <BuilderLoading />;
 
   const activeStep = steps[Math.min(stepIndex, steps.length - 1)];
   const nextStep = stepIndex < steps.length - 1 ? steps[stepIndex + 1] : undefined;
@@ -456,6 +509,17 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                             if (!recoloured.url) setPreviewFailed(true);
                           }}
                         />
+                        {/* Instant feedback for a new colour: the photo tinted
+                            in the browser (mix-blend "color" keeps the light and
+                            shade, takes the hue). The exact AI recolour takes
+                            30–90 s and replaces this when it's ready. */}
+                        {recolourTo && !recoloured.url && chosenHex && (
+                          <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 mix-blend-color transition-colors duration-300"
+                            style={{ backgroundColor: chosenHex }}
+                          />
+                        )}
                         <RecolourOverlay
                           recoloured={recoloured}
                           tokensEnabled={Boolean(creditsEnabled)}
@@ -479,7 +543,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
               {/* Phones and tablets: price and Add To Cart live in MobileBuilderBar. */}
               <div className="mt-10 hidden lg:block">
-                <PriceSummary pricing={pricing} basePrice={config.basePrice} />
+                <PriceSummary pricing={shownPricing} basePrice={config.basePrice} />
 
                 <button
                   type="button"
@@ -543,7 +607,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
               <ReviewStep
                 groups={groups}
                 selections={selections}
-                pricing={pricing}
+                pricing={shownPricing}
                 measurementName={
                   usesStandardSize
                     ? 'Standard size — no measurements needed'
@@ -582,7 +646,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
       <MobileBuilderBar
         previewUrl={previewImage && !previewFailed ? (recoloured.url ?? previewImage) : undefined}
         isGenerating={recoloured.isGenerating}
-        total={pricing?.total ?? config.basePrice}
+        total={shownPricing?.total ?? config.basePrice}
         canGoBack={stepIndex > 0}
         onBack={() => goToStep(stepIndex - 1)}
         error={error}

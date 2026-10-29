@@ -69,6 +69,8 @@ export interface AdminOption {
   pairsWith: string[];
   position: number;
   isActive: boolean;
+  /** Embroidery options: the AI Studio collection it renders with. */
+  assetCollectionId?: string;
 }
 
 export interface AdminMeasurementTemplate {
@@ -100,7 +102,7 @@ export interface CatalogSyncSummary {
   skipped: string[];
 }
 
-export type ContentPage = 'home' | 'footer' | 'terms';
+export type ContentPage = 'home' | 'footer' | 'terms' | 'products';
 
 /** A storefront customer, as the admin user list returns one. */
 export interface AdminCustomer {

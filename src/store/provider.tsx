@@ -8,13 +8,13 @@
  * App Router.
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { makeStore, setupListeners, type AppStore } from './index';
 import { hydrate } from './features/authSlice';
 import { baseApi } from './api/baseApi';
-import { onAdminUpdate } from '@/lib/liveUpdates';
+import { isCustomerBusy, onAdminUpdate, watchContentVersion } from '@/lib/liveUpdates';
 import { useRouter } from 'next/navigation';
 
 export default function ReduxProvider({ children }: { children: ReactNode }) {
@@ -23,17 +23,39 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => setupListeners(store.dispatch), [store]);
 
-  /* An admin saved something in another tab: refetch the catalogue and
-     re-render server content, so the change shows without a reload. */
-  useEffect(
-    () =>
-      onAdminUpdate(() => {
-        if (window.location.pathname.startsWith('/admin')) return;
-        store.dispatch(baseApi.util.invalidateTags(['Design', 'GarmentType', 'Product', 'Settings', 'Tokens']));
-        router.refresh();
-      }),
-    [store, router]
-  );
+  /**
+   * An admin saved something: refetch the catalogue and re-render server
+   * content, so the change shows without a reload. router.refresh() swaps
+   * the content in place — scroll position and anything typed are kept.
+   *
+   * Never while the customer is busy (cart, address, sign-in, builder, typing,
+   * a dialog open): the refresh waits and runs once they're done.
+   */
+  const pending = useRef(false);
+  useEffect(() => {
+    const apply = () => {
+      if (window.location.pathname.startsWith('/admin')) return;
+      if (isCustomerBusy()) {
+        pending.current = true;
+        return;
+      }
+      pending.current = false;
+      store.dispatch(baseApi.util.invalidateTags(['Design', 'GarmentType', 'Product', 'Settings', 'Tokens']));
+      router.refresh();
+    };
+
+    /* Same browser: instant. Every other visitor: within ~4 seconds. */
+    const stopChannel = onAdminUpdate(apply);
+    const stopWatch = watchContentVersion(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1', apply);
+    /* A refresh that had to wait goes through as soon as it's safe. */
+    const retry = setInterval(() => pending.current && apply(), 2000);
+
+    return () => {
+      stopChannel();
+      stopWatch();
+      clearInterval(retry);
+    };
+  }, [store, router]);
 
   /* Read the persisted session only in the browser, after the first paint. */
   useEffect(() => {

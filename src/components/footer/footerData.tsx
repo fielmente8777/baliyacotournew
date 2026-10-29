@@ -13,7 +13,7 @@ interface WebsiteFooterData {
 
 export const websiteFooterData: WebsiteFooterData = {
   logo: "/logo.png",
-  description: "We Customise Product for your happiness",
+  description: "Made-to-measure ethnic wear, designed by you and crafted by hand.",
 
   lists: [
     {
@@ -26,7 +26,7 @@ export const websiteFooterData: WebsiteFooterData = {
     },
 
     {
-      title: "Connect With Us On",
+      title: "Contact Us",
       links: [
         // {
         //   label: "Address: " + contact.address,
@@ -38,8 +38,8 @@ export const websiteFooterData: WebsiteFooterData = {
           href: "tel:+1xx xxx xxxx",
         },
         {
-          label: "Blaiye@gmail.com",
-          href: "Blaiye@gmail.com",
+          label: "Baliye@gmail.com",
+          href: "mailto:Baliye@gmail.com",
         },
       ],
     },

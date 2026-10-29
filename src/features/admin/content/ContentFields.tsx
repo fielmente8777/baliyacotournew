@@ -14,6 +14,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { useUploadImageMutation } from '@/store/api/adminApi';
 import { cn } from '@/lib/format';
 import { Button, ImageSlot, inputClass, TextField, Toggle } from '../ui';
+import AiWriter from './AiWriter';
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -82,7 +83,9 @@ export function ContentField({
   if (typeof value === 'string') {
     if (isImageField(name, value, parentKey)) return <ImageField label={label} value={value} onChange={onChange} />;
     const long = value.length > 90 || name === 'description';
-    return (
+    /* Words customers read get the AI helper; links and addresses don't. */
+    const isWords = !['link', 'href', 'src', 'video'].includes(name) && !/^(https?:|\/|mailto:|tel:)/.test(value);
+    const field = (
       <TextField
         label={label}
         value={value}
@@ -93,6 +96,19 @@ export function ContentField({
           value.includes('<br') ? 'Write <br/> where the line should break.' : name === 'link' || name === 'href' ? 'A page on this site (/products) or a full address.' : undefined
         }
       />
+    );
+    if (!isWords) return field;
+    return (
+      <div className="relative">
+        {/* Sits on the label row, at the right. */}
+        <AiWriter
+          className="absolute -top-1 right-0 z-10"
+          value={value}
+          onApply={onChange}
+          field={[parentKey && humanize(parentKey), label].filter(Boolean).join(' › ')}
+        />
+        {field}
+      </div>
     );
   }
 

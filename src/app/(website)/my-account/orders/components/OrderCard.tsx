@@ -29,7 +29,7 @@ export default function OrderCard({ order }: Props) {
     <article className="overflow-hidden rounded-lg border border-[#EAE6DF] bg-white transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.25)]">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-[#F2EEE8] bg-[#FAF8F4] px-4 py-2.5 text-xs text-[#6B6B6B] sm:px-5">
         <p>
-          Placed on <span className="font-medium text-[#333]">{shortDate(order.placedAt)}</span>
+          Placed on <span className="font-medium text-dark">{shortDate(order.placedAt)}</span>
         </p>
         <p className="uppercase tracking-wider text-[#8A8A8A]">
           {order.source === 'custom' ? 'Custom design' : 'Ready to wear'}

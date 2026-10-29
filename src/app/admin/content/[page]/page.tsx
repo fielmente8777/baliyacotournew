@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { ContentPage } from "@/@types/admin";
 import ContentEditorView from "@/features/admin/content/ContentEditorView";
 
-const PAGES: ContentPage[] = ["home", "footer", "terms"];
+const PAGES: ContentPage[] = ["home", "footer", "terms", "products"];
 
 export const dynamicParams = false;
 

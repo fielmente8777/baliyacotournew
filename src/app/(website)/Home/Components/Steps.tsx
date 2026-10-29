@@ -30,7 +30,8 @@ const Steps: React.FC<StepsProps> = ({ title, description, image, cta }) => {
           />
         </div>
         <div className="w-full aspect-4/2 relative">
-          <Image src={image} alt={title} fill className="object-cover" />
+          {/* The title carries a <br/> for the heading layout — not alt text. */}
+          <Image src={image} alt={title.replace(/<[^>]*>/g, "").replace(/  +/g, " ").trim()} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
         </div>
       </Container>
       <LineWithFlower />

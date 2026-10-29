@@ -27,7 +27,7 @@ export default function PriceSummary({
   return (
     <div>
       <CheckoutCard className="overflow-hidden">
-        <h3 className="border-b border-[#F2EEE8] px-5 py-4 text-base font-semibold uppercase tracking-wide text-[#333]">
+        <h3 className="border-b border-[#F2EEE8] px-5 py-4 text-base font-semibold uppercase tracking-wide text-dark">
           Price Details{" "}
           <span className="font-normal normal-case tracking-normal text-[#8A8A8A]">
             ({totals.itemCount} {totals.itemCount === 1 ? "item" : "items"})

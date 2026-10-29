@@ -48,7 +48,7 @@ function WishlistCard({ item }: { item: WishlistItem }) {
         )}
       </div>
       <div className="px-3 pt-3">
-        <h3 className="line-clamp-2 min-h-[2.5em] text-sm font-medium leading-snug text-[#262626] group-hover:text-secondary">
+        <h3 className="line-clamp-2 min-h-[2.5em] text-sm font-medium leading-snug text-dark group-hover:text-secondary">
           {item.title}
         </h3>
         {item.price !== undefined && item.currency && (

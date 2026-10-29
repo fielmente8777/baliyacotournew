@@ -1,3 +1,4 @@
+import LinkButton from "@/components/buttons/LinkButton";
 import { Container, Section } from "@/components/sectionComponants";
 import { LazyLoadedVideo } from "@/components/Video";
 
@@ -9,12 +10,17 @@ interface VideoBannerProps {
     src: string;
     poster: string;
   };
+  cta?: {
+    label: string;
+    link: string;
+  };
 }
 
 const VideoBanner: React.FC<VideoBannerProps> = ({
   video,
   title,
   description,
+  cta,
 }) => {
   return (
     <Section
@@ -23,14 +29,24 @@ const VideoBanner: React.FC<VideoBannerProps> = ({
     >
       <LazyLoadedVideo src={video.src} poster={video.poster} />
       <div className="absolute inset-0 z-10 bg-black/60" />
-      <div className="absolute inset-0 z-20 bg-linear-to-r from-teansparent to-[#382218]/80" />
+      <div className="absolute inset-0 z-20 bg-linear-to-r from-transparent to-[#382218]/80" />
 
       <div className="absolute inset-0  z-30 flex items-center text-center justify-center">
-        <Container>
+        <Container className="flex flex-col items-center gap-5">
           <h1 className="font-primary text-4xl md:text-6xl/tight text-white lg:max-w-6xl mx-auto">
             {title}
           </h1>
-          <p className="text-white/50 lg:max-w-6xl mx-auto">{description}</p>
+          <p className="text-white/50 lg:max-w-6xl mx-auto">
+            {description}
+          </p>
+          {cta?.label && (
+            <LinkButton
+              href={cta.link}
+              label={cta.label}
+              arrowIcon
+              className="mt-2 rounded-full bg-dark gap-4 text-white border-secondary"
+            />
+          )}
         </Container>
       </div>
     </Section>

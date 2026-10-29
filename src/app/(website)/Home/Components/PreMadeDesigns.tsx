@@ -5,12 +5,13 @@ import { Container, Section } from "@/components/sectionComponants";
 import SwiperCarousel from "@/components/sliders/SwiperCarousel";
 import { SectionHeading } from "@/components/typography";
 import Image from "next/image";
+import Link from "next/link";
 import { Autoplay, Navigation } from "swiper/modules";
 
 interface PreMadeDesignsProps {
   title: string;
   description: string;
-  images: { src: string; alt: string }[];
+  images: { src: string; alt: string; link?: string }[];
   button: {
     label: string;
     link: string;
@@ -32,20 +33,28 @@ const PreMadeDesigns: React.FC<PreMadeDesignsProps> = ({
       <div className="xl:max-w-360 w-full ml-auto">
         <SwiperCarousel
           data={images}
-          slidesPerView={2.5}
-          spaceBetween={30}
+          slidesPerView={1.6}
+          spaceBetween={16}
+          /* Breathing room at both ends, so the first card isn't flush
+             against the screen edge. */
+          slidesOffsetBefore={16}
+          slidesOffsetAfter={16}
           autoplay={{
             delay: 3000,
             disableOnInteraction: false,
           }}
           breakpoints={{
             768: {
-              slidesPerView: 3.5,
-              spaceBetween: 40,
+              slidesPerView: 2.6,
+              spaceBetween: 24,
+              slidesOffsetBefore: 32,
+              slidesOffsetAfter: 32,
             },
             1024: {
-              slidesPerView: 4.5,
-              spaceBetween: 50,
+              slidesPerView: 3.4,
+              spaceBetween: 32,
+              slidesOffsetBefore: 48,
+              slidesOffsetAfter: 48,
             },
           }}
           modules={[Autoplay, Navigation]}
@@ -53,15 +62,19 @@ const PreMadeDesigns: React.FC<PreMadeDesignsProps> = ({
             nextEl: ".button-next",
             prevEl: ".button-prev",
           }}
-          renderSlide={(src) => (
-            <div className="w-full relative aspect-4/5.25">
+          renderSlide={(slide) => (
+            <Link
+              href={slide.link || button.link}
+              className="group block w-full relative aspect-4/5.25 overflow-hidden"
+            >
               <Image
-                src={src.src}
-                alt={src.alt}
+                src={slide.src}
+                alt={slide.alt || title}
                 fill
-                className="object-cover"
+                sizes="(max-width: 768px) 60vw, 30vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
-            </div>
+            </Link>
           )}
         />
       </div>

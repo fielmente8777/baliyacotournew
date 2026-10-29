@@ -16,28 +16,63 @@ export const groupUsesImages = (group: AdminOptionGroup) =>
 
 export interface MissingImage {
   key: string;
+  /** Which part it belongs to — "Garment cards", "Dupatta", "Fabric"… */
+  group: string;
+  /** The item within that part — "Kurti", "Chiffon"… */
+  name: string;
+  /** Both together, for a flat list. */
   label: string;
+}
+
+/** Missing pictures grouped by part, in the order the builder shows them. */
+export interface MissingGroup {
+  id: string;
+  title: string;
+  /** What these pictures are used for, in a few words. */
+  hint: string;
+  items: MissingImage[];
 }
 
 /** Active garments and options the builder will show without a picture. */
 export function findMissingImages(catalog: AdminCatalog): MissingImage[] {
-  const missing: MissingImage[] = [];
+  return groupMissingImages(catalog).flatMap((g) => g.items);
+}
+
+/**
+ * The same missing pictures, grouped: the garment cards and previews first,
+ * then one group per step (Fabric, Neck, Dupatta…) in step order. Empty
+ * groups are left out.
+ */
+export function groupMissingImages(catalog: AdminCatalog): MissingGroup[] {
   const has = (key: string) => Boolean(catalog.images[key]);
+  const item = (key: string, group: string, name: string): MissingImage => ({ key, group, name, label: `${group}: ${name}` });
+  const garments = catalog.garments.filter((g) => g.isActive);
 
-  for (const g of catalog.garments) {
-    if (!g.isActive) continue;
-    if (!has(garmentKey(g))) missing.push({ key: garmentKey(g), label: `${g.name} — card` });
-    if (!has(previewKey(g))) missing.push({ key: previewKey(g), label: `${g.name} — preview` });
+  const groups: MissingGroup[] = [
+    {
+      id: 'garment-cards',
+      title: 'Garment cards',
+      hint: 'The picture on each garment tile where customers start designing.',
+      items: garments.filter((g) => !has(garmentKey(g))).map((g) => item(garmentKey(g), 'Garment cards', g.name)),
+    },
+    {
+      id: 'garment-previews',
+      title: 'Garment previews',
+      hint: 'The large preview shown while a customer designs that garment.',
+      items: garments.filter((g) => !has(previewKey(g))).map((g) => item(previewKey(g), 'Garment previews', g.name)),
+    },
+  ];
+
+  for (const group of [...catalog.groups].sort(byPosition)) {
+    if (!groupUsesImages(group)) continue;
+    const items = catalog.options
+      .filter((o) => o.groupId === group._id && o.isActive && !has(optionKey(group, o)))
+      .sort(byPosition)
+      .map((o) => item(optionKey(group, o), group.label, o.label));
+    groups.push({ id: `step-${group._id}`, title: group.label, hint: `The ${group.label} choices customers pick from.`, items });
   }
 
-  const groupById = new Map(catalog.groups.map((g) => [g._id, g]));
-  for (const o of catalog.options) {
-    const group = groupById.get(o.groupId);
-    if (!group || !o.isActive || !groupUsesImages(group)) continue;
-    if (!has(optionKey(group, o))) missing.push({ key: optionKey(group, o), label: `${group.label} — ${o.label}` });
-  }
-
-  return missing;
+  return groups.filter((g) => g.items.length > 0);
 }
 
 export const byPosition = <T extends { position: number }>(a: T, b: T) => a.position - b.position;

@@ -82,6 +82,8 @@ export interface ProductListQuery {
       does something again. Left in the type so CollectionsView still compiles. */
   garmentTypeId?: string;
   tag?: string;
+  /** Silhouette: the Shopify product type, e.g. "Kurti". */
+  productType?: string;
   badge?: 'bestseller' | 'editors-pick';
   minPrice?: number;
   maxPrice?: number;

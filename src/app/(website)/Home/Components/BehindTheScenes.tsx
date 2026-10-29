@@ -46,7 +46,9 @@ const BehindTheScenes: React.FC<BehindTheScenesProps> = ({
             modules={[Autoplay, EffectFade]}
             effect="fade"
             renderSlide={(images) => (
-              <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 grid-flow-row auto-rows-23 gap-4">
+              /* Two columns on phones too — one column made this section
+                 three and a half screens long. */
+              <div className="grid lg:grid-cols-4 grid-cols-2 grid-flow-row auto-rows-12 md:auto-rows-23 gap-2 md:gap-4">
                 {images.map((image, index) => (
                   <div
                     key={index}
@@ -56,8 +58,9 @@ const BehindTheScenes: React.FC<BehindTheScenesProps> = ({
                   >
                     <Image
                       src={image}
-                      alt={title}
+                      alt={`${title} at Baliye`}
                       fill
+                      sizes="(max-width: 1024px) 50vw, 25vw"
                       className="object-cover rounded-sm"
                     />
                     {/* <div className="absolute inset-0 bg-black/40 z-10 text-white">{index}</div> */}

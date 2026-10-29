@@ -154,7 +154,7 @@ export default function CartItem({ item, index = 0 }: Props) {
               {item.selections.map((selection) => (
                 <div key={selection.groupLabel} className="flex min-w-0 gap-1.5">
                   <dt className="shrink-0 text-[#999]">{selection.groupLabel}:</dt>
-                  <dd className="truncate text-[#333]">{selection.optionLabel}</dd>
+                  <dd className="truncate text-dark">{selection.optionLabel}</dd>
                 </div>
               ))}
             </dl>

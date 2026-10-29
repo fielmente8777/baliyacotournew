@@ -1,6 +1,8 @@
 export const termsContent = `
 <h1>Terms and Conditions</h1>
 
+<p><em>Last updated: 29 October 2026</em></p>
+
 <p>
 Welcome to Baliye! We are delighted that you have chosen us for your custom Indian clothing needs.
 Please read our Terms and Conditions ("Terms") carefully before using our website and services.
@@ -26,8 +28,8 @@ to these Terms. These Terms are subject to change, and we recommend reviewing th
 <p>
 Baliye specializes in custom Indian clothing, offering products that are tailored to your specifications.
 Our services include fabric selection, design consultation, and customization of traditional Indian clothing
-(e.g., sarees, lehengas, sherwanis, kurta sets, etc.). We aim to provide a seamless,
-personalized shopping experience for customers globally.
+(such as lehengas, anarkalis, kurtis, suits and shararas). We aim to provide a seamless,
+personalised shopping experience.
 </p>
 
 <h2>3. Eligibility</h2>
@@ -47,8 +49,9 @@ update your information as needed.
 </p>
 
 <p>
-You are responsible for maintaining the confidentiality of your account and password.
-You agree to notify Baliye immediately of any unauthorized use of your account.
+You are responsible for keeping access to your account secure, including the email address,
+phone number or Google account you sign in with. You agree to notify Baliye immediately of any
+unauthorised use of your account.
 </p>
 
 <h2>5. Product Information and Customization</h2>
@@ -93,22 +96,22 @@ We reserve the right to refuse any order at our discretion.
 
   <li>
     <strong>Payment:</strong> Payments for orders must be made in full
-    at the time of purchase. We accept a variety of payment methods,
-    including major credit/debit cards, PayPal, and other secure payment options.
+    at the time of purchase, using one of the payment methods shown at checkout.
+    Payments are processed securely by our payment provider.
   </li>
 
   <li>
-    <strong>Currency and Taxes:</strong> All prices are listed in [Currency]
+    <strong>Currency and Taxes:</strong> All prices are listed in Indian Rupees (INR, ₹)
     unless otherwise stated. For international orders, additional customs duties
     or taxes may apply, and it is the responsibility of the customer to cover these costs.
   </li>
 </ul>
 
-<h2>15. Changes to Terms</h2>
+<h2>7. Changes to Terms</h2>
 
 <p>
 Baliye reserves the right to modify or update these Terms at any time without prior notice.
-Any changes will be posted on this page, and the effective date will be updated accordingly.
+Any changes will be posted on this page, and the "Last updated" date above will change accordingly.
 Your continued use of the website after such modifications constitutes your acceptance of the updated Terms.
 </p>
 `;

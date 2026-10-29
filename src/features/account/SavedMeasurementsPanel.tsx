@@ -198,7 +198,7 @@ export default function SavedMeasurementsPanel() {
       title: 'Delete these measurements?',
       text: (
         <>
-          <strong className="font-medium text-[#333]">{p.profileName}</strong> will be removed. Orders already placed
+          <strong className="font-medium text-dark">{p.profileName}</strong> will be removed. Orders already placed
           keep their measurements.
         </>
       ),

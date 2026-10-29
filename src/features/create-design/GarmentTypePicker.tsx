@@ -12,8 +12,12 @@ import { useRouter } from 'next/navigation';
 import { useGetGarmentTypesQuery } from '@/store/api/productApi';
 import { useGetDesignImagesQuery } from '@/store/api/designApi';
 import { designImageKey } from '@/lib/designImages';
-import { formatINR } from '@/lib/format';
+import { cn, formatINR } from '@/lib/format';
 import { LIVE } from '@/lib/liveUpdates';
+
+/* Two / three / five across (gap-5 = 1.25rem), in a centred wrapping row, so
+   a leftover card sits in the middle rather than alone on the left. */
+const CARD_WIDTH = 'w-[calc((100%-1.25rem)/2)] md:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-5rem)/5)]';
 
 export default function GarmentTypePicker() {
   const router = useRouter();
@@ -32,10 +36,10 @@ export default function GarmentTypePicker() {
         </p>
       </div>
 
-      <div className="mx-auto mt-12 grid max-w-5xl grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+      <div className="mx-auto mt-12 flex max-w-5xl flex-wrap justify-center gap-5">
         {isLoading &&
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-black/5" />
+            <div key={i} className={cn('h-48 animate-pulse rounded-xl bg-black/5', CARD_WIDTH)} />
           ))}
 
         {types.map((type) => {
@@ -47,7 +51,7 @@ export default function GarmentTypePicker() {
             onClick={() =>
               router.push(`/create-your-own-design?garmentType=${type._id}`)
             }
-            className="group overflow-hidden rounded-xl bg-white text-left transition-shadow hover:shadow-lg"
+            className={cn('group overflow-hidden rounded-xl bg-white text-left transition-shadow hover:shadow-lg', CARD_WIDTH)}
           >
             <div className="relative aspect-[3/4] w-full bg-[#F1EDE6]">
               {image && (

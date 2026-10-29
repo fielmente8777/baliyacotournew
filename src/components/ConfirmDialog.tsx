@@ -69,7 +69,7 @@ function Dialog({ request, busy, onCancel, onConfirm }: { request: Request; busy
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="h-11 flex-1 rounded-md border border-[#E4DED4] bg-white text-sm font-medium text-[#333] transition hover:border-[#A52C45] hover:text-[#A52C45] disabled:opacity-50"
+            className="h-11 flex-1 rounded-md border border-[#E4DED4] bg-white text-sm font-medium text-dark transition hover:border-[#A52C45] hover:text-[#A52C45] disabled:opacity-50"
           >
             Cancel
           </button>

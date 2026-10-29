@@ -107,7 +107,7 @@ function ExchangeSizes({
                   ? 'border-[#A52C45] bg-[#A52C45] text-white'
                   : disabled
                     ? 'cursor-not-allowed border-[#EEE9E2] text-[#BDB5AA]'
-                    : 'border-[#DDD6CC] text-[#333] hover:border-[#A52C45]'
+                    : 'border-[#DDD6CC] text-dark hover:border-[#A52C45]'
               } ${!s.inStock && !isCurrent ? 'line-through' : ''}`}
             >
               {s.value}

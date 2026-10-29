@@ -1,6 +1,6 @@
 export const homePageData = {
   hero: {
-    title: "Woven from your Imagination",
+    title: "Woven from Your Imagination",
     description:
       "From lehengas to kurtis, Baliye crafts pieces that are uniquely yours.",
     image: "/image-1.png",
@@ -10,14 +10,14 @@ export const homePageData = {
     },
     cta: {
       label: "Design Your Dress",
-      link: "#design",
+      link: "/create-your-own-design",
     },
   },
 
   categories: {
     title: "Luxurious and Contemporary Appeal for Every Woman",
     description:
-      "Baliye offers a stunning collection of ethnic Indian clothing, blending traditional artistry with modern design. From sarees and lehengas to kurtas and suits, each piece is crafted with intricate details and premium fabrics. Perfect for weddings, festivals, and special occasions, Baliye brings the essence of Indian culture to your wardrobe. Celebrate timeless elegance with Baliye.",
+      "Baliye offers a stunning collection of ethnic Indian clothing, blending traditional artistry with modern design. From lehengas and anarkalis to kurtis and suits, each piece is crafted with intricate details and premium fabrics. Perfect for weddings, festivals, and special occasions, Baliye brings the essence of Indian culture to your wardrobe. Celebrate timeless elegance with Baliye.",
     items: [
       {
         title: "KURTIS",
@@ -38,28 +38,28 @@ export const homePageData = {
   },
 
   designProcess: {
-    title: "How to Design your Dress",
+    title: "How to Design Your Dress",
 
     steps: [
       {
         step: "01",
-        title: "Choose the fabric and color",
+        title: "Choose your fabric and colour",
         description:
-          "New Fabrics every season. Choose from over 10 fabrics and patterns.",
+          "New fabrics every season. Choose from over 10 fabrics and colours.",
         image: "/fabric-2.png",
       },
       {
         step: "02",
-        title: "Choose the embroidery style",
+        title: "Choose your embroidery",
         description:
-          "Place and try all new embroidery style over your clothes.",
+          "Try every embroidery style on your design before you decide.",
         image: "/fabric-3.png",
       },
       {
         step: "03",
-        title: "Choose your options",
+        title: "Choose your details",
         description:
-          "Make you clothing the way you want with various custom options.",
+          "Neckline, sleeves and fit: make your clothing exactly the way you want it.",
         image: "/fabric-1.png",
       },
     ],
@@ -67,7 +67,7 @@ export const homePageData = {
   steps: {
     title: "Three Steps <br/> from Sketch to Stitch",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat.",
+      "Design it, measure it, wear it. Pick your garment and fabric, then choose the colour, neckline and embroidery and see it come together as you go. Add your measurements once, and our artisans cut and stitch your piece by hand to fit you exactly, then deliver it to your door.",
     image: "/Rectangle-23951.png",
     cta: {
       label: "Design Your Dress",
@@ -75,34 +75,14 @@ export const homePageData = {
     },
   },
   preMadeDesigns: {
-    title: "Pre made Designs",
+    title: "Pre-made Designs",
     description:
       "Get inspired by women who wear our designs. Discover how they style their custom made looks for every occasion.",
     images: [
-      {
-        src: "/Rectangle-23959.png",
-        alt: "",
-      },
-      {
-        src: "/Rectangle-23961.png",
-        alt: "",
-      },
-      {
-        src: "/Rectangle-23962.png",
-        alt: "",
-      },
-      {
-        src: "/Rectangle-23963.png",
-        alt: "",
-      },
-      {
-        src: "/Rectangle-23959.png",
-        alt: "",
-      },
-      {
-        src: "/Rectangle-23959.png",
-        alt: "",
-      },
+      { src: "/Rectangle-23959.png", alt: "Ivory embroidered kurta set", link: "/products" },
+      { src: "/Rectangle-23961.png", alt: "Pastel suit with hand embroidery", link: "/products" },
+      { src: "/Rectangle-23962.png", alt: "Festive anarkali in rich colours", link: "/products" },
+      { src: "/Rectangle-23963.png", alt: "Everyday kurti with fine detailing", link: "/products" },
     ],
     button: {
       label: "View All Designs",
@@ -111,7 +91,7 @@ export const homePageData = {
   },
 
   bestSellers: {
-    title: "Shop our Bestsellers",
+    title: "Shop Our Bestsellers",
     description:
       "Discover the custom-made pieces everyone is talking about.",
     products: [
@@ -152,7 +132,7 @@ export const homePageData = {
 
   behindTheScenes: {
     title: "Behind the Scenes",
-    description: "Here are our workers working hard",
+    description: "The artisans, pattern makers and embroiderers who make every Baliye piece by hand.",
     images: [
       [
         "/image-3.png",
@@ -176,7 +156,7 @@ export const homePageData = {
   foundersMessage: {
     title: "Message from the Founders",
     description:
-      "Welcome to Baliye ! We founded this brand with one simple goal: to help you express your unique style through custom clothing and accessories. Each piece is made with care, quality, and a personal touch, ensuring that it s as distinctive as you are. Thank you for choosing us to be part of your style journey, we can t wait to see what you create!",
+      "Welcome to Baliye! We founded this brand with one simple goal: to help you express your unique style through custom clothing and accessories. Each piece is made with care, quality and a personal touch, so that it's as distinctive as you are. Thank you for choosing us to be part of your style journey. We can't wait to see what you create!",
     image: "/image-2.png",
   },
 };

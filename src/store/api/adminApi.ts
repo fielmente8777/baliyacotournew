@@ -114,7 +114,7 @@ export type AppSettingsAdmin = { creditsEnabled: boolean; measureVideoUrl: strin
 export const adminApi = createApi({
   reducerPath: 'adminApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit'],
+  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit', 'Embroidery'],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AuthTokens, { email: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -256,6 +256,21 @@ export const adminApi = createApi({
       transformResponse: unwrap<{ url: string }>,
     }),
 
+    /** "Write with AI": a suggestion for one content field. Nothing is saved. */
+    writeContent: builder.mutation<
+      { text: string },
+      {
+        action: 'write' | 'improve' | 'shorter' | 'longer' | 'fix' | 'custom';
+        text?: string;
+        instruction?: string;
+        field?: string;
+        format: 'html' | 'plain';
+      }
+    >({
+      query: (body) => ({ url: '/admin/content/write', method: 'POST', body }),
+      transformResponse: unwrap<{ text: string }>,
+    }),
+
     /* ---- Design credits ---- */
 
     getAppSettings: builder.query<AppSettingsAdmin, void>({
@@ -331,6 +346,7 @@ export const {
   useGetContentQuery,
   useSaveContentMutation,
   useUploadImageMutation,
+  useWriteContentMutation,
   useGetAppSettingsQuery,
   useUpdateAppSettingsMutation,
   useSearchUsersQuery,

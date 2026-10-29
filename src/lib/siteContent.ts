@@ -11,7 +11,7 @@
  * edit shows on the next page load.
  */
 
-export type ContentPage = 'home' | 'footer' | 'terms';
+export type ContentPage = 'home' | 'footer' | 'terms' | 'products';
 
 export const contentTag = (page: ContentPage) => `content:${page}`;
 

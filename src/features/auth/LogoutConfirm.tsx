@@ -74,7 +74,7 @@ function LogoutDialog({ onCancel, onConfirm, busy }: { onCancel: () => void; onC
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="h-11 flex-1 rounded-md border border-[#E4DED4] bg-white text-sm font-medium text-[#333] transition hover:border-[#A52C45] hover:text-[#A52C45] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A52C45] disabled:opacity-50"
+            className="h-11 flex-1 rounded-md border border-[#E4DED4] bg-white text-sm font-medium text-dark transition hover:border-[#A52C45] hover:text-[#A52C45] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A52C45] disabled:opacity-50"
           >
             Cancel
           </button>

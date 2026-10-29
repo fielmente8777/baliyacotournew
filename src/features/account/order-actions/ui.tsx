@@ -9,7 +9,7 @@ export const btnPrimary =
 export const btnDanger =
   'flex h-11 flex-1 items-center justify-center rounded-lg bg-[#9B1C14] px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 export const btnSecondary =
-  'flex h-11 flex-1 items-center justify-center rounded-lg border border-[#DDD6CC] px-5 text-sm font-medium text-[#333] transition hover:bg-[#FAF8F4]';
+  'flex h-11 flex-1 items-center justify-center rounded-lg border border-[#DDD6CC] px-5 text-sm font-medium text-dark transition hover:bg-[#FAF8F4]';
 export const textArea =
   'w-full rounded-lg border border-[#DDD6CC] bg-white px-3 py-2.5 text-sm text-[#222] outline-none transition placeholder:text-[#A9A9A9] focus:border-[#A52C45]';
 

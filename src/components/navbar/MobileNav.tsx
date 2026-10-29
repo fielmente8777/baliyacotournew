@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Slide-over menu for the hamburger button (below the `xl` breakpoint,
+ * Slide-over menu for the hamburger button (below the `lg` breakpoint,
  * where the inline nav links and account dropdown in NavBar are hidden).
  *
  * This used to be a stub with no links and no way to reach My Account —
@@ -11,7 +11,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, LogOut, Package, User, X } from "lucide-react";
+import { Bell, Heart, LogOut, Package, User, X } from "lucide-react";
 
 import { navData } from "./navData";
 import { useAuth } from "@/features/auth/useAuth";
@@ -46,7 +46,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
   return (
     <div
       aria-hidden={!isOpenNavBar}
-      className={`fixed inset-0 z-9998 xl:hidden ${
+      className={`fixed inset-0 z-9998 lg:hidden ${
         isOpenNavBar ? "pointer-events-auto" : "pointer-events-none"
       }`}
     >
@@ -90,7 +90,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
               <Link
                 href={item.href}
                 onClick={close}
-                className="flex items-center gap-3 py-3 text-base text-[#333] transition-colors hover:text-secondary"
+                className="flex items-center gap-3 py-3 text-base text-dark transition-colors hover:text-secondary"
               >
                 <item.icon size={18} aria-hidden="true" />
                 {item.name}
@@ -106,7 +106,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
                 <Link
                   href="/my-account"
                   onClick={close}
-                  className="flex items-center gap-3 py-3 text-base text-[#333] hover:text-secondary"
+                  className="flex items-center gap-3 py-3 text-base text-dark hover:text-secondary"
                 >
                   <User size={18} />
                   My Account
@@ -116,7 +116,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
                 <Link
                   href="/my-account/notifications"
                   onClick={close}
-                  className="flex items-center gap-3 py-3 text-base text-[#333] hover:text-secondary"
+                  className="flex items-center gap-3 py-3 text-base text-dark hover:text-secondary"
                 >
                   <Bell size={18} />
                   Notifications
@@ -126,10 +126,20 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
                 <Link
                   href="/my-account/orders"
                   onClick={close}
-                  className="flex items-center gap-3 py-3 text-base text-[#333] hover:text-secondary"
+                  className="flex items-center gap-3 py-3 text-base text-dark hover:text-secondary"
                 >
                   <Package size={18} />
                   My Orders
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/my-account/wishlist"
+                  onClick={close}
+                  className="flex items-center gap-3 py-3 text-base text-dark hover:text-secondary"
+                >
+                  <Heart size={18} />
+                  Wishlist
                 </Link>
               </li>
               <li>

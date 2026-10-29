@@ -44,7 +44,7 @@ function StatTile({ href, icon: Icon, label, value, hint }: TileProps) {
       <span className="mt-3 text-2xl font-semibold text-[#222]">
         {value === undefined ? <span className="inline-block h-7 w-8 animate-pulse rounded bg-black/5" /> : value}
       </span>
-      <span className="text-sm font-medium text-[#333]">{label}</span>
+      <span className="text-sm font-medium text-dark">{label}</span>
       <span className="mt-0.5 text-xs text-[#8A8A8A]">{hint}</span>
     </Link>
   );

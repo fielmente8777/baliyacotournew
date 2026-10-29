@@ -10,6 +10,8 @@ import { useCart } from "@/hooks/useCart";
 import NotificationBell from "./NotificationBell";
 import { useBumpOnIncrease } from "./useBumpOnIncrease";
 import { useLogoutConfirm } from "@/features/auth/LogoutConfirm";
+import { Heart } from "lucide-react";
+import { useGetWishlistRefsQuery } from "@/store/api/wishlistApi";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
@@ -20,6 +22,12 @@ const Navbar = () => {
   /* Skips its own fetch when signed out, so this costs nothing for guests. */
   const { totals, isLoading: cartLoading } = useCart();
   const isSignedIn = isHydrated && isAuthenticated;
+  /* Saved items, for the heart's badge — the same small list the product
+     cards already load to show which hearts are filled. */
+  const { data: wishRefs } = useGetWishlistRefsQuery(undefined, { skip: !isSignedIn });
+  const wishCount = wishRefs
+    ? wishRefs.productIds.length + wishRefs.designIds.length + wishRefs.shopifyProductIds.length
+    : 0;
   /* Adding to the bag (from any page) makes the cart icon jump. */
   const cartBump = useBumpOnIncrease(totals.itemCount, isSignedIn && !cartLoading);
   const hasCartItems = isSignedIn && totals.itemCount > 0;
@@ -29,7 +37,7 @@ const Navbar = () => {
       {/* relative: the logo is centred on this box, and on phones the
           notification panel spans it instead of hanging off one icon. */}
       <nav className="max_width relative flex min-h-10 items-center justify-between">
-        <div className="xl:hidden block">
+        <div className="lg:hidden block">
           <MenuButton
             color="dark"
             isOpenNavBar={isOpenNavBar}
@@ -37,12 +45,12 @@ const Navbar = () => {
           />
           <MobileNav isOpenNavBar={isOpenNavBar} setIsOpenNavBar={setIsOpenNavBar} />
         </div>
-        <ul className="xl:flex hidden items-center gap-6">
+        <ul className="lg:flex hidden items-center gap-5 text-[15px] xl:gap-7">
           {navData.map((item, index) => (
             <li className="" key={index}>
               <Link
                 href={item.href}
-                className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
+                className="whitespace-nowrap text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
               >
                 {item.name}
               </Link>
@@ -57,7 +65,7 @@ const Navbar = () => {
           <Image src="/logo.png" alt="Baliye Couture" fill priority sizes="153px" className="object-contain" />
         </Link>
 
-        <ul className="flex items-center gap-2.5 sm:gap-4 [&>li]:flex [&>li]:items-center">
+        <ul className="-mr-2 flex items-center gap-0 sm:gap-1 [&>li]:flex [&>li]:items-center">
           <li>
             {isAuthenticated ? (
               <AccountMenu onSignOut={askToLogOut} open={open} setOpen={setOpen} />
@@ -65,11 +73,26 @@ const Navbar = () => {
               <Link
                 href="/login?redirect=%2Fmy-account%2Fpersonal-details"
                 aria-label="Sign in"
-                className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
+                className="text-[#5C6476] size-11 flex items-center justify-center hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
               >
                 <ProfileIcon />
               </Link>
             )}
+          </li>
+          {/* Wishlist — desktop; on phones it's in the menu. */}
+          <li className="max-lg:hidden!">
+            <Link
+              href={isSignedIn ? "/my-account/wishlist" : "/login?redirect=%2Fmy-account%2Fwishlist"}
+              aria-label={wishCount > 0 ? `Wishlist, ${wishCount} saved` : "Wishlist"}
+              className="relative text-[#5C6476] size-11 flex items-center justify-center hover:text-secondary transition-all duration-300 ease-in-out"
+            >
+              <Heart size={22} strokeWidth={1.6} aria-hidden="true" />
+              {isSignedIn && wishCount > 0 && (
+                <span className="absolute right-1 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
+                  {wishCount > 9 ? "9+" : wishCount}
+                </span>
+              )}
+            </Link>
           </li>
           <li>
             <Link
@@ -79,7 +102,7 @@ const Navbar = () => {
                   ? `Cart, ${totals.itemCount} item${totals.itemCount > 1 ? "s" : ""}`
                   : "Cart"
               }
-              className="group text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer relative"
+              className="group text-[#5C6476] size-11 flex items-center justify-center hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer relative"
             >
               {/* A small tilt every few seconds while the bag holds something,
                   a drop-and-bounce on hover or when an item is added. */}
@@ -98,7 +121,7 @@ const Navbar = () => {
               {/* Rendered only once hydrated, or the server and client markup
                   would differ and React would discard the subtree. */}
               {hasCartItems && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4">
+                <span className="absolute right-1 top-1.5 flex h-4 min-w-4">
                   {cartBump.active && (
                     <span className="absolute inset-0 animate-ping rounded-full bg-secondary opacity-40 [animation-iteration-count:2]" aria-hidden="true" />
                   )}
@@ -236,7 +259,7 @@ const AccountMenu = ({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
+        className="text-[#5C6476] size-11 flex items-center justify-center hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
       >
         <ProfileIcon />
       </button>
@@ -249,14 +272,14 @@ const AccountMenu = ({
           <Link
             href="/my-account"
             onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-[#333] hover:bg-[#F7F7F7]"
+            className="block px-4 py-2.5 text-sm text-dark hover:bg-[#F7F7F7]"
           >
             My Account
           </Link>
           <Link
             href="/my-account/orders"
             onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-[#333] hover:bg-[#F7F7F7]"
+            className="block px-4 py-2.5 text-sm text-dark hover:bg-[#F7F7F7]"
           >
             My Orders
           </Link>

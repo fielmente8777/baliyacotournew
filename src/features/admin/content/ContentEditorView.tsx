@@ -10,8 +10,11 @@ import { mergeContent } from '@/lib/siteContent';
 import { homePageData } from '@/app/(website)/Home/pagedata';
 import { websiteFooterData } from '@/components/footer/footerData';
 import { termsContent } from '@/app/(website)/terms-and-conditions/pageData';
-import { Button, Card, NoticeBar, PageTitle, TextField, type Notice } from '../ui';
+import { productsPageData } from '@/app/(website)/products/pageData';
+import { Button, Card, NoticeBar, PageTitle, type Notice } from '../ui';
 import { ContentField, humanize, ObjectFields, type Json } from './ContentFields';
+import AiWriter from './AiWriter';
+import RichTextEditor from './RichTextEditor';
 
 type Content = { [key: string]: Json };
 
@@ -29,10 +32,16 @@ const PAGES: Record<ContentPage, { title: string; path: string; description: str
     description: 'Shown at the bottom of every page.',
     defaults: { footer: websiteFooterData as unknown as Json },
   },
+  products: {
+    title: 'Pre-made Designs page',
+    path: '/products',
+    description: 'The banner (words and pictures), the silhouette heading and the design-your-own block on the Pre-made Designs page. Product names, prices and photos come from Shopify.',
+    defaults: productsPageData as unknown as Content,
+  },
   terms: {
     title: 'Terms & Conditions',
     path: '/terms-and-conditions',
-    description: 'The terms page. Written in HTML: <h2> for headings, <p> for paragraphs.',
+    description: 'The terms page. Type and format it like a document; no HTML needed.',
     defaults: { html: termsContent },
   },
 };
@@ -54,6 +63,8 @@ const SECTION_LABELS: Record<string, string> = {
   behindTheScenes: 'Behind the scenes',
   foundersMessage: 'Message from the founders',
   footer: 'Footer',
+  silhouettes: 'Shop by silhouette',
+  promo: 'Design-your-own block',
 };
 
 export default function ContentEditorView({ page }: { page: ContentPage }) {
@@ -157,22 +168,21 @@ function Editor({ page, saved, updatedAt }: { page: ContentPage; saved: Record<s
   );
 }
 
+/**
+ * The Terms page: typed like a document, formatted with the toolbar — no HTML.
+ * "Write with AI" can draft, tidy or shorten the whole text.
+ */
 function TermsEditor({ html, onChange }: { html: string; onChange: (html: string) => void }) {
-  const [preview, setPreview] = useState(false);
   return (
     <Card
       title="Terms text"
-      actions={
-        <Button variant="outline" onClick={() => setPreview((p) => !p)} className="h-8 text-xs">
-          {preview ? 'Edit' : 'Preview'}
-        </Button>
-      }
+      actions={<AiWriter value={html} onApply={onChange} field="Terms and Conditions page" format="html" />}
     >
-      {preview ? (
-        <article className="terms-content max-h-[70vh] overflow-y-auto" dangerouslySetInnerHTML={{ __html: html }} />
-      ) : (
-        <TextField label="HTML" value={html} onChange={onChange} multiline rows={28} />
-      )}
+      <p className="mb-3 text-xs text-[#888]">
+        Type as you would in a document. Select text and use the toolbar for headings, bold, lists and links; what you
+        see is how it looks on the website.
+      </p>
+      <RichTextEditor value={html} onChange={onChange} placeholder="Write the terms here…" />
     </Card>
   );
 }

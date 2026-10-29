@@ -235,6 +235,10 @@ async function fetchProducts(query: ProductListQuery, excludeHandle?: string, pr
 
   let items = data.products.edges.map(({ node }) => mapStorefrontProduct(node));
 
+  /* Silhouette (Shopify product type), matched exactly — filtered here
+     rather than in the search string, so a type with spaces or an
+     apostrophe can't break the query. */
+  if (query.productType) items = items.filter((p) => p.productType === query.productType);
   if (query.minPrice !== undefined) items = items.filter((p) => p.basePrice >= query.minPrice!);
   if (query.maxPrice !== undefined) items = items.filter((p) => p.basePrice <= query.maxPrice!);
 
@@ -295,10 +299,17 @@ const productApi = baseApi.injectEndpoints({
             specs: SPEC_METAFIELD_IDENTIFIERS,
           });
 
+          /* Same type first, then anything else, so the row is always full —
+             and never the product being viewed (the search exclusion alone
+             let it through). */
           const productType = data.product?.productType;
-          if (!productType) return { data: [] };
-
-          const items = await fetchProducts({}, slug, productType);
+          const notThis = (p: Product) => p.slug !== slug;
+          let items = productType ? (await fetchProducts({}, slug, productType)).filter(notThis) : [];
+          if (items.length < 4) {
+            const seen = new Set(items.map((p) => p._id));
+            const more = (await fetchProducts({}, slug)).filter((p) => notThis(p) && !seen.has(p._id));
+            items = [...items, ...more];
+          }
           return { data: items.slice(0, 4) };
         } catch (error) {
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };

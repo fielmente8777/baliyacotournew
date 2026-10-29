@@ -14,7 +14,7 @@ import { cn, formatINR } from '@/lib/format';
 import { Badge, Button, Card, ImageSlot, NoticeBar, PageTitle, PriceField, TextField, type Notice } from '../ui';
 import GarmentEditor from './GarmentEditor';
 import OptionGroupsPanel from './OptionGroupsPanel';
-import { byPosition, findMissingImages, garmentKey } from './catalogKeys';
+import { byPosition, garmentKey, groupMissingImages, type MissingGroup } from './catalogKeys';
 
 type Tab = 'garments' | 'steps' | 'missing';
 
@@ -39,7 +39,8 @@ export default function DesignBuilderView() {
 
   const garments = [...catalog.garments].sort(byPosition);
   const selected = garments.find((g) => g._id === garmentId) ?? garments[0];
-  const missing = findMissingImages(catalog);
+  const missingGroups = groupMissingImages(catalog);
+  const missing = missingGroups.flatMap((g) => g.items);
 
   const pull = async () => {
     setNotice(null);
@@ -149,7 +150,7 @@ export default function DesignBuilderView() {
 
       {tab === 'steps' && <OptionGroupsPanel catalog={catalog} />}
 
-      {tab === 'missing' && <MissingPictures missing={missing} />}
+      {tab === 'missing' && <MissingPictures groups={missingGroups} />}
     </div>
   );
 }
@@ -203,10 +204,17 @@ function NewGarmentTile({ onCreated }: { onCreated: (id: string) => void }) {
   );
 }
 
-function MissingPictures({ missing }: { missing: { key: string; label: string }[] }) {
+/**
+ * Every missing picture, grouped by the part it belongs to — garment cards,
+ * garment previews, then each step (Fabric, Neck, Dupatta…) — so it's clear
+ * what each one is for. Chips at the top jump to a group. A tile disappears
+ * from here as soon as its picture is uploaded.
+ */
+function MissingPictures({ groups }: { groups: MissingGroup[] }) {
   const [uploadImage] = useUploadCatalogImageMutation();
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
 
-  if (!missing.length) {
+  if (!total) {
     return (
       <Card>
         <p className="text-sm text-emerald-800">Every visible garment and option has a picture.</p>
@@ -215,16 +223,49 @@ function MissingPictures({ missing }: { missing: { key: string; label: string }[
   }
 
   return (
-    <Card title={`${missing.length} pictures missing`}>
-      <p className="mb-4 text-sm text-[#777]">Customers see a blank tile for these. Click a tile to upload.</p>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        {missing.map((m) => (
-          <div key={m.key} className="flex flex-col gap-1.5">
-            <ImageSlot onUpload={(file) => uploadImage({ key: m.key, file }).unwrap()} />
-            <p className="text-xs leading-snug text-[#555]">{m.label}</p>
-          </div>
-        ))}
-      </div>
-    </Card>
+    <div className="flex flex-col gap-5">
+      <Card title={`${total} pictures missing in ${groups.length} ${groups.length === 1 ? 'part' : 'parts'}`}>
+        <p className="mb-3 text-sm text-[#777]">
+          Customers see a blank tile for these. Pick a part to jump to it, then click a tile to upload.
+        </p>
+        <nav aria-label="Parts with missing pictures" className="flex flex-wrap gap-2">
+          {groups.map((g) => (
+            <a
+              key={g.id}
+              href={`#missing-${g.id}`}
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-[#d8d2c8] bg-white pl-3.5 pr-2 text-sm text-dark transition hover:border-secondary hover:text-secondary"
+            >
+              {g.title}
+              <Badge tone="warn">{g.items.length}</Badge>
+            </a>
+          ))}
+        </nav>
+      </Card>
+
+      {groups.map((g) => (
+        <section key={g.id} id={`missing-${g.id}`} className="scroll-mt-4">
+          <Card
+            title={
+              <span className="flex items-center gap-2">
+                {g.title}
+                <Badge tone="warn">
+                  {g.items.length} missing
+                </Badge>
+              </span>
+            }
+          >
+            <p className="mb-4 text-xs text-[#888]">{g.hint}</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+              {g.items.map((m) => (
+                <div key={m.key} className="flex flex-col gap-1.5">
+                  <ImageSlot onUpload={(file) => uploadImage({ key: m.key, file }).unwrap()} />
+                  <p className="text-xs font-medium leading-snug text-dark">{m.name}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+      ))}
+    </div>
   );
 }

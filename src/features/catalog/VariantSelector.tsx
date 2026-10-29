@@ -41,7 +41,7 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
   };
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="space-y-5">
       {product.options.map((option) => {
         const currentValue = selectedVariant?.selectedOptions.find(
           (o) => o.name === option.name,
@@ -49,9 +49,13 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
 
         return (
           <div key={option.name}>
-            <p className="mb-3 text-sm uppercase tracking-[2px] text-gray-500">
+            <p className="mb-2.5 text-[13px] text-[#6B6B6B]">
               {option.name}
-              {currentValue ? `: ${currentValue}` : ''}
+              {currentValue && (
+                <>
+                  : <span className="font-semibold text-dark">{currentValue}</span>
+                </>
+              )}
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -77,7 +81,7 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
                       aria-label={`${option.name}: ${value}${variantExists ? '' : ' (unavailable)'}`}
                       aria-pressed={isSelected}
                       className={`relative h-10 w-10 rounded-full p-0.5 transition ${
-                        isSelected ? 'ring-2 ring-black ring-offset-2' : 'hover:ring-1 hover:ring-[#999] hover:ring-offset-2'
+                        isSelected ? 'ring-2 ring-secondary ring-offset-2 ring-offset-[#FAF7F2]' : 'hover:ring-1 hover:ring-[#B5ABA0] hover:ring-offset-2 hover:ring-offset-[#FAF7F2]'
                       } ${variantExists ? '' : 'cursor-not-allowed opacity-40'}`}
                     >
                       <span
@@ -100,12 +104,13 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
                     type="button"
                     disabled={!variantExists}
                     onClick={() => selectOption(option.name, value)}
-                    className={`rounded-full border px-5 py-2 text-sm transition-colors ${
+                    aria-pressed={isSelected}
+                    className={`inline-flex min-h-10 min-w-12 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors ${
                       isSelected
-                        ? 'border-dark bg-dark text-white'
+                        ? 'border-secondary bg-secondary text-white'
                         : variantExists
-                          ? 'border-[#D5D5D5] text-dark hover:border-dark'
-                          : 'cursor-not-allowed border-[#EDEDED] text-[#CCC] line-through'
+                          ? 'border-[#E4DED4] bg-white text-dark hover:border-secondary hover:text-secondary'
+                          : 'cursor-not-allowed border-[#EDEDED] bg-white text-[#CCC] line-through'
                     }`}
                   >
                     {value}

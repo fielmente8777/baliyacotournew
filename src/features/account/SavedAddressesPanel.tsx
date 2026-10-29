@@ -203,7 +203,7 @@ export default function SavedAddressesPanel() {
       title: 'Delete this address?',
       text: (
         <>
-          <strong className="font-medium text-[#333]">{a.fullName}</strong>, {a.street}, {a.city} will be removed from
+          <strong className="font-medium text-dark">{a.fullName}</strong>, {a.street}, {a.city} will be removed from
           your saved addresses.
         </>
       ),

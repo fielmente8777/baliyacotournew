@@ -13,7 +13,8 @@ export default async function TermsPage() {
   const { html } = await getSiteContent("terms", { html: termsContent });
 
   return (
-    <main className="container mx-auto max-w-7xl px-4 py-20">
+    /* ~720px of text per line: full-width paragraphs were hard to read. */
+    <main className="mx-auto max-w-180 px-4 py-14 md:py-20">
       <article
         className="terms-content"
         dangerouslySetInnerHTML={{

@@ -74,7 +74,7 @@ export default function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
         aria-expanded={open}
-        className="group relative flex aspect-square w-7 items-center justify-center text-[#5C6476] transition-all duration-300 ease-in-out hover:text-secondary"
+        className="group relative flex size-11 items-center justify-center text-[#5C6476] transition-all duration-300 ease-in-out hover:text-secondary"
       >
         {/* Same size and line weight as the 20px profile and cart icons.
             Swings from its top, like a real bell: a gentle ring every few
@@ -94,7 +94,7 @@ export default function NotificationBell() {
         </span>
 
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4">
+          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4">
             {!open && <span key={ring.key} className="absolute inset-0 animate-ping rounded-full bg-secondary opacity-40 [animation-iteration-count:3]" aria-hidden="true" />}
             <span
               key={unread}

@@ -100,12 +100,14 @@ export default function WishlistButton({ product, variant = 'overlay', className
       aria-pressed={saved}
       aria-label={label}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition hover:scale-105',
+        /* 36px to look at on a small phone card, 44px to tap: the ::before
+           pads the hit area without making the circle bigger. */
+        'flex size-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition before:absolute before:-inset-1 before:content-[""] hover:scale-105 sm:size-10',
         saved ? 'text-[#8D2F46]' : 'text-[#444]',
         className,
       )}
     >
-      <Heart size={18} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />
+      <Heart size={17} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />
     </button>
   );
 }
