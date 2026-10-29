@@ -27,6 +27,7 @@ import type {
   AdminCustomer,
   AdminProfile,
   AdminTokenEntry,
+  CatalogImportReport,
   CatalogSyncSummary,
   ContentPage,
 } from '@/@types/admin';
@@ -193,6 +194,28 @@ export const adminApi = createApi({
       invalidatesTags: ['Catalog'],
     }),
 
+    /* ---- Bulk import from the Design Builder sheet ---- */
+
+    /** An object URL for the .xlsx, ready for a download link. Revoke it after use. */
+    downloadCatalogSheet: builder.mutation<string, { filled: boolean }>({
+      query: ({ filled }) => ({
+        url: `/admin/catalog/sheet${filled ? '?filled=true' : ''}`,
+        responseHandler: async (response) =>
+          response.ok ? URL.createObjectURL(await response.blob()) : response.json(),
+      }),
+    }),
+
+    /** Previews unless `apply`; applying saves only when the sheet has no errors. */
+    importCatalogSheet: builder.mutation<CatalogImportReport, { files: File[]; apply: boolean }>({
+      query: ({ files, apply }) => {
+        const form = new FormData();
+        files.forEach((file) => form.append('files', file));
+        return { url: `/admin/catalog/import${apply ? '?apply=true' : ''}`, method: 'POST', body: form };
+      },
+      transformResponse: unwrap<CatalogImportReport>,
+      invalidatesTags: (result) => (result?.applied ? ['Catalog'] : []),
+    }),
+
     /* ---- Measurement fields (existing backend endpoints) ---- */
 
     createMeasurementTemplate: builder.mutation<AdminMeasurementTemplate, TemplateBody & { name: string }>({
@@ -330,6 +353,8 @@ export const {
   useAdminLoginMutation,
   useGetAdminMeQuery,
   useGetCatalogQuery,
+  useDownloadCatalogSheetMutation,
+  useImportCatalogSheetMutation,
   useSyncCatalogMutation,
   useCreateGarmentMutation,
   useUpdateGarmentMutation,

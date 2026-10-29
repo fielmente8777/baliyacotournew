@@ -26,9 +26,9 @@ For each product:
 
 ──────────────────────────
 2. CREATE YOUR OWN DESIGN (the design builder)
-Folder: [2-Design Your Own] · Sheets: design-builder-garments.csv and design-builder-options.csv
+Folder: [2-Design Your Own] · Sheet: design-builder-sheet.xlsx (tabs: How to fill, Garments, Options)
 
-a) Garments customers can design (sheet: design-builder-garments)
+a) Garments customers can design (Garments tab)
 For each garment, e.g. Kurti, Anarkali, Patiala Suit, Sharara Set, Lehenga:
 • Starting price in ₹ (the price before any extras)
 • One line describing it
@@ -38,7 +38,7 @@ For each garment, e.g. Kurti, Anarkali, Patiala Suit, Sharara Set, Lehenga:
  – Card photo: shown on the "What do you want to design?" screen
  – Preview photo: a front view on a mannequin, plain background, the whole garment in frame, portrait 3:4
 
-b) Choices inside each step (sheet: design-builder-options)
+b) Choices inside each step (Options tab)
 For every choice, e.g. Fabric: Cotton, Chanderi, Georgette…:
 • Name
 • Extra price in ₹ (0 if included)

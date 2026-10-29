@@ -12,11 +12,12 @@ import {
 } from '@/store/api/adminApi';
 import { cn, formatINR } from '@/lib/format';
 import { Badge, Button, Card, ImageSlot, NoticeBar, PageTitle, PriceField, TextField, type Notice } from '../ui';
+import BulkImportPanel from './BulkImportPanel';
 import GarmentEditor from './GarmentEditor';
 import OptionGroupsPanel from './OptionGroupsPanel';
 import { byPosition, garmentKey, groupMissingImages, type MissingGroup } from './catalogKeys';
 
-type Tab = 'garments' | 'steps' | 'missing';
+type Tab = 'garments' | 'steps' | 'missing' | 'import';
 
 export default function DesignBuilderView() {
   const { data: catalog, isLoading, error, refetch, isFetching } = useGetCatalogQuery();
@@ -59,6 +60,7 @@ export default function DesignBuilderView() {
     { id: 'garments', label: 'Garments', count: garments.length },
     { id: 'steps', label: 'Steps & options', count: catalog.groups.length },
     { id: 'missing', label: 'Missing pictures', count: missing.length },
+    { id: 'import', label: 'Bulk import' },
   ];
 
   return (
@@ -151,6 +153,8 @@ export default function DesignBuilderView() {
       {tab === 'steps' && <OptionGroupsPanel catalog={catalog} />}
 
       {tab === 'missing' && <MissingPictures groups={missingGroups} />}
+
+      {tab === 'import' && <BulkImportPanel />}
     </div>
   );
 }

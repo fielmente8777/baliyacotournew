@@ -94,6 +94,27 @@ export interface AdminCatalog {
   shopifyError?: string;
 }
 
+/** One row of the Design Builder sheet, as the import read it. */
+export interface CatalogImportRow {
+  row: number;
+  name: string;
+  action: 'create' | 'update' | 'unchanged' | 'error';
+  changes: string[];
+  errors: string[];
+}
+
+/** POST /admin/catalog/import: a preview, or what was saved with `?apply=true`. */
+export interface CatalogImportReport {
+  applied: boolean;
+  garments: CatalogImportRow[];
+  options: CatalogImportRow[];
+  newSteps: string[];
+  newMeasurements: string[];
+  rules: { garment: string; changes: string[] }[];
+  warnings: string[];
+  errorCount: number;
+}
+
 export interface CatalogSyncSummary {
   garments: number;
   groups: number;

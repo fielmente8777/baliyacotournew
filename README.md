@@ -60,6 +60,17 @@ All images worth keeping go to **Shopify Files** (`baliye-node/src/config/imageS
 
 `next.config.ts` keeps `images.unoptimized: true`. Turning optimisation on needs `remotePatterns` for every image host; it was tried and rolled back.
 
+## Design Builder bulk import (admin → Design Builder → Bulk import)
+
+Add or update many garments and options from one Excel sheet the client fills in.
+
+- **Get the sheet:** *Blank template*, or *Current catalogue* (the site as it stands, for the client to correct). The sheet has a *How to fill* tab, a Garments tab and an Options tab, with help notes on every column heading. A blank copy for the client is `docs/client-kit/design-builder-sheet.xlsx`. The older `design-builder-*.csv` files still import; their picture columns are ignored.
+- **Upload:** first a preview of every row (new / update / no change / error), new steps, new measurement fields, and each garment's step and rule changes. *Import* is enabled only when no row has an error.
+- **Matching:** garments by name, options by step + name. Blank price, description, colour or visibility on an existing row means "leave as is". Nothing is ever deleted. Uploading the same sheet twice changes nothing the second time, so if an import stops part-way (e.g. Shopify down), upload it again.
+- **Rules from the sheet:** `only_with` → the option's pairing (`pairsWith`). `only_for_garments` → each garment's allowed options for that step. If every option in a step is `only_with` options of one earlier step, the step waits for them (`dependsOn`, e.g. Sleeve Cuff after Full Sleeve). Unknown measurement names are added as new measurement fields.
+- **Pictures** are not in the sheet; upload them under *Missing pictures*.
+- Backend: `GET /admin/catalog/sheet[?filled=true]`, `POST /admin/catalog/import[?apply=true]` (`services/catalogSheet.ts` reads and writes the workbook with `exceljs`; `services/catalogImport.ts` plans and applies). Writes go through `services/adminCatalog.ts`, so Shopify gets names, prices and visibility exactly as with a manual edit. Frontend: `features/admin/design-builder/BulkImportPanel.tsx`.
+
 ## AI Studio (admin → AI Studio): testing only
 
 Extract embroidery from garment photos, split it into named pieces (each with position, side, work type and description), approve them, and try them on a plain garment.
@@ -86,9 +97,14 @@ Extract embroidery from garment photos, split it into named pieces (each with po
 
 ## Change log (newest first)
 
+- **Client kit:** added `create-your-design-requirements.md`, the client message listing everything needed for Create Your Own Design (garments, choices per step, measurements, videos, custom-order policies).
+- **Design Builder bulk import:** a *Bulk import* tab downloads the client sheet (blank or filled with the current catalogue) and imports it after a preview. It creates or updates garments, steps, options, measurement fields and rules, and never deletes. Checked read-only against the live catalogue: re-importing the current catalogue reports no changes (5 garments, 77 options), and the client-kit CSVs preview correctly. The client message now points to `design-builder-sheet.xlsx`. Backend adds the `exceljs` dependency, and `writeEntry` reads Shopify once per import instead of once per row (`withEntryCache`).
+
+- **Backend cleanup:** removed the empty, misspelled `baliye-node/src/respositories/` folder (the real one is `src/repositories/`). Checked that `src/repositories/` matches git after an accidental delete and undo, and that every backend file is still imported by the server or a script.
+
 - **AI Studio try-on copies the source layout:** pieces were placed by fixed region defaults (14 random butis over the body, "chest" motifs under the shoulders, the hem border on the salwar hem on a suit), so a try-on did not match the design it was extracted from. Now one vision call reads the source photo and the plain garment (labelled 10% grid on both) and every piece's position on the source; code maps them across (`services/referenceLayout.ts`, `compositeFromPlan` in `embroideryCompositor.ts`). `/admin/ai/assets/preview` and `/apply` accept `referenceImage` and `plan`; the panel sends step 1's front photo or its own upload.
 
-- **Client kit** (`docs/client-kit/`): requirements message for the client, Shopify product CSV template (tags + metafield columns the site reads), Design Builder CSV templates (garments, options), and a Sidekick prompt. The Design Builder CSV importer itself is not built yet.
+- **Client kit** (`docs/client-kit/`): requirements message for the client, Shopify product CSV template (tags + metafield columns the site reads), Design Builder CSV templates (garments, options), a simple one-row-per-product client sheet (`client-product-sheet.csv`), and Sidekick prompts that turn it into the Shopify import CSV with photos linked from Shopify Files. The Design Builder CSV importer itself is not built yet.
 - **Content editor:** a rich text editor (TipTap) replaces typing HTML on the Terms page, and "Write with AI" is on every text field (`POST /admin/content/write`).
 - **Content and live updates:**
   - The Pre-made Designs page's banner, text and pictures are editable in the admin, with images in Shopify.
