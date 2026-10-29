@@ -26,9 +26,9 @@ export default function PriceSummary({ pricing, basePrice }: Props) {
 
   return (
     <div>
-      <p className="text-base text-[#1B2B36]/70">Your price</p>
+      <p className="text-base text-dark/70">Your price</p>
 
-      <p className="mt-1 text-3xl font-bold text-[#1B2B36] md:text-4xl lg:text-5xl">
+      <p className="mt-1 text-3xl font-bold text-dark md:text-4xl lg:text-5xl">
         {formatINR(total / 100)}
       </p>
 
@@ -60,7 +60,7 @@ export default function PriceSummary({ pricing, basePrice }: Props) {
                 </div>
               ))}
 
-              <div className="flex justify-between border-t border-[#EFEBE4] pt-2 font-semibold text-[#1B2B36]">
+              <div className="flex justify-between border-t border-[#EFEBE4] pt-2 font-semibold text-dark">
                 <dt>Total</dt>
                 <dd>{formatINR(total / 100)}</dd>
               </div>

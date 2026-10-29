@@ -3,7 +3,6 @@ import { Container } from "../sectionComponants";
 import { websiteFooterData as defaults } from "./footerData";
 import { getSiteContent } from "@/lib/siteContent";
 import Image from "next/image";
-import clsx from "clsx";
 
 /* Edited in the admin panel; footerData.tsx holds the defaults. */
 const Footer = async () => {
@@ -14,8 +13,11 @@ const Footer = async () => {
       <div className="flex flex-col gap-16 py-10">
         {/* line */}
         <Line />
-        <Container className="grid md:grid-cols-3 grid-cols-1 max-xl:gap-6">
-          <div className="w-[200px] text-center">
+        {/* Phones: logo and description centred on top, the two link lists
+            side by side below. From md: three columns, each centred in its
+            own third so the row sits balanced. */}
+        <Container className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-8">
+          <div className="col-span-2 flex flex-col items-center text-center md:col-span-1">
             <div className="relative w-[200px] aspect-4/1.5">
               <Image
                 src={websiteFooterData.logo}
@@ -24,22 +26,17 @@ const Footer = async () => {
                 className="object-contain"
               />
             </div>
-            <p className="mt-4">{websiteFooterData.description}</p>
+            <p className="mt-4 max-w-xs">{websiteFooterData.description}</p>
           </div>
           {websiteFooterData.lists.map((list, index) => (
-            <div
-              key={index}
-              className={clsx(
-                "flex flex-col gap-4",
-                index === 1 && "w-fit xl:ml-auto",
-                index === 0 && "w-fit xl:ml-40"
-              )}
-            >
-              <h3 className="text-2xl text-[#16161699]">{list.title}</h3>
-              <ul className="flex flex-col gap-2">
+            <div key={index} className="flex min-w-0 flex-col gap-3 md:mx-auto md:w-fit md:gap-4">
+              <h3 className="text-lg text-dark/60 md:text-2xl">{list.title}</h3>
+              <ul className="flex flex-col gap-2 text-sm md:text-base">
                 {list.links.map((item, index) => (
-                  <li key={index}>
-                    <Link href={item.href}>{item.label}</Link>
+                  <li key={index} className="wrap-break-word">
+                    <Link href={item.href} className="transition-colors hover:text-secondary">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -37,7 +37,7 @@ export default function RecolourOverlay({
 
   if (state === 'generating') {
     content = (
-      <span className={`flex items-center gap-2 font-medium text-[#1B2B36] ${pill}`}>
+      <span className={`flex items-center gap-2 font-medium text-dark ${pill}`}>
         <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#9B2335] border-t-transparent" />
         Designing your outfit…
       </span>
@@ -57,7 +57,7 @@ export default function RecolourOverlay({
     );
   } else if (refusedWith === 402 || (balance !== undefined && balance < cost)) {
     content = (
-      <span className={`flex flex-col items-center gap-1 text-center text-[#1B2B36] ${pill}`}>
+      <span className={`flex flex-col items-center gap-1 text-center text-dark ${pill}`}>
         You&apos;re out of design credits.
         <Link href="/my-account/credits" className="font-medium text-[#9B2335] underline">
           Get more credits

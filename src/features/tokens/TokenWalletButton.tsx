@@ -50,7 +50,7 @@ export default function TokenWalletButton({ wallet, isSignedIn, onSignIn, classN
         aria-expanded={open}
         className={cn(
           'flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-sm font-medium transition',
-          low ? 'border-amber-300 text-amber-800' : 'border-[#EAE6DF] text-[#1B2B36] hover:border-[#A52C45]'
+          low ? 'border-amber-300 text-amber-800' : 'border-[#EAE6DF] text-dark hover:border-[#A52C45]'
         )}
       >
         <Coins className="h-4 w-4 text-[#A52C45]" aria-hidden />

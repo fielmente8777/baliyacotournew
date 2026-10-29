@@ -2,7 +2,8 @@
 
 /**
  * The styling rail inside the product card: a vertical stepper of icon
- * circles joined by a progress line (a horizontal strip on phones).
+ * circles joined by a progress line. Desktop only — phones and tablets get
+ * the sticky StepTabs instead.
  *
  * A garment type can expose eleven or more steps, so the list scrolls inside
  * a fixed height; fades and arrow buttons show there is more above or below
@@ -24,7 +25,7 @@ interface Props {
   onSelect: (index: number) => void;
 }
 
-const labelFor = (step: BuilderStep) => {
+export const labelFor = (step: BuilderStep) => {
   if (step.kind === 'option') return step.group.label;
   if (step.kind === 'measurement') return 'Measurements';
   if (step.kind === 'instructions') return 'Notes';
@@ -100,7 +101,7 @@ export default function StepRail({
   return (
     <nav aria-label="Styling steps" className="w-full min-w-0 shrink-0 md:w-[96px]">
       <div className="mb-3 hidden md:block">
-        <p className="text-center text-sm font-semibold text-[#1B2B36]">Styling</p>
+        <p className="text-center text-sm font-semibold text-dark">Styling</p>
         <p className="mt-0.5 text-center text-[11px] text-[#8A8A8A]">
           {doneCount} of {steps.length} done
         </p>
@@ -150,7 +151,7 @@ export default function StepRail({
                         : done
                           ? 'border-secondary/50 bg-white text-secondary'
                           : reachable
-                            ? 'border-[#E6DED3] bg-white text-[#1B2B36]/70 group-hover:border-secondary/50 group-hover:text-secondary'
+                            ? 'border-[#E6DED3] bg-white text-dark/70 group-hover:border-secondary/50 group-hover:text-secondary'
                             : 'border-transparent bg-[#F1ECE4] text-[#C4BBAE]'
                     )}
                   >
@@ -178,8 +179,8 @@ export default function StepRail({
                       active
                         ? 'font-semibold text-secondary'
                         : reachable
-                          ? 'text-[#1B2B36]/75'
-                          : 'text-[#1B2B36]/35'
+                          ? 'text-dark/75'
+                          : 'text-dark/35'
                     )}
                   >
                     {labelFor(step)}

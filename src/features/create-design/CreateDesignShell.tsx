@@ -9,9 +9,10 @@
  * so a garment type exposing Dupatta gets a Dupatta step with no code change.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
@@ -35,7 +36,9 @@ import { cn } from '@/lib/format';
 import { designImageKey } from '@/lib/designImages';
 import { GarmentPreviewIllustration } from '@/components/illustrations';
 
-import StepRail from './StepRail';
+import StepRail, { labelFor } from './StepRail';
+import StepTabs from './StepTabs';
+import MobileBuilderBar from './MobileBuilderBar';
 import PriceSummary from './PriceSummary';
 import OptionStep from './steps/OptionStep';
 import InstructionsStep from './steps/InstructionsStep';
@@ -99,6 +102,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   /* The fallback preview file may not exist; show the illustration instead
      of a broken-image icon. */
   const [previewFailed, setPreviewFailed] = useState(false);
+  const optionsRef = useRef<HTMLElement>(null);
 
   const { data: config, isLoading } = useGetDesignConfigQuery(
     { garmentTypeId, productId },
@@ -263,6 +267,18 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
 
   const canAddToCart = missingStep === -1 && !isAdding && !isSaving;
 
+  /**
+   * Every step change the customer makes goes through here. On phones and
+   * tablets the options sit below the preview, so the new step's options are
+   * scrolled into view (under the sticky tabs) — otherwise the page stays on
+   * the picture and the change looks like nothing happened.
+   */
+  const goToStep = (index: number) => {
+    dispatch(setStepIndex(index));
+    if (window.matchMedia('(min-width: 1024px)').matches) return;
+    requestAnimationFrame(() => optionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
   const handleAddToCart = async () => {
     setError(null);
 
@@ -346,6 +362,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   }
 
   const activeStep = steps[Math.min(stepIndex, steps.length - 1)];
+  const nextStep = stepIndex < steps.length - 1 ? steps[stepIndex + 1] : undefined;
 
   /**
    * For a group whose options pair with another group (Embroidery with Neck
@@ -375,28 +392,17 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);
 
   return (
-    <main className="min-h-screen bg-[#FAF7F2]">
-      <div className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 md:py-10">
+    <main className="min-h-screen bg-[#FAF7F2] pb-28 lg:pb-10">
+      <div className="mx-auto w-full max-w-[1500px] px-4 pt-6 md:px-6 md:pt-10">
         <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-[#1B2B36] md:text-3xl">
+            <h1 className="text-2xl font-semibold text-dark md:text-3xl">
               {config.product ? `Customise ${config.product.name}` : config.garmentType.name}
             </h1>
 
             <p className="mt-1 text-sm text-[#6B6B6B]">
               Step {Math.min(stepIndex + 1, steps.length)} of {steps.length}
-              {activeStep && (
-                <span className="text-[#1B2B36]">
-                  {' · '}
-                  {activeStep.kind === 'option'
-                    ? activeStep.group.label
-                    : activeStep.kind === 'measurement'
-                      ? 'Measurements'
-                      : activeStep.kind === 'instructions'
-                        ? 'Notes'
-                        : 'Review'}
-                </span>
-              )}
+              {activeStep && <span className="text-dark">{` · ${labelFor(activeStep)}`}</span>}
             </p>
           </div>
 
@@ -405,23 +411,34 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           )}
         </header>
 
+        <StepTabs
+          steps={steps}
+          activeIndex={stepIndex}
+          isComplete={isStepComplete}
+          isReachable={isStepReachable}
+          onSelect={goToStep}
+        />
+
         <div className="grid gap-6 lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:gap-10">
           {/* ---- Product card: rail, preview, price, CTA ------------------ */}
           {/* min-w-0: a grid column otherwise grows to its widest child (the
               sideways step strip on phones) and pushes the page off-screen. */}
           <section className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <div className="flex flex-col rounded-2xl border border-[#EFE8DE] bg-white p-4 shadow-[0_8px_30px_rgba(27,43,54,0.05)] md:p-6 lg:p-7">
-              <div className="flex flex-1 flex-col gap-6 md:flex-row md:items-start md:gap-6">
-                <StepRail
-                  steps={steps}
-                  activeIndex={stepIndex}
-                  isComplete={isStepComplete}
-                  isReachable={isStepReachable}
-                  onSelect={(i) => dispatch(setStepIndex(i))}
-                />
+              <div className="flex flex-1 flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
+                {/* Phones and tablets get the sticky StepTabs instead. */}
+                <div className="hidden shrink-0 lg:block">
+                  <StepRail
+                    steps={steps}
+                    activeIndex={stepIndex}
+                    isComplete={isStepComplete}
+                    isReachable={isStepReachable}
+                    onSelect={goToStep}
+                  />
+                </div>
 
                 <div className="flex flex-1 flex-col items-center justify-center">
-                  <div className="relative aspect-[3/4] w-full max-w-[380px] overflow-hidden rounded-xl bg-gradient-to-b from-[#F7F3ED] to-[#EFE8DE] ring-1 ring-[#EFE8DE]">
+                  <div className="relative aspect-3/4 w-full max-w-65 overflow-hidden sm:max-w-80 lg:max-w-95 rounded-xl bg-linear-to-b from-[#F7F3ED] to-[#EFE8DE] ring-1 ring-[#EFE8DE]">
                     {previewImage && !previewFailed ? (
                       <>
                         <Image
@@ -460,7 +477,8 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 </div>
               </div>
 
-              <div className="mt-8 md:mt-10">
+              {/* Phones and tablets: price and Add To Cart live in MobileBuilderBar. */}
+              <div className="mt-10 hidden lg:block">
                 <PriceSummary pricing={pricing} basePrice={config.basePrice} />
 
                 <button
@@ -480,7 +498,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 {missingStep !== -1 && (
                   <button
                     type="button"
-                    onClick={() => dispatch(setStepIndex(missingStep))}
+                    onClick={() => goToStep(missingStep)}
                     className="mt-3 block text-xs text-[#8B6E54] underline"
                   >
                     Finish{' '}
@@ -497,7 +515,8 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           </section>
 
           {/* ---- Options panel ------------------------------------------- */}
-          <section className="min-w-0">
+          {/* scroll-mt: lands below the sticky StepTabs. */}
+          <section ref={optionsRef} className="min-w-0 scroll-mt-16">
             {activeStep?.kind === 'option' && (
               <OptionStep
                 key={activeStep.group._id}
@@ -531,34 +550,64 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                     : selectedProfile?.profileName
                 }
                 instructions={instructions}
-                onEditStep={(i) => dispatch(setStepIndex(i))}
+                onEditStep={goToStep}
               />
             )}
 
-            <div className="mt-8 flex items-center justify-between gap-4">
+            <div className="mt-10 hidden items-center justify-between gap-4 border-t border-[#EFE8DE] pt-6 lg:flex">
               <button
                 type="button"
                 disabled={stepIndex === 0}
-                onClick={() => dispatch(setStepIndex(stepIndex - 1))}
-                className="h-11 rounded-md border border-[#DDD] px-6 text-sm disabled:opacity-40"
+                onClick={() => goToStep(stepIndex - 1)}
+                className="inline-flex h-12 items-center gap-1.5 rounded-md border border-[#E4DED4] bg-white px-5 text-sm text-dark transition-colors hover:border-secondary/40 disabled:opacity-40"
               >
-                Back
+                <ChevronLeft size={16} aria-hidden /> Back
               </button>
 
-              {stepIndex < steps.length - 1 && (
+              {nextStep && (
                 <button
                   type="button"
                   disabled={!isStepReachable(stepIndex + 1)}
-                  onClick={() => dispatch(setStepIndex(stepIndex + 1))}
-                  className="h-11 rounded-md bg-secondary px-8 text-sm font-medium text-white disabled:opacity-40"
+                  onClick={() => goToStep(stepIndex + 1)}
+                  className="inline-flex h-12 items-center gap-1.5 rounded-md bg-secondary px-7 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:opacity-40"
                 >
-                  Continue
+                  Next: {labelFor(nextStep)} <ChevronRight size={16} aria-hidden />
                 </button>
               )}
             </div>
           </section>
         </div>
       </div>
+
+      <MobileBuilderBar
+        previewUrl={previewImage && !previewFailed ? (recoloured.url ?? previewImage) : undefined}
+        isGenerating={recoloured.isGenerating}
+        total={pricing?.total ?? config.basePrice}
+        canGoBack={stepIndex > 0}
+        onBack={() => goToStep(stepIndex - 1)}
+        error={error}
+        hint={
+          nextStep && !isStepReachable(stepIndex + 1) && activeStep
+            ? `Choose your ${labelFor(activeStep)} to continue`
+            : undefined
+        }
+        action={
+          nextStep
+            ? {
+                label: `Next: ${labelFor(nextStep)}`,
+                onClick: () => goToStep(stepIndex + 1),
+                disabled: !isStepReachable(stepIndex + 1),
+              }
+            : missingStep !== -1
+              ? { label: `Finish ${labelFor(steps[missingStep])}`, onClick: () => goToStep(missingStep) }
+              : {
+                  label: isSaving || isAdding ? 'Adding…' : 'Add To Cart',
+                  onClick: handleAddToCart,
+                  disabled: !canAddToCart,
+                  isFinal: true,
+                }
+        }
+      />
     </main>
   );
 }

@@ -24,7 +24,7 @@ interface Props {
 export default function ShopifySignIn({ redirectTo, error }: Props) {
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-[#1B2B36]">Sign in</h1>
+      <h1 className="text-2xl font-semibold text-dark">Sign in</h1>
 
       <p className="mt-2 text-sm leading-relaxed text-[#7A868E]">
         Enter your email and we&apos;ll send you a code. No password needed — and

@@ -8,9 +8,10 @@
  * on a phone, signing in and then tapping the menu had nowhere to go.
  */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Bell, LogOut, Package, User } from "lucide-react";
+import { Bell, LogOut, Package, User, X } from "lucide-react";
 
 import { navData } from "./navData";
 import { useAuth } from "@/features/auth/useAuth";
@@ -34,6 +35,14 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
     if (isOpenNavBar) close();
   });
 
+  /* Escape closes it too. */
+  useEffect(() => {
+    if (!isOpenNavBar) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsOpenNavBar(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpenNavBar, setIsOpenNavBar]);
+
   return (
     <div
       aria-hidden={!isOpenNavBar}
@@ -55,11 +64,26 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        className={`absolute left-0 top-0 flex h-full w-[82%] max-w-[340px] flex-col overflow-y-auto bg-white pt-20 transition-[transform,box-shadow] duration-300 ease-in-out ${
+        className={`absolute left-0 top-0 flex h-full w-[82%] max-w-85 flex-col overflow-y-auto bg-white transition-[transform,box-shadow] duration-300 ease-in-out ${
           /* Shadow only while open — closed, it bled onto the left edge of every page. */
           isOpenNavBar ? "translate-x-0 shadow-[0_0_40px_rgba(0,0,0,0.15)]" : "-translate-x-full shadow-none"
         }`}
       >
+        {/* Logo and a visible close button — tapping outside isn't obvious to everyone. */}
+        <div className="flex items-center justify-between border-b border-[#EFEFEF] px-6 py-4">
+          <Link href="/" onClick={close} className="relative aspect-[4/1.7] w-25" aria-label="Baliye Couture home">
+            <Image src="/logo.png" alt="Baliye Couture" fill sizes="100px" className="object-contain" />
+          </Link>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close menu"
+            className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-[#5C6476] transition-colors hover:bg-[#FBF6F7] hover:text-secondary"
+          >
+            <X size={22} aria-hidden="true" />
+          </button>
+        </div>
+
         <ul className="flex flex-col gap-1 px-6 py-4">
           {navData.map((item, index) => (
             <li key={index}>

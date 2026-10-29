@@ -16,7 +16,7 @@ export default function ProductSpecs({ specs }: { specs: ProductSpec[] }) {
     <ul className="mt-6 space-y-2 text-[15px] text-[#555]">
       {specs.map((spec) => (
         <li key={spec.key} className="flex gap-2">
-          <span className="font-medium text-black">{spec.label}:</span>
+          <span className="font-medium text-dark">{spec.label}:</span>
           <span>{spec.value}</span>
         </li>
       ))}

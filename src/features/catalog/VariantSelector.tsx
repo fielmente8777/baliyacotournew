@@ -102,9 +102,9 @@ export default function VariantSelector({ product, selectedVariant, onSelect }: 
                     onClick={() => selectOption(option.name, value)}
                     className={`rounded-full border px-5 py-2 text-sm transition-colors ${
                       isSelected
-                        ? 'border-black bg-black text-white'
+                        ? 'border-dark bg-dark text-white'
                         : variantExists
-                          ? 'border-[#D5D5D5] text-black hover:border-black'
+                          ? 'border-[#D5D5D5] text-dark hover:border-dark'
                           : 'cursor-not-allowed border-[#EDEDED] text-[#CCC] line-through'
                     }`}
                   >

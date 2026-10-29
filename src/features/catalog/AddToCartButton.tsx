@@ -80,7 +80,7 @@ export default function AddToCartButton({ product, variant, className }: Props) 
           type="button"
           onClick={handleClick}
           disabled={isAdding}
-          className={`flex-1 rounded-full bg-black py-4 font-medium text-white transition-opacity disabled:opacity-60 ${className ?? ''}`}
+          className={`flex-1 rounded-full bg-dark py-4 font-medium text-white transition-opacity disabled:opacity-60 ${className ?? ''}`}
         >
           {isAdding ? 'Adding…' : state === 'added' ? 'Added ✓' : 'Add to Cart'}
         </button>
@@ -89,7 +89,7 @@ export default function AddToCartButton({ product, variant, className }: Props) 
           <button
             type="button"
             onClick={() => router.push('/cart')}
-            className="rounded-full border border-black px-6 py-4 text-sm font-medium"
+            className="rounded-full border border-dark px-6 py-4 text-sm font-medium"
           >
             View Cart
           </button>
