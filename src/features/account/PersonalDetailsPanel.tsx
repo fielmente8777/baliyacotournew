@@ -5,17 +5,24 @@
  * (Profile-4.pdf) in place. All data comes from GET /profile.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { BadgeCheck, Cake, Mail, Pencil, Phone, UserRound, VenusAndMars, type LucideIcon } from 'lucide-react';
 import {
   useGetProfileQuery,
   useUpdateProfileMutation,
 } from '@/store/api/profileApi';
 import type { Gender, UpdateProfileBody } from '@/@types/account';
+import DateField from '@/components/inputs/DateField';
 import PhoneField from '@/components/inputs/PhoneField';
+import Select from '@/components/inputs/Select';
+import TokenSummaryCard from '@/features/tokens/TokenSummaryCard';
+import { formatPhone, isPhonePossible } from '@/lib/phone';
 import AccountContent from '../../app/(website)/my-account/components/AccountContent';
 import PageHeader from '../../app/(website)/my-account/components/PageHeader';
 import PrimaryButton from '../../app/(website)/my-account/components/PrimaryButton';
 import OutlineButton from '../../app/(website)/my-account/components/OutlineButton';
+import { initialsOf } from '../../app/(website)/my-account/components/accountMenu';
+import FormField, { accountInputClass } from '../../app/(website)/my-account/components/FormField';
 
 const GENDERS: Array<{ value: Gender; label: string }> = [
   { value: 'female', label: 'Female' },
@@ -23,26 +30,53 @@ const GENDERS: Array<{ value: Gender; label: string }> = [
   { value: 'other', label: 'Other' },
 ];
 
-const NOT_ADDED = '- not added-';
-
-/** 19/02/1999 — the display format used in the design. */
+/** "19 February 1999". The DOB is a calendar day — read its date part, not a local time. */
 const formatDob = (iso?: string) => {
-  if (!iso) return NOT_ADDED;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime())
-    ? NOT_ADDED
-    : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  const d = iso ? fromDay(iso.slice(0, 10)) : undefined;
+  return d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined;
 };
 
-/** "+918580547174" → "+91- 8580547174" as the design shows it. */
-const formatPhone = (phone?: string) => {
-  if (!phone) return NOT_ADDED;
-  const match = phone.match(/^(\+\d{1,3})(\d{6,})$/);
-  return match ? `${match[1]}- ${match[2]}` : phone;
+const fromDay = (day: string) => {
+  const [y, m, d] = day.split('-').map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : undefined;
 };
 
-/** <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp. */
+/** The date picker works in YYYY-MM-DD, not a full ISO timestamp. */
 const toDateInput = (iso?: string) => (iso ? iso.slice(0, 10) : '');
+
+/** One detail in the read view: icon, label, value — or "Not added" with a shortcut to add it. */
+function DetailTile({
+  icon: Icon,
+  label,
+  value,
+  onAdd,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value?: ReactNode;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-3.5 rounded-lg border border-[#F2EEE8] bg-[#FDFBF8] p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+        <Icon size={18} aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8A8A8A]">{label}</p>
+        {value ? (
+          <div className="mt-0.5 wrap-break-word text-[15px] font-medium text-[#222]">{value}</div>
+        ) : (
+          <p className="mt-0.5 text-sm text-[#9A9A9A]">
+            Not added ·{' '}
+            <button type="button" onClick={onAdd} className="font-medium text-[#A52C45] hover:underline">
+              Add
+            </button>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PersonalDetailsPanel() {
   const { data: profile, isLoading, isError, refetch } = useGetProfileQuery();
@@ -72,7 +106,7 @@ export default function PersonalDetailsPanel() {
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
       return setError('Please enter a valid email address.');
     }
-    if (form.phone && form.phone.trim().length < 8) {
+    if (form.phone && !isPhonePossible(form.phone.trim())) {
       return setError('Please enter a valid phone number.');
     }
 
@@ -128,32 +162,67 @@ export default function PersonalDetailsPanel() {
   }
 
   if (!editing) {
-    const rows: Array<[string, string]> = [
-      ['Full Name', profile.name || NOT_ADDED],
-      ['Mobile Number', formatPhone(profile.phone)],
-      ['Email ID', profile.email || NOT_ADDED],
-      ['Gender', GENDERS.find((g) => g.value === profile.gender)?.label ?? NOT_ADDED],
-      ['DOB', formatDob(profile.dob)],
-    ];
+    const gender = GENDERS.find((g) => g.value === profile.gender)?.label;
+    const verified = (
+      <span className="ml-2 inline-flex items-center gap-1 align-middle text-xs font-medium text-emerald-700">
+        <BadgeCheck size={14} aria-hidden /> Verified
+      </span>
+    );
 
     return (
       <AccountContent>
         <PageHeader title="Personal Details" />
 
-        <dl className="px-5 py-2 md:px-6">
-          {rows.map(([label, value]) => (
-            <div
-              key={label}
-              className="grid grid-cols-1 gap-1 border-b border-[#F2EEE8] py-4 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4"
-            >
-              <dt className="text-sm text-[#8A8A8A]">{label}</dt>
-              <dd className="break-words text-sm text-[#222]">{value}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Who this is, at a glance. */}
+        <div className="flex items-center gap-4 border-b border-[#F2EEE8] bg-linear-to-r from-[#FBF6F7] to-white px-5 py-6 md:px-6">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#A52C45] text-xl font-semibold tracking-wide text-white ring-4 ring-white">
+            {initialsOf(profile.name)}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold text-[#222]">{profile.name || 'Your profile'}</p>
+            <p className="truncate text-sm text-[#6B6B6B]">
+              {[formatPhone(profile.phone), profile.email].filter(Boolean).join('  ·  ') || 'Add your details below'}
+            </p>
+          </div>
+        </div>
+
+        <TokenSummaryCard />
+
+        <div className="grid gap-3 p-5 sm:grid-cols-2 md:p-6">
+          <DetailTile icon={UserRound} label="Full name" value={profile.name} onAdd={startEditing} />
+          <DetailTile
+            icon={Phone}
+            label="Mobile number"
+            value={
+              profile.phone && (
+                <>
+                  <span className="tabular-nums">{formatPhone(profile.phone)}</span>
+                  {profile.isPhoneVerified && verified}
+                </>
+              )
+            }
+            onAdd={startEditing}
+          />
+          <DetailTile
+            icon={Mail}
+            label="Email"
+            value={
+              profile.email && (
+                <>
+                  {profile.email}
+                  {profile.isEmailVerified && verified}
+                </>
+              )
+            }
+            onAdd={startEditing}
+          />
+          <DetailTile icon={VenusAndMars} label="Gender" value={gender} onAdd={startEditing} />
+          <DetailTile icon={Cake} label="Date of birth" value={formatDob(profile.dob)} onAdd={startEditing} />
+        </div>
 
         <div className="border-t border-[#EAE6DF] p-5 md:p-6">
-          <OutlineButton type="button" onClick={startEditing} className="w-full sm:w-auto">
+          <OutlineButton type="button" onClick={startEditing} className="w-full gap-2 sm:w-auto">
+            <Pencil size={15} aria-hidden />
             Edit Profile Details
           </OutlineButton>
         </div>
@@ -163,70 +232,65 @@ export default function PersonalDetailsPanel() {
 
   return (
     <AccountContent>
-      <PageHeader title="Personal Details" />
+      <PageHeader title="Edit Personal Details" />
 
-      <div className="space-y-4 p-5 md:p-6">
-        <input
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Full Name"
-          className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
-        />
+      <div className="grid gap-5 p-5 sm:grid-cols-2 md:p-6">
+        <FormField label="Full name">
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Your full name"
+            autoComplete="name"
+            className={accountInputClass}
+          />
+        </FormField>
 
         {/* Contact number — no longer the login identity (Shopify email is),
             so it's a normal field now, kept unique per account server-side. */}
-        <PhoneField
-          value={form.phone}
-          onChange={(phone) => setForm({ ...form, phone })}
-          placeholder="Mobile Number"
-        />
+        <FormField label="Mobile number">
+          <PhoneField
+            value={form.phone}
+            onChange={(phone) => setForm({ ...form, phone })}
+            placeholder="Mobile number"
+          />
+        </FormField>
 
-        <input
-          type="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          placeholder="Email ID"
-          className="h-12 w-full rounded-md border border-[#EAE6DF] px-4 text-sm outline-none focus:border-[#A52C45]"
-        />
+        <FormField label="Email">
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder="you@example.com"
+            autoComplete="email"
+            className={accountInputClass}
+          />
+        </FormField>
 
-        <select
-          value={form.gender}
-          onChange={(e) => setForm({ ...form, gender: e.target.value })}
-          className="h-12 w-full rounded-md border border-[#EAE6DF] bg-white px-4 text-sm outline-none focus:border-[#A52C45]"
-        >
-          <option value="">Select Gender</option>
-          {GENDERS.map((g) => (
-            <option key={g.value} value={g.value}>
-              {g.label}
-            </option>
-          ))}
-        </select>
+        <FormField label="Gender">
+          <Select
+            value={form.gender}
+            onChange={(gender) => setForm({ ...form, gender })}
+            aria-label="Gender"
+            placeholder="Select gender"
+            options={GENDERS}
+            className={accountInputClass}
+          />
+        </FormField>
 
-        {/* Clicking anywhere in the field opens the picker, not just the
-            icon. showPicker() is unsupported on Safari and older Firefox, so
-            the call is guarded and those browsers keep the native behaviour. */}
-        <input
-          type="date"
-          value={form.dob}
-          max={new Date().toISOString().slice(0, 10)}
-          onChange={(e) => setForm({ ...form, dob: e.target.value })}
-          onClick={(e) => {
-            const input = e.currentTarget as HTMLInputElement & {
-              showPicker?: () => void;
-            };
-            try {
-              input.showPicker?.();
-            } catch {
-              /* Some browsers throw NotAllowedError here even from a click
-                 handler (seen in practice, not just the documented Safari/
-                 Firefox unsupported case) — the native picker still opens
-                 on its own via the input's default behaviour either way. */
-            }
-          }}
-          className="h-12 w-full cursor-pointer rounded-md border border-[#EAE6DF] px-4 text-sm text-[#222] outline-none focus:border-[#A52C45]"
-        />
+        {/* A calendar, not a text box: on phones it opens as a sheet and the
+            keyboard never comes up. */}
+        <FormField label="Date of birth">
+          <DateField
+            value={form.dob}
+            onChange={(dob) => setForm({ ...form, dob })}
+            placeholder="Select your date of birth"
+            label="Date of birth"
+            max={new Date()}
+            defaultMonth={new Date(new Date().getFullYear() - 25, 0)}
+          />
+        </FormField>
 
-        {error && <p className="text-sm text-[#A52C45]">{error}</p>}
+        {error && <p className="text-sm text-[#A52C45] sm:col-span-2">{error}</p>}
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">

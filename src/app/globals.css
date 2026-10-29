@@ -17,7 +17,59 @@
 
 
 body {
-  font-family: var(--font-fira-sans);  
+  font-family: var(--font-fira-sans);
+}
+
+/* ------------------------------------------------------------------
+ * Scrollbars. Thin, rounded and in the brand colour everywhere — the
+ * browser default (grey bar with arrow buttons) looked out of place in
+ * the design builder's step rail and the dropdown lists.
+ * Firefox reads scrollbar-*; Chrome, Edge and Safari read ::-webkit-*.
+ * ------------------------------------------------------------------ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d9c9cd transparent;
+}
+
+*:hover {
+  scrollbar-color: #b88691 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: #d9c9cd padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a52c45 padding-box;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Lists inside panels: a touch stronger, so it is clear they scroll. */
+.scrollbar-brand {
+  scrollbar-color: #c9a3ab transparent;
+}
+
+/* Horizontal chip rows on phones: scroll without showing a bar. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* ------------------------------------------------------------------
@@ -32,6 +84,72 @@ body {
   --animate-pop-in: pop-in 0.18s var(--ease-smooth) both;
   --animate-fade-in: fade-in 0.3s ease-out both;
   --animate-slide-down: slide-down 0.25s var(--ease-smooth) both;
+  --animate-rise-in: rise-in 0.5s var(--ease-smooth) both;
+  --animate-slide-up: slide-up 0.35s var(--ease-smooth) both;
+  --animate-check-pop: check-pop 0.35s var(--ease-smooth) both;
+  --animate-shake: shake 0.4s ease-in-out both;
+  --animate-collapse-out: collapse-out 0.3s var(--ease-smooth) both;
+  /* Bell: one quick ring, then a long rest — repeats while there's something unread. */
+  --animate-bell-ring: bell-ring 5s ease-in-out infinite;
+  --animate-bell-ring-once: bell-ring-once 0.9s ease-in-out both;
+  /* Cart: a small tilt every few seconds while it holds something, and a
+     drop-and-bounce when an item is added. */
+  --animate-cart-wiggle: cart-wiggle 6s ease-in-out infinite;
+  --animate-cart-bump: cart-bump 0.8s var(--ease-smooth) both;
+}
+
+@keyframes cart-wiggle {
+  0%, 14%, 100% { transform: none; }
+  3%  { transform: rotate(-10deg) translateY(-1px); }
+  6%  { transform: rotate(8deg); }
+  9%  { transform: rotate(-5deg); }
+  12% { transform: rotate(2deg); }
+}
+@keyframes cart-bump {
+  0%   { transform: none; }
+  20%  { transform: translateY(-5px) scale(1.15) rotate(-8deg); }
+  40%  { transform: translateY(1px) scale(0.95) rotate(6deg); }
+  60%  { transform: translateY(-2px) scale(1.06) rotate(-3deg); }
+  80%  { transform: scale(0.99); }
+  100% { transform: none; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+@keyframes check-pop {
+  0%   { opacity: 0; transform: scale(0.4); }
+  60%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: none; }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes collapse-out {
+  to { opacity: 0; transform: translateX(24px) scale(0.98); }
+}
+@keyframes bell-ring {
+  0%, 18%, 100% { transform: rotate(0); }
+  2%  { transform: rotate(16deg); }
+  5%  { transform: rotate(-14deg); }
+  8%  { transform: rotate(10deg); }
+  11% { transform: rotate(-8deg); }
+  14% { transform: rotate(4deg); }
+}
+@keyframes bell-ring-once {
+  0%, 100% { transform: rotate(0); }
+  12% { transform: rotate(18deg); }
+  28% { transform: rotate(-16deg); }
+  44% { transform: rotate(12deg); }
+  60% { transform: rotate(-8deg); }
+  76% { transform: rotate(4deg); }
 }
 
 @keyframes page-in {
@@ -63,4 +181,63 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Calendar (components/inputs/DateField.tsx) — react-day-picker in the site's maroon. */
+.baliye-calendar .rdp-root {
+  --rdp-accent-color: #A52C45;
+  --rdp-accent-background-color: #F6EEF0;
+  --rdp-today-color: #A52C45;
+  --rdp-day-width: 42px;
+  --rdp-day-height: 42px;
+  --rdp-day_button-width: 40px;
+  --rdp-day_button-height: 40px;
+  --rdp-day_button-border-radius: 9999px;
+  --rdp-selected-border: 2px solid #A52C45;
+  --rdp-nav-height: 44px;
+  font-size: 14px;
+  color: #222;
+}
+/* Phones: seven days across the full sheet width. */
+@media (max-width: 639px) {
+  .baliye-calendar .rdp-root {
+    --rdp-day-width: calc((100vw - 40px) / 7);
+    --rdp-day_button-width: min(44px, calc((100vw - 48px) / 7));
+    --rdp-day_button-height: 44px;
+    --rdp-day-height: 46px;
+  }
+}
+.baliye-calendar .rdp-selected .rdp-day_button {
+  background: #A52C45;
+  color: #fff;
+  font-weight: 600;
+}
+.baliye-calendar .rdp-day_button:hover:not([disabled]) {
+  background: #F6EEF0;
+  color: #A52C45;
+}
+.baliye-calendar .rdp-selected .rdp-day_button:hover {
+  background: #8E2439;
+  color: #fff;
+}
+.baliye-calendar .rdp-weekday {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8A8A8A;
+  opacity: 1;
+}
+.baliye-calendar .rdp-dropdown_root {
+  border: 1px solid #EAE6DF;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.baliye-calendar .rdp-dropdown_root:focus-within {
+  border-color: #A52C45;
+}
+.baliye-calendar .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.baliye-calendar .rdp-chevron {
+  fill: #A52C45;
 }

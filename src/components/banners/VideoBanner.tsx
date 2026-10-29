@@ -15,7 +15,6 @@ const VideoBanner: React.FC<VideoBannerProps> = ({
   video,
   title,
   description,
-  image,
 }) => {
   return (
     <Section

@@ -41,6 +41,14 @@ import OptionStep from './steps/OptionStep';
 import InstructionsStep from './steps/InstructionsStep';
 import ReviewStep from './steps/ReviewStep';
 import MeasurementPanel from './panels/MeasurementPanel';
+import { useRecolouredPreview } from './useRecolouredPreview';
+import { useStepInUrl } from './useStepInUrl';
+import RecolourOverlay, { TokenBalanceChip } from './RecolourOverlay';
+import { useGetWalletQuery } from '@/store/api/tokenApi';
+import { useCreditsEnabled } from '@/store/api/settingsApi';
+import { useAuth } from '@/features/auth/useAuth';
+import TokenWalletButton from '@/features/tokens/TokenWalletButton';
+import { LIVE } from '@/lib/liveUpdates';
 
 interface Props {
   garmentTypeId?: string;
@@ -81,6 +89,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { add, isAdding } = useCart();
+  const { isAuthenticated, openLogin } = useAuth();
 
   const { selections, stepIndex, measurementProfileId, instructions, designName } =
     useAppSelector((s) => s.createDesign);
@@ -91,8 +100,12 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
      of a broken-image icon. */
   const [previewFailed, setPreviewFailed] = useState(false);
 
-  const { data: config, isLoading } = useGetDesignConfigQuery({ garmentTypeId, productId });
-  const { data: designImages = {} } = useGetDesignImagesQuery();
+  const { data: config, isLoading } = useGetDesignConfigQuery(
+    { garmentTypeId, productId },
+    /* Always current: options, prices and rules are edited in the admin panel. */
+    LIVE
+  );
+  const { data: designImages = {} } = useGetDesignImagesQuery(undefined, LIVE);
   const { data: profiles = [] } = useGetMeasurementProfilesQuery();
   const [quotePrice] = useQuotePriceMutation();
   const [createDesign, { isLoading: isSaving }] = useCreateDesignMutation();
@@ -239,6 +252,9 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
       return isStepComplete(i);
     });
 
+  /* ?step=fabric — refresh, share and the Back button keep the step. */
+  useStepInUrl(steps, stepIndex, isStepReachable);
+
   const missingStep = steps.findIndex(
     (step, i) =>
       (step.kind === 'option' && step.group.isRequired && !isStepComplete(i)) ||
@@ -283,6 +299,41 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     }
   };
 
+  /* A pre-designed product shows its own photo; otherwise the garment's
+     preview image from Shopify (key preview/<slug>). */
+  const previewImage = config
+    ? (config.product?.images?.[0]?.url ?? designImages[designImageKey.preview(config.garmentType.slug)])
+    : undefined;
+
+  const colourGroup = config?.groups.find((g) => g.inputType === 'color_select');
+  const chosenColourId = colourGroup ? selections[colourGroup._id] : undefined;
+  const chosenHex = colourGroup?.options.find((o) => o._id === chosenColourId)?.hex;
+
+  /* The product photo already shows its preset colour — only re-dye for a
+     different one. */
+  const presetColourId = config?.presetSelections.find((p) => p.groupId === colourGroup?._id)?.optionId;
+  const recolourTo = chosenColourId && chosenColourId !== presetColourId ? chosenColourId : undefined;
+
+  /* The admin's switch. Off: AI previews are free and no credit UI shows. */
+  const creditsEnabled = useCreditsEnabled();
+  const { data: wallet } = useGetWalletQuery(undefined, {
+    skip: !creditsEnabled || !isAuthenticated,
+    ...LIVE,
+  });
+  /* Signed in with enough credits: a new design starts by itself. */
+  const canSpend = !isAuthenticated
+    ? false
+    : wallet
+      ? wallet.balance >= wallet.costs.recolour
+      : undefined;
+  const recoloured = useRecolouredPreview(
+    previewImage && !previewFailed ? previewImage : undefined,
+    recolourTo,
+    { credits: creditsEnabled, canSpend }
+  );
+  /* Back to this exact design after signing in. */
+  const signIn = () => openLogin(window.location.pathname + window.location.search);
+
   if (isLoading || !config) {
     return (
       <main className="min-h-screen bg-[#FAF7F2] px-4 py-10 md:px-8">
@@ -322,32 +373,44 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   };
 
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);
-  /* A pre-designed product shows its own photo; otherwise the garment's
-     preview image from Shopify (key preview/<slug>). */
-  const previewImage =
-    config.product?.images?.[0]?.url ?? designImages[designImageKey.preview(config.garmentType.slug)];
-
-  /* The chosen colour tints every drawing that stands in for a missing photo. */
-  const colourGroup = config.groups.find((g) => g.inputType === 'color_select');
-  const chosenHex = colourGroup?.options.find((o) => o._id === selections[colourGroup._id])?.hex;
 
   return (
     <main className="min-h-screen bg-[#FAF7F2]">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 md:py-10">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-[#1B2B36] md:text-3xl">
-            {config.product ? `Customise ${config.product.name}` : config.garmentType.name}
-          </h1>
+        <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-[#1B2B36] md:text-3xl">
+              {config.product ? `Customise ${config.product.name}` : config.garmentType.name}
+            </h1>
 
-          <p className="mt-1 text-sm text-[#6B6B6B]">
-            Step {Math.min(stepIndex + 1, steps.length)} of {steps.length}
-          </p>
+            <p className="mt-1 text-sm text-[#6B6B6B]">
+              Step {Math.min(stepIndex + 1, steps.length)} of {steps.length}
+              {activeStep && (
+                <span className="text-[#1B2B36]">
+                  {' · '}
+                  {activeStep.kind === 'option'
+                    ? activeStep.group.label
+                    : activeStep.kind === 'measurement'
+                      ? 'Measurements'
+                      : activeStep.kind === 'instructions'
+                        ? 'Notes'
+                        : 'Review'}
+                </span>
+              )}
+            </p>
+          </div>
+
+          {creditsEnabled && (
+            <TokenWalletButton wallet={wallet} isSignedIn={isAuthenticated} onSignIn={signIn} />
+          )}
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:gap-10">
           {/* ---- Product card: rail, preview, price, CTA ------------------ */}
-          <section className="lg:sticky lg:top-24 lg:self-start">
-            <div className="flex flex-col rounded-2xl bg-white p-4 md:p-6 lg:p-8">
+          {/* min-w-0: a grid column otherwise grows to its widest child (the
+              sideways step strip on phones) and pushes the page off-screen. */}
+          <section className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+            <div className="flex flex-col rounded-2xl border border-[#EFE8DE] bg-white p-4 shadow-[0_8px_30px_rgba(27,43,54,0.05)] md:p-6 lg:p-7">
               <div className="flex flex-1 flex-col gap-6 md:flex-row md:items-start md:gap-6">
                 <StepRail
                   steps={steps}
@@ -357,24 +420,43 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                   onSelect={(i) => dispatch(setStepIndex(i))}
                 />
 
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="relative aspect-[3/4] w-full max-w-[380px]">
+                <div className="flex flex-1 flex-col items-center justify-center">
+                  <div className="relative aspect-[3/4] w-full max-w-[380px] overflow-hidden rounded-xl bg-gradient-to-b from-[#F7F3ED] to-[#EFE8DE] ring-1 ring-[#EFE8DE]">
                     {previewImage && !previewFailed ? (
-                      <Image
-                        src={previewImage}
-                        alt={config.product?.name ?? config.garmentType.name}
-                        fill
-                        sizes="(max-width: 768px) 80vw, 380px"
-                        className="animate-fade-in object-contain"
-                        priority
-                        onError={() => setPreviewFailed(true)}
-                      />
+                      <>
+                        <Image
+                          key={recoloured.url ?? previewImage}
+                          src={recoloured.url ?? previewImage}
+                          alt={config.product?.name ?? config.garmentType.name}
+                          fill
+                          sizes="(max-width: 768px) 80vw, 380px"
+                          className={cn(
+                            'animate-fade-in object-contain transition-opacity',
+                            recoloured.isGenerating && 'opacity-60'
+                          )}
+                          priority
+                          onError={() => {
+                            if (!recoloured.url) setPreviewFailed(true);
+                          }}
+                        />
+                        <RecolourOverlay
+                          recoloured={recoloured}
+                          tokensEnabled={Boolean(creditsEnabled)}
+                          isSignedIn={isAuthenticated}
+                          balance={wallet?.balance}
+                          cost={wallet?.costs.recolour ?? 1}
+                          onSignIn={signIn}
+                        />
+                      </>
                     ) : (
                       <div className="flex h-full animate-fade-in items-center justify-center p-6">
                         <GarmentPreviewIllustration className="h-full w-auto max-w-full" fill={chosenHex ?? '#FFFFFF'} />
                       </div>
                     )}
                   </div>
+                  {creditsEnabled && (
+                    <TokenBalanceChip balance={wallet?.balance} cost={wallet?.costs.recolour ?? 1} />
+                  )}
                 </div>
               </div>
 

@@ -1,6 +1,11 @@
-import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import AccountOverview from '@/features/account/AccountOverview';
 
-/** /my-account has no screen of its own — land on Personal Details. */
+export const metadata: Metadata = {
+  title: 'My Account | Baliye Couture',
+  robots: { index: false, follow: false },
+};
+
 export default function MyAccountIndexPage() {
-  redirect('/my-account/personal-details');
+  return <AccountOverview />;
 }

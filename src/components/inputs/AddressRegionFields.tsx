@@ -12,6 +12,8 @@
  * lib/addressCountries.ts; add a country there and it appears here.
  */
 
+import Flag from '@/components/Flag';
+import Select from './Select';
 import {
   ADDRESS_COUNTRIES,
   getAddressCountry,
@@ -28,18 +30,18 @@ interface CountrySelectProps {
 
 export function CountrySelect({ value, onChange, className }: CountrySelectProps) {
   return (
-    <select
+    <Select
       value={getAddressCountry(value).code}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
       aria-label="Country"
+      options={ADDRESS_COUNTRIES.map((c) => ({
+        value: c.code,
+        label: c.name,
+        prefix: <Flag iso={c.code} />,
+      }))}
+      searchable
       className={`${className} bg-white`}
-    >
-      {ADDRESS_COUNTRIES.map((c) => (
-        <option key={c.code} value={c.code}>
-          {c.name}
-        </option>
-      ))}
-    </select>
+    />
   );
 }
 
@@ -57,19 +59,15 @@ export function StateField({ country, value, onChange, className }: StateFieldPr
 
   if (c.subdivisions) {
     return (
-      <select
+      <Select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         aria-label={c.subdivisionLabel}
+        placeholder={label}
+        options={c.subdivisions.map((s) => ({ value: s.name, label: s.name }))}
+        searchable
         className={`${className} bg-white`}
-      >
-        <option value="">{label}</option>
-        {c.subdivisions.map((s) => (
-          <option key={s.code} value={s.name}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+      />
     );
   }
 

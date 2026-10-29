@@ -20,7 +20,8 @@ export interface OrderFilters {
 
 export const DEFAULT_ORDER_FILTERS: OrderFilters = { status: 'all', type: 'all', time: 'all' };
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+/** Status lives in the tab row above the list, not in this panel. */
+export const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'In progress' },
   { value: 'delivered', label: 'Delivered' },
@@ -40,8 +41,9 @@ const TIME_OPTIONS: { value: TimeFilter; label: string }[] = [
   { value: 'year', label: 'This year' },
 ];
 
+/** Filters set from the panel (type, time) — the status tabs show their own state. */
 export const countActiveFilters = (f: OrderFilters) =>
-  (f.status !== 'all' ? 1 : 0) + (f.type !== 'all' ? 1 : 0) + (f.time !== 'all' ? 1 : 0);
+  (f.type !== 'all' ? 1 : 0) + (f.time !== 'all' ? 1 : 0);
 
 /** Earliest placement date the time filter allows, or null for "all time". */
 export function timeFilterStart(time: TimeFilter, now = new Date()): Date | null {
@@ -106,14 +108,8 @@ export default function OrdersFilterPanel({ filters, onChange }: Props) {
   return (
     <div
       id="orders-filter-panel"
-      className="grid animate-slide-down gap-5 border-b border-[#E9E4DC] bg-[#FCFBF8] px-4 py-5 sm:px-5 md:grid-cols-3 md:px-6"
+      className="grid animate-slide-down gap-5 border-b border-[#E9E4DC] bg-[#FCFBF8] px-4 py-5 sm:px-5 md:grid-cols-2 md:px-6"
     >
-      <ChipGroup
-        label="Status"
-        value={filters.status}
-        options={STATUS_OPTIONS}
-        onChange={(status) => onChange({ ...filters, status })}
-      />
       <ChipGroup
         label="Type"
         value={filters.type}
@@ -130,8 +126,8 @@ export default function OrdersFilterPanel({ filters, onChange }: Props) {
       {active > 0 && (
         <button
           type="button"
-          onClick={() => onChange(DEFAULT_ORDER_FILTERS)}
-          className="justify-self-start text-sm font-medium text-[#A52C45] underline underline-offset-2 md:col-span-3"
+          onClick={() => onChange({ ...DEFAULT_ORDER_FILTERS, status: filters.status })}
+          className="justify-self-start text-sm font-medium text-[#A52C45] underline underline-offset-2 md:col-span-2"
         >
           Clear filters
         </button>

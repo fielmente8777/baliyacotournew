@@ -17,7 +17,7 @@
 
 import { shopifyStorefrontFetch } from './shopifyStorefront';
 
-export const DESIGN_IMAGE_TYPE = 'design_image';
+const DESIGN_IMAGE_TYPE = 'design_image';
 
 const FIELDS = { key: 'key', image: 'image' } as const;
 

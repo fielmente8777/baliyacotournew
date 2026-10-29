@@ -13,11 +13,12 @@ import { useGetGarmentTypesQuery } from '@/store/api/productApi';
 import { useGetDesignImagesQuery } from '@/store/api/designApi';
 import { designImageKey } from '@/lib/designImages';
 import { formatINR } from '@/lib/format';
+import { LIVE } from '@/lib/liveUpdates';
 
 export default function GarmentTypePicker() {
   const router = useRouter();
-  const { data: types = [], isLoading } = useGetGarmentTypesQuery();
-  const { data: images = {} } = useGetDesignImagesQuery();
+  const { data: types = [], isLoading } = useGetGarmentTypesQuery(undefined, LIVE);
+  const { data: images = {} } = useGetDesignImagesQuery(undefined, LIVE);
 
   return (
     <main className="min-h-[70vh] bg-[#FAF7F2] px-4 py-16 md:px-10">

@@ -8,15 +8,21 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 import { useCart } from "@/hooks/useCart";
 import NotificationBell from "./NotificationBell";
+import { useBumpOnIncrease } from "./useBumpOnIncrease";
+import { useLogoutConfirm } from "@/features/auth/LogoutConfirm";
 
 const Navbar = () => {
   const [isOpenNavBar, setIsOpenNavBar] = useState(false);
-  const { isAuthenticated, isHydrated, signOut } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
+  const { askToLogOut, logoutDialog } = useLogoutConfirm();
   const [open, setOpen] = useState(false);
 
   /* Skips its own fetch when signed out, so this costs nothing for guests. */
-  const { totals } = useCart();
+  const { totals, isLoading: cartLoading } = useCart();
   const isSignedIn = isHydrated && isAuthenticated;
+  /* Adding to the bag (from any page) makes the cart icon jump. */
+  const cartBump = useBumpOnIncrease(totals.itemCount, isSignedIn && !cartLoading);
+  const hasCartItems = isSignedIn && totals.itemCount > 0;
 
   return (
     <header className="max_screen_width py-4 md:py-6 bg-white">
@@ -51,10 +57,10 @@ const Navbar = () => {
           <Image src="/logo.png" alt="Baliye Couture" fill priority sizes="153px" className="object-contain" />
         </Link>
 
-        <ul className="flex items-center gap-2.5 sm:gap-4">
+        <ul className="flex items-center gap-2.5 sm:gap-4 [&>li]:flex [&>li]:items-center">
           <li>
             {isAuthenticated ? (
-              <AccountMenu onSignOut={signOut} open={open} setOpen={setOpen} />
+              <AccountMenu onSignOut={askToLogOut} open={open} setOpen={setOpen} />
             ) : (
               <Link
                 href="/login?redirect=%2Fmy-account%2Fpersonal-details"
@@ -65,12 +71,6 @@ const Navbar = () => {
               </Link>
             )}
           </li>
-          {isSignedIn && (
-            <li>
-              <NotificationBell />
-            </li>
-          )}
-
           <li>
             <Link
               href={isSignedIn ? "/cart" : "/login?redirect=%2Fcart"}
@@ -79,21 +79,47 @@ const Navbar = () => {
                   ? `Cart, ${totals.itemCount} item${totals.itemCount > 1 ? "s" : ""}`
                   : "Cart"
               }
-              className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer relative"
+              className="group text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer relative"
             >
-              <CartIcon />
+              {/* A small tilt every few seconds while the bag holds something,
+                  a drop-and-bounce on hover or when an item is added. */}
+              <span
+                key={cartBump.key}
+                className={`flex origin-bottom group-hover:animate-cart-bump ${
+                  cartBump.active ? "animate-cart-bump" : hasCartItems ? "animate-cart-wiggle" : ""
+                }`}
+                onAnimationEnd={(e) => {
+                  if (e.animationName === "cart-bump") cartBump.done();
+                }}
+              >
+                <CartIcon />
+              </span>
 
               {/* Rendered only once hydrated, or the server and client markup
                   would differ and React would discard the subtree. */}
-              {isSignedIn && totals.itemCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
-                  {totals.itemCount > 9 ? "9+" : totals.itemCount}
+              {hasCartItems && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4">
+                  {cartBump.active && (
+                    <span className="absolute inset-0 animate-ping rounded-full bg-secondary opacity-40 [animation-iteration-count:2]" aria-hidden="true" />
+                  )}
+                  <span
+                    key={totals.itemCount}
+                    className="relative flex h-4 min-w-4 animate-check-pop items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white"
+                  >
+                    {totals.itemCount > 9 ? "9+" : totals.itemCount}
+                  </span>
                 </span>
               )}
             </Link>
           </li>
+          {isSignedIn && (
+            <li>
+              <NotificationBell />
+            </li>
+          )}
         </ul>
       </nav>
+      {logoutDialog}
     </header>
   );
 };
@@ -203,14 +229,14 @@ const AccountMenu = ({
   }, [open, setOpen]);
 
   return (
-    <div ref={ref} className={`relative`}>
+    <div ref={ref} className="relative flex">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="text-[#5C6476] hover:text-secondary transition-all duration-300 ease-in-out"
+        className="text-[#5C6476] w-7 flex items-center justify-center aspect-square hover:text-secondary transition-all duration-300 ease-in-out cursor-pointer"
       >
         <ProfileIcon />
       </button>
@@ -221,7 +247,7 @@ const AccountMenu = ({
           className="absolute right-0 top-[calc(100%+12px)] z-9999 w-52 origin-top-right animate-pop-in overflow-hidden rounded-lg bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
         >
           <Link
-            href="/my-account/personal-details"
+            href="/my-account"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-[#333] hover:bg-[#F7F7F7]"
           >

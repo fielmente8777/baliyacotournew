@@ -14,6 +14,7 @@ import { Bell, LogOut, Package, User } from "lucide-react";
 
 import { navData } from "./navData";
 import { useAuth } from "@/features/auth/useAuth";
+import { useLogoutConfirm } from "@/features/auth/LogoutConfirm";
 import useClickOutside from "@/hooks/useClickOutside";
 
 interface MobileNavProps {
@@ -23,7 +24,8 @@ interface MobileNavProps {
 
 const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, isHydrated, signOut } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
+  const { askToLogOut, logoutDialog } = useLogoutConfirm();
   const isSignedIn = isHydrated && isAuthenticated;
 
   const close = () => setIsOpenNavBar(false);
@@ -53,8 +55,9 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        className={`absolute left-0 top-0 flex h-full w-[82%] max-w-[340px] flex-col overflow-y-auto bg-white pt-20 shadow-[0_0_40px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-in-out ${
-          isOpenNavBar ? "translate-x-0" : "-translate-x-full"
+        className={`absolute left-0 top-0 flex h-full w-[82%] max-w-[340px] flex-col overflow-y-auto bg-white pt-20 transition-[transform,box-shadow] duration-300 ease-in-out ${
+          /* Shadow only while open — closed, it bled onto the left edge of every page. */
+          isOpenNavBar ? "translate-x-0 shadow-[0_0_40px_rgba(0,0,0,0.15)]" : "-translate-x-full shadow-none"
         }`}
       >
         <ul className="flex flex-col gap-1 px-6 py-4">
@@ -77,7 +80,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
             <ul className="flex flex-col gap-1">
               <li>
                 <Link
-                  href="/my-account/personal-details"
+                  href="/my-account"
                   onClick={close}
                   className="flex items-center gap-3 py-3 text-base text-[#333] hover:text-secondary"
                 >
@@ -110,7 +113,7 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
                   type="button"
                   onClick={() => {
                     close();
-                    signOut();
+                    askToLogOut();
                   }}
                   className="flex w-full items-center gap-3 py-3 text-left text-base text-[#A52C45]"
                 >
@@ -130,6 +133,9 @@ const MobileNav = ({ isOpenNavBar, setIsOpenNavBar }: MobileNavProps) => {
           )}
         </div>
       </div>
+
+      {/* Portalled to <body>, so it shows after this menu has closed. */}
+      {logoutDialog}
     </div>
   );
 };

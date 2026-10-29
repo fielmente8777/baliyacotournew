@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Fira_Sans } from "next/font/google";
 import "./globals.css";
 import "./style.scss";
-import Navbar from "@/components/navbar/NavBar";
-import Footer from "@/components/footer/Footer";
 import ReduxProvider from "@/store/provider";
 import { ALLOW_INDEXING, DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
@@ -59,9 +57,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd).replace(/</g, "\\u003c") }}
         />
         <ReduxProvider>
-          <Navbar />
           {children}
-          <Footer />
         </ReduxProvider>
       </body>
     </html>

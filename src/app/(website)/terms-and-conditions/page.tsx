@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { termsContent } from "./pageData";
+import { getSiteContent } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Baliye Couture",
@@ -7,13 +8,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms-and-conditions" },
 };
 
-export default function TermsPage() {
+/* Edited in the admin panel; pageData.ts holds the default text. */
+export default async function TermsPage() {
+  const { html } = await getSiteContent("terms", { html: termsContent });
+
   return (
     <main className="container mx-auto max-w-7xl px-4 py-20">
       <article
         className="terms-content"
         dangerouslySetInnerHTML={{
-          __html: termsContent,
+          __html: html,
         }}
       />
     </main>

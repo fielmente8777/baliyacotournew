@@ -7,6 +7,8 @@ export interface MeasurementTemplate {
   _id: string;
   name: string;
   unit: 'in' | 'cm';
+  /** Admin-written tip on how to take this measurement. */
+  description?: string;
   displayOrder: number;
   isActive: boolean;
 }

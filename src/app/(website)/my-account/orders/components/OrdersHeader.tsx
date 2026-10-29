@@ -20,7 +20,7 @@ export default function OrdersHeader({
   return (
     <div className="flex min-h-[58px] items-center justify-between gap-3 border-b border-[#E9E4DC] px-4 sm:px-5 md:px-6">
       <div className="min-w-0">
-        <h2 className="text-base font-semibold text-[#202020]">All Orders</h2>
+        <h2 className="text-base font-semibold text-[#202020]">My Orders</h2>
         {resultCount !== undefined && (
           <p className="text-xs text-[#8A8A8A]">
             {resultCount} {resultCount === 1 ? "item" : "items"}

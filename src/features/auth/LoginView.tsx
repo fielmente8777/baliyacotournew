@@ -23,7 +23,7 @@ import ShopifySignIn from "./ShopifySignIn";
 const safeRedirect = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//")
     ? value
-    : "/my-account/personal-details";
+    : "/my-account";
 
 export default function LoginView() {
   const router = useRouter();

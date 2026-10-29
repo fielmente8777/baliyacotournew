@@ -23,6 +23,8 @@ import {
   useMarkNotificationReadMutation,
 } from '@/store/api/notificationApi';
 
+import { useBumpOnIncrease } from './useBumpOnIncrease';
+
 /** How many the dropdown shows; the rest are on the notifications page. */
 const PREVIEW_COUNT = 5;
 
@@ -31,13 +33,17 @@ export default function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  /* Polls once a minute so new order updates show up without a refresh. */
-  const { data } = useGetNotificationsQuery(undefined, { pollingInterval: 60000 });
+  /* Polls once a minute so new order updates show up without a refresh, and
+     checks again as soon as the customer comes back to the tab. */
+  const { data } = useGetNotificationsQuery(undefined, { pollingInterval: 60000, refetchOnFocus: true });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAllRead] = useMarkAllNotificationsReadMutation();
 
   const items = (data?.items ?? []).slice(0, PREVIEW_COUNT);
   const unread = data?.unread ?? 0;
+
+  /* A new update arriving (unread goes up) gives the bell one strong ring. */
+  const ring = useBumpOnIncrease(unread, data !== undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -68,13 +74,34 @@ export default function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
         aria-expanded={open}
-        className="relative flex aspect-square w-7 items-center justify-center text-[#5C6476] transition-all duration-300 ease-in-out hover:text-secondary"
+        className="group relative flex aspect-square w-7 items-center justify-center text-[#5C6476] transition-all duration-300 ease-in-out hover:text-secondary"
       >
-        <Bell size={22} />
+        {/* Same size and line weight as the 20px profile and cart icons.
+            Swings from its top, like a real bell: a gentle ring every few
+            seconds while something is unread, a full ring on hover or when
+            a new update lands, and still while the panel is open. */}
+        <span
+          key={ring.key}
+          className={`flex origin-top transition-transform group-hover:animate-bell-ring-once ${
+            open ? '' : ring.active ? 'animate-bell-ring-once' : unread > 0 ? 'animate-bell-ring' : ''
+          }`}
+          onAnimationEnd={(e) => {
+            /* After the one-off ring, fall back to the gentle repeating one. */
+            if (e.animationName === 'bell-ring-once') ring.done();
+          }}
+        >
+          <Bell size={20} strokeWidth={1.25} className={unread > 0 ? 'fill-secondary/10' : ''} />
+        </span>
 
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 animate-pop-in items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white">
-            {unread > 9 ? '9+' : unread}
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4">
+            {!open && <span key={ring.key} className="absolute inset-0 animate-ping rounded-full bg-secondary opacity-40 [animation-iteration-count:3]" aria-hidden="true" />}
+            <span
+              key={unread}
+              className="relative flex h-4 min-w-4 animate-check-pop items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-medium leading-none text-white"
+            >
+              {unread > 9 ? '9+' : unread}
+            </span>
           </span>
         )}
       </button>

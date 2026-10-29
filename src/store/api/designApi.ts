@@ -14,6 +14,13 @@ import type { GarmentType } from '@/@types/product';
 import { fetchDesignImages, type DesignImageMap } from '@/lib/designImages';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
+export interface RecolourResult {
+  key: string;
+  status: 'generating' | 'ready' | 'failed';
+  url: string | null;
+  error: string | null;
+}
+
 const designApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** Garment, preview and option images — straight from Shopify. */
@@ -25,7 +32,7 @@ const designApi = baseApi.injectEndpoints({
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
         }
       },
-      keepUnusedDataFor: 600,
+      providesTags: ['Design'],
     }),
 
     /**
@@ -54,6 +61,31 @@ const designApi = baseApi.injectEndpoints({
       transformResponse: (res: ApiEnvelope<PriceBreakdown>) => unwrap(res),
     }),
 
+    /**
+     * The preview photo re-dyed to a colour option by AI. Cached server-side
+     * per photo + colour; while `generating`, poll getRecolour with the key.
+     */
+    recolourPhoto: builder.mutation<RecolourResult, { imageUrl: string; colourOptionId: string }>({
+      query: (body) => ({ url: '/designs/recolour', method: 'POST', body }),
+      transformResponse: (res: ApiEnvelope<RecolourResult>) => unwrap(res),
+      /* A new generation may have spent tokens. A 401/402 refusal can mean
+         the admin just turned credits on — re-read the switch too. */
+      invalidatesTags: (_result, error) =>
+        error?.status === 401 || error?.status === 402 ? ['Tokens', 'Settings'] : ['Tokens'],
+    }),
+
+    /** Free: the cached recolour for this photo + colour, or null. Starts nothing. */
+    lookupRecolour: builder.mutation<RecolourResult | null, { imageUrl: string; colourOptionId: string }>({
+      query: (body) => ({ url: '/designs/recolour/lookup', method: 'POST', body }),
+      transformResponse: (res: ApiEnvelope<RecolourResult | null>) => unwrap(res),
+    }),
+
+    getRecolour: builder.query<RecolourResult, string>({
+      query: (key) => `/designs/recolour/${key}`,
+      transformResponse: (res: ApiEnvelope<RecolourResult>) => unwrap(res),
+      keepUnusedDataFor: 0,
+    }),
+
     createDesign: builder.mutation<SavedDesign, CreateDesignBody>({
       query: (body) => ({ url: '/designs', method: 'POST', body }),
       transformResponse: (res: ApiEnvelope<SavedDesign>) => unwrap(res),
@@ -67,6 +99,9 @@ export const {
   useGetDesignImagesQuery,
   useGetDesignConfigQuery,
   useQuotePriceMutation,
+  useRecolourPhotoMutation,
+  useLookupRecolourMutation,
+  useLazyGetRecolourQuery,
   useCreateDesignMutation,
 } = designApi;
 

@@ -211,3 +211,7 @@ export const provinceCodeFor = (countryCode: string, state: string): string | un
   const code = trimmed.toUpperCase().replace(/^[A-Z]{2}-/, '');
   return /^[A-Z0-9]{1,3}$/.test(code) ? code : undefined;
 };
+
+/** The visitor's country if we ship there, else null — a new address's default. */
+export const shippableCountry = (iso: string | null): string | null =>
+  iso && ADDRESS_COUNTRIES.some((c) => c.code === iso) ? iso : null;

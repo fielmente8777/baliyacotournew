@@ -13,6 +13,7 @@ import { OptionIllustration } from '@/components/illustrations/optionIllustratio
 import { designImageKey } from '@/lib/designImages';
 import { cn, formatINR } from '@/lib/format';
 import { useGetDesignImagesQuery } from '@/store/api/designApi';
+import { LIVE } from '@/lib/liveUpdates';
 
 interface Props {
   group: DesignGroup;
@@ -29,7 +30,7 @@ interface Props {
 export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage, tint }: Props) {
   const isColour = group.inputType === 'color_select';
   const isSize = group.inputType === 'size_select';
-  const { data: images = {} } = useGetDesignImagesQuery();
+  const { data: images = {} } = useGetDesignImagesQuery(undefined, LIVE);
 
   return (
     <div>

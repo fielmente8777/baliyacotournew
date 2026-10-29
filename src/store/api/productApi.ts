@@ -288,7 +288,7 @@ const productApi = baseApi.injectEndpoints({
     }),
 
     getRelatedProducts: builder.query<Product[], string>({
-      queryFn: async (slug, api, extraOptions, baseQuery) => {
+      queryFn: async (slug) => {
         try {
           const data = await shopifyStorefrontFetch<{ product: ShopifyProductNode | null }>(PRODUCT_BY_HANDLE, {
             handle: slug,

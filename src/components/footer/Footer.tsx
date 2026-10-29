@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { Container } from "../sectionComponants";
-import { websiteFooterData } from "./footerData";
+import { websiteFooterData as defaults } from "./footerData";
+import { getSiteContent } from "@/lib/siteContent";
 import Image from "next/image";
 import clsx from "clsx";
 
-const Footer = () => {
+/* Edited in the admin panel; footerData.tsx holds the defaults. */
+const Footer = async () => {
+  const websiteFooterData = await getSiteContent("footer", defaults);
+
   return (
     <footer className="bg-primary text-dark">
       <div className="flex flex-col gap-16 py-10">

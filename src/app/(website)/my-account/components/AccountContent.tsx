@@ -11,7 +11,7 @@ export default function AccountContent({
 }: Props) {
   return (
     <div
-      className={`overflow-hidden bg-white ${className}`}
+      className={`overflow-hidden rounded-lg border border-[#EAE6DF] bg-white ${className}`}
     >
       {children}
     </div>

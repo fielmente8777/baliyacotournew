@@ -20,7 +20,7 @@ interface Props {
  */
 export default function AddressType({ value, onChange }: Props) {
   return (
-    <div className="mt-8">
+    <div className="pt-1">
       <p className="mb-4 text-sm font-semibold">Address Type</p>
 
       <div className="flex flex-wrap gap-4">

@@ -7,14 +7,18 @@ import DesignProcess from "./Home/Components/DesignProcess";
 import FoundersMessage from "./Home/Components/FoundersMessage";
 import PreMadeDesigns from "./Home/Components/PreMadeDesigns";
 import Steps from "./Home/Components/Steps";
-import { homePageData } from "./Home/pagedata";
+import { homePageData as defaults } from "./Home/pagedata";
+import { getSiteContent } from "@/lib/siteContent";
 
 /* Title, description and share image are inherited from app/layout.tsx. */
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function Home() {
+/* Copy and images are edited in the admin panel; pagedata.tsx holds the defaults. */
+export default async function Home() {
+  const homePageData = await getSiteContent("home", defaults);
+
   return (
     <main className="bg-[#FAF7F2]">
       <VideoBanner {...homePageData.hero} />

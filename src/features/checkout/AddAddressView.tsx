@@ -1,197 +1,52 @@
 "use client";
 
 /**
- * Checkout — add a delivery address mid-flow.
- *
- * Posts to the same /addresses endpoint as the account section rather than
- * keeping a second, divergent address form. On success it returns to /shipping
- * where the new address is already selectable.
+ * Checkout — add a delivery address on its own page. /shipping now opens the
+ * same form inline, so this page mostly serves old links and bookmarks. On
+ * success it returns to /shipping where the new address is selectable.
  */
 
-import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
 import CheckoutCard from "@/components/checkout/CheckoutCard";
 import DeliveryBanner from "@/components/checkout/DeliveryBanner";
 import PriceSummary from "@/components/checkout/PriceSummary";
-import PrimaryButton from "@/components/checkout/PrimaryButton";
-import SecondaryButton from "@/components/checkout/SecondaryButton";
-import PhoneField from "@/components/inputs/PhoneField";
-import {
-  CountrySelect,
-  PostalField,
-  StateField,
-  regionResetFor,
-  validateRegion,
-} from "@/components/inputs/AddressRegionFields";
-
-import { useCreateAddressMutation } from "@/store/api/addressApi";
 import { useCart } from "@/hooks/useCart";
-import { DEFAULT_COUNTRY_CODE } from "@/lib/addressCountries";
-import type { AddressType as AddressTypeValue } from "@/@types/account";
 
-import AddressType from "../../app/(website)/shipping/add-address/Components/AddressType";
-
-const emptyForm = {
-  fullName: "",
-  street: "",
-  landmark: "",
-  city: "",
-  state: "",
-  pincode: "",
-  country: DEFAULT_COUNTRY_CODE,
-  phone: "",
-  type: "home" as AddressTypeValue,
-};
+import AddressForm from "./AddressForm";
 
 export default function AddAddressView() {
   const router = useRouter();
   const { totals } = useCart();
-  const [createAddress, { isLoading }] = useCreateAddressMutation();
-
-  const [form, setForm] = useState(emptyForm);
-  const [error, setError] = useState<string | null>(null);
-
-  const set = (key: keyof typeof form, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }));
-
-  const handleSave = async () => {
-    if (form.fullName.trim().length < 2) return setError("Please enter a full name.");
-    if (form.street.trim().length < 3) return setError("Please enter a street address.");
-    if (!form.city.trim()) return setError("Please enter a city.");
-    const regionError = validateRegion(form.country, form.state, form.pincode);
-    if (regionError) return setError(regionError);
-
-    setError(null);
-
-    try {
-      await createAddress({
-        fullName: form.fullName.trim(),
-        street: form.street.trim(),
-        landmark: form.landmark.trim() || undefined,
-        city: form.city.trim(),
-        state: form.state,
-        pincode: form.pincode.trim(),
-        country: form.country,
-        phone: form.phone.trim() || undefined,
-        type: form.type,
-      }).unwrap();
-
-      router.push("/shipping");
-    } catch {
-      setError("We couldn't save this address. Please try again.");
-    }
-  };
-
-  const inputClass =
-    "h-12 w-full rounded-md border border-[#E4E0D8] px-4 text-sm outline-none focus:border-[#972E47]";
 
   return (
     <main className="min-h-screen bg-[#F8F6EF]">
-      <section className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-semibold">My Cart</h1>
-
-        <p className="mt-2 text-[#777]">{totals.itemCount} Items</p>
-
-        <div className="mt-8">
+      <section className="container mx-auto px-4 py-8 md:py-12">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <Link href="/shipping" className="mb-2 inline-flex items-center gap-1.5 text-sm text-[#777] hover:text-[#972E47]">
+              <ArrowLeft size={14} aria-hidden="true" />
+              Back to addresses
+            </Link>
+            <h1 className="text-3xl font-semibold md:text-4xl">Delivery Address</h1>
+          </div>
           <CheckoutStepper step={2} />
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[2fr_380px]">
-          <CheckoutCard>
-            <div className="border-b p-6">
-              <h2 className="text-2xl font-semibold">Add New Address</h2>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_380px] lg:gap-8">
+          <CheckoutCard className="animate-rise-in">
+            <div className="border-b border-[#F2EEE8] px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-semibold">Add New Address</h2>
             </div>
-
-            <div className="space-y-4 p-6">
-              <CountrySelect
-                value={form.country}
-                onChange={(country) => setForm((f) => ({ ...f, ...regionResetFor(country) }))}
-                className={inputClass}
-              />
-
-              <input
-                value={form.fullName}
-                onChange={(e) => set("fullName", e.target.value)}
-                placeholder="Full Name*"
-                className={inputClass}
-              />
-
-              <input
-                value={form.street}
-                onChange={(e) => set("street", e.target.value)}
-                placeholder="Street Address*"
-                className={inputClass}
-              />
-
-              <input
-                value={form.landmark}
-                onChange={(e) => set("landmark", e.target.value)}
-                placeholder="Landmark (optional)"
-                className={inputClass}
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  value={form.city}
-                  onChange={(e) => set("city", e.target.value)}
-                  placeholder="City*"
-                  className={inputClass}
-                />
-
-                <StateField
-                  country={form.country}
-                  value={form.state}
-                  onChange={(state) => set("state", state)}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <PostalField
-                  country={form.country}
-                  value={form.pincode}
-                  onChange={(pincode) => set("pincode", pincode)}
-                  className={inputClass}
-                />
-
-                <PhoneField
-                  value={form.phone}
-                  onChange={(phone) => set("phone", phone)}
-                  placeholder="Delivery phone (optional)"
-                />
-              </div>
-
-              <AddressType
-                value={form.type}
-                onChange={(t: AddressTypeValue) => set("type", t)}
-              />
-
-              {error && <p className="text-sm text-[#972E47]">{error}</p>}
-
-              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between">
-                <SecondaryButton
-                  fullWidth={false}
-                  className="px-8"
-                  onClick={() => router.push("/shipping")}
-                >
-                  Cancel
-                </SecondaryButton>
-
-                <PrimaryButton
-                  fullWidth={false}
-                  className="px-8"
-                  onClick={handleSave}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Saving…" : "Save Address"}
-                </PrimaryButton>
-              </div>
+            <div className="p-5 sm:p-6">
+              <AddressForm onSaved={() => router.push("/shipping")} onCancel={() => router.push("/shipping")} />
             </div>
           </CheckoutCard>
 
-          <div>
+          <div className="animate-rise-in [animation-delay:120ms] lg:sticky lg:top-6 lg:self-start">
             <PriceSummary totals={totals} />
             <DeliveryBanner />
           </div>
