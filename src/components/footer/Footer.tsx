@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Container } from "../sectionComponants";
+import Image from "next/image";
 import { websiteFooterData as defaults } from "./footerData";
 import { getSiteContent } from "@/lib/siteContent";
-import Image from "next/image";
 
 /**
  * Links typed in the admin often miss their scheme — "name@gmail.com" as the
@@ -17,59 +16,72 @@ function contactHref(href: string, label: string) {
   return value;
 }
 
-/* Edited in the admin panel; footerData.tsx holds the defaults. */
+const wrap = "mx-auto w-full max-w-320 px-4 md:px-10";
+
+/**
+ * Brand column (logo, line, social icons), then the admin's link columns,
+ * then the bottom bar. Mint with dark text, dark bottom bar: the site's
+ * footer colours. Edited in the admin panel; footerData.tsx holds the defaults.
+ */
 const Footer = async () => {
-  const websiteFooterData = await getSiteContent("footer", defaults);
+  const footer = await getSiteContent("footer", defaults);
+  const socials = (footer.socials ?? []).filter((s) => s.href.trim());
+  const lists = footer.lists.filter((list) => list.links.length);
 
   return (
     <footer className="bg-primary text-dark">
-      <div className="flex flex-col gap-16 py-10">
-        {/* line */}
-        <Line />
-        {/* Phones: logo and description centred on top, the two link lists
-            side by side below. From md: three columns, each centred in its
-            own third so the row sits balanced. */}
-        <Container className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-8">
-          <div className="col-span-2 flex flex-col items-center text-center md:col-span-1">
-            <div className="relative w-[200px] aspect-4/1.5">
-              <Image
-                src={websiteFooterData.logo}
-                alt="Baliye Couture"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="mt-4 max-w-xs">{websiteFooterData.description}</p>
-          </div>
-          {websiteFooterData.lists.map((list, index) => (
-            <div key={index} className="flex min-w-0 flex-col gap-3 md:mx-auto md:w-fit md:gap-4">
-              <h3 className="text-lg text-dark/60 md:text-2xl">{list.title}</h3>
-              <ul className="flex flex-col text-sm md:text-base">
-                {list.links.map((item, index) => (
-                  <li key={index} className="wrap-break-word">
-                    {/* py-2.5: a comfortable tap target on phones. */}
-                    <Link
-                      href={contactHref(item.href, item.label)}
-                      className="inline-block py-2.5 transition-colors hover:text-secondary md:py-1.5"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </Container>
-        <Line />
+      <div className={`${wrap} grid grid-cols-2 gap-x-6 gap-y-10 pb-12 pt-14 md:pt-18 lg:grid-cols-[minmax(0,1.6fr)_repeat(var(--cols),minmax(0,1fr))] lg:gap-8`} style={{ "--cols": Math.max(lists.length, 1) } as React.CSSProperties}>
+        <div className="col-span-2 flex flex-col items-start gap-4 lg:col-span-1">
+          <Link href="/" aria-label="Baliye Couture home" className="relative block aspect-305/96 w-44">
+            <Image src={footer.logo} alt="Baliye Couture" fill sizes="176px" className="object-contain object-left" />
+          </Link>
+          {footer.description && <p className="max-w-xs text-sm leading-relaxed text-light">{footer.description}</p>}
+          {socials.length > 0 && (
+            <ul className="flex gap-2">
+              {socials.map((social, i) => (
+                <li key={i}>
+                  <a
+                    href={contactHref(social.href, social.label)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="flex size-11 items-center justify-center rounded-full border border-dark/25 text-dark transition-colors hover:border-secondary hover:text-secondary"
+                  >
+                    <SocialIcon href={social.href} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {lists.map((list, index) => (
+          <nav key={index} aria-label={list.title || "Links"} className="flex min-w-0 flex-col gap-2">
+            {list.title && (
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-dark">{list.title}</h3>
+            )}
+            <ul className="flex flex-col text-sm">
+              {list.links.map((item, i) => (
+                <li key={i} className="wrap-break-word">
+                  {/* py-2.5: a comfortable tap target on phones. */}
+                  <Link
+                    href={contactHref(item.href, item.label)}
+                    className="inline-block py-2.5 text-light transition-colors hover:text-secondary md:py-1.5"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
       </div>
+
       <div className="bg-dark">
-        <Container className="py-4">
-          <div className="flex max-md:flex-col items-center justify-between gap-2 text-white ">
-            {" "}
-            <p className="">© Baliye Couture. All rights reserved.</p>
-            <p className="">Powered by Fielmente</p>
-          </div>
-        </Container>
+        <div className={`${wrap} flex flex-col items-start justify-between gap-2 py-5 text-[13px] text-white md:flex-row md:items-center`}>
+          <p>{footer.copyright}</p>
+          {footer.credit && <p className="text-white/80">{footer.credit}</p>}
+        </div>
       </div>
     </footer>
   );
@@ -77,57 +89,66 @@ const Footer = async () => {
 
 export default Footer;
 
-const Line = () => {
-  return (
-    <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
-      <div className="h-px bg-secondary"></div>
-      <span>
-        <Foo />
-      </span>
-      <div className="h-px bg-secondary"></div>
-    </div>
-  );
-};
+/** Picked from the address, so the admin only types a link. */
+function SocialIcon({ href }: { href: string }) {
+  const props = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  const url = href.toLowerCase();
 
-const Foo = () => (
-  <svg
-    width={33}
-    height={32}
-    viewBox="0 0 33 32"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M15.4408 13.538C13.2031 11.4495 10.9653 9.36091 8.72754 7.27233C8.72754 5.10916 8.72754 2.90866 8.72754 0.670898C10.5178 2.01356 12.3079 3.35626 14.0982 4.69892C14.5457 7.6826 14.9933 10.6289 15.4408 13.538Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M17.4541 13.5384C19.4681 11.2261 21.4448 8.91372 23.3842 6.60136C23.1604 4.43819 22.9366 2.23776 22.7129 0C21.0718 1.56643 19.4308 3.09555 17.7898 4.58739C17.7152 7.57107 17.6033 10.5548 17.4541 13.5384Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M16.336 17.5654C17.2311 20.4745 18.1262 23.3836 19.0213 26.2927C18.0516 28.1575 17.0446 30.0596 16.0003 31.999C15.0306 29.985 14.0982 27.9337 13.2031 25.8451C14.2474 23.0852 15.2917 20.3253 16.336 17.5654Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M14.4337 17.0059C12.718 19.542 11.0024 22.0781 9.28682 24.6142C7.19824 24.9872 5.07235 25.3602 2.90918 25.7331C3.95347 23.7191 4.96048 21.7425 5.93017 19.8031C8.76468 18.8334 11.5991 17.901 14.4337 17.0059Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M14.0979 15.2169C11.1142 15.5153 8.09325 15.851 5.03497 16.2239C3.39394 14.8067 1.71562 13.4267 0 12.084C2.16317 11.5619 4.32633 11.0397 6.4895 10.5176C9.02563 12.084 11.5618 13.6505 14.0979 15.2169Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M18.2373 17.0059C21.221 17.6772 24.2047 18.3485 27.1884 19.0198C28.3072 20.8846 29.4261 22.7494 30.545 24.6142C28.3072 24.3905 26.0695 24.1666 23.8317 23.9429C21.9669 21.6305 20.1021 19.3182 18.2373 17.0059Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M18.5732 15.1054C21.0348 13.3152 23.5336 11.5623 26.0698 9.84668C28.2329 10.2942 30.3588 10.7045 32.4474 11.0774C30.8064 12.5693 29.1281 14.0611 27.4124 15.553C24.4288 15.4038 21.4823 15.2546 18.5732 15.1054Z"
-      fill="#F9C365"
-    />
-    <path
-      d="M17.7904 15.4403C17.7904 16.2235 17.231 16.8949 16.4478 16.8949C15.6645 16.8949 14.9932 16.2235 14.9932 15.4403C14.9932 14.6571 15.6645 14.0977 16.4478 14.0977C17.231 14.0977 17.7904 14.6571 17.7904 15.4403Z"
-      fill="#F9C365"
-    />
-  </svg>
-);
+  if (url.includes("instagram"))
+    return (
+      <svg {...props}>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
+      </svg>
+    );
+  if (url.includes("facebook"))
+    return (
+      <svg {...props}>
+        <path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z" />
+      </svg>
+    );
+  if (url.includes("youtube"))
+    return (
+      <svg {...props}>
+        <rect x="2.5" y="5.5" width="19" height="13" rx="4" />
+        <path d="M10 9.5v5l4.5-2.5z" fill="currentColor" />
+      </svg>
+    );
+  if (url.includes("pinterest"))
+    return (
+      <svg {...props}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M11 8.5c3-1 5 .5 5 3 0 2.5-1.7 4-3.5 4-1 0-1.6-.6-1.6-.6L9.5 21" />
+      </svg>
+    );
+  if (url.includes("wa.me") || url.includes("whatsapp"))
+    return (
+      <svg {...props}>
+        <path d="M4 20l1.3-4A8 8 0 1 1 8.5 19z" />
+        <path d="M9 9.5c.3 2 2.5 4.3 4.6 4.7l1.2-1.2 1.7.8" />
+      </svg>
+    );
+  if (url.includes("x.com") || url.includes("twitter"))
+    return (
+      <svg {...props}>
+        <path d="M5 4l14 16M19 4L5 20" />
+      </svg>
+    );
+  return (
+    <svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+    </svg>
+  );
+}

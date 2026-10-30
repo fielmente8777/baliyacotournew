@@ -95,7 +95,9 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
       >
         {group.options.map((option) => {
           const active = selectedId === option._id;
-          const image = images[designImageKey.option(group.code, option.value)] ?? option.image;
+          const image = option.fromStudio
+            ? option.image
+            : (images[designImageKey.option(group.code, option.value)] ?? option.image);
 
           /* Colours are round swatches with the name underneath. */
           if (isColour) {

@@ -344,3 +344,6 @@ export const {
   useGetRelatedProductsQuery,
   useGetGarmentTypesQuery,
 } = productApi;
+
+/** Loads a product list into the cache ahead of time, e.g. the other tabs of a tab bar. */
+export const usePrefetchProducts = () => productApi.usePrefetch('getProducts');

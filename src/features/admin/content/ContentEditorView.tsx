@@ -23,7 +23,7 @@ const PAGES: Record<ContentPage, { title: string; path: string; description: str
   home: {
     title: 'Home page',
     path: '/',
-    description: 'Every section of the home page, top to bottom.',
+    description: 'Every section of the home page, top to bottom. Switch a section off with its Show switch. Product names, prices and photos come from Shopify; the fabric library from the Design Builder.',
     defaults: homePageData as unknown as Content,
   },
   footer: {
@@ -55,15 +55,18 @@ const toSaved = (page: ContentPage, draft: Content) => (page === 'footer' ? (dra
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Top banner',
-  categories: 'Categories',
-  designProcess: 'How to design your dress',
-  steps: 'Three steps',
-  preMadeDesigns: 'Pre-made designs',
-  bestSellers: 'Bestsellers',
-  behindTheScenes: 'Behind the scenes',
-  foundersMessage: 'Message from the founders',
-  footer: 'Footer',
+  highlights: 'Four promises under the banner',
   silhouettes: 'Shop by silhouette',
+  philosophy: 'Statement',
+  designOnline: 'Designed online (laptop picture)',
+  products: 'Ready to order (product tabs)',
+  collections: 'Collections',
+  fabrics: 'Fabric library',
+  behindTheScenes: 'Behind the scenes',
+  reviews: 'Customer photos and reviews',
+  foundersMessage: 'Note from the founders',
+  newsletter: 'Newsletter sign-up',
+  footer: 'Footer',
   promo: 'Design-your-own block',
 };
 

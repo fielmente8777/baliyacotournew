@@ -22,6 +22,17 @@ const IMAGE_EXT = /\.(png|jpe?g|webp|gif|avif|svg)(\?|$)/i;
 const VIDEO_EXT = /\.(mp4|webm|mov)(\?|$)/i;
 const IMAGE_KEYS = new Set(['image', 'src', 'poster', 'logo']);
 
+/* Links, addresses and Shopify names: typed exactly, so no "Write with AI". */
+const NOT_WORDS = new Set(['link', 'href', 'src', 'video', 'tag', 'productHandle', 'productType']);
+/* Every field inside these lists is part of a link (footer columns, social icons). */
+const LINK_LISTS = new Set(['links', 'socials']);
+const looksLikeAddress = (value: string) =>
+  /^(https?:|\/|#|mailto:|tel:|www\.)/i.test(value) || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value) || /^\+?[\d\s()x-]{7,}$/i.test(value);
+
+/** Words customers read get the AI helper; links and the text of links don't. */
+const isWords = (name: string, value: string, parentKey?: string) =>
+  !NOT_WORDS.has(name) && !LINK_LISTS.has(parentKey ?? '') && !looksLikeAddress(value);
+
 const LABELS: Record<string, string> = {
   cta: 'Button',
   button: 'Button',
@@ -35,6 +46,28 @@ const LABELS: Record<string, string> = {
   types: 'Tags',
   lists: 'Columns',
   links: 'Links',
+  show: 'Show this section',
+  eyebrow: 'Small heading above the title',
+  titleAccent: 'Title: words shown in burgundy',
+  secondaryCta: 'Second button',
+  featured: 'Product card on the photo',
+  productHandle: 'Shopify product handle (the end of its web address)',
+  productType: 'Shopify product type',
+  tag: 'Shopify tag',
+  tabs: 'Tabs',
+  linkLabel: 'Link text',
+  buttonLabel: 'Button text',
+  placeholder: 'Text in the empty email box',
+  successMessage: 'Message after signing up',
+  signature: 'Signed',
+  note: 'Small note under the button',
+  main: 'Large tile',
+  side: 'Side tile',
+  promo: 'Card shown when a tab has fewer than four designs',
+  gallery: 'Customer photos',
+  socials: 'Social media links',
+  copyright: 'Copyright line',
+  credit: 'Credit line',
 };
 
 export const humanize = (key: string) =>
@@ -83,8 +116,6 @@ export function ContentField({
   if (typeof value === 'string') {
     if (isImageField(name, value, parentKey)) return <ImageField label={label} value={value} onChange={onChange} />;
     const long = value.length > 90 || name === 'description';
-    /* Words customers read get the AI helper; links and addresses don't. */
-    const isWords = !['link', 'href', 'src', 'video'].includes(name) && !/^(https?:|\/|mailto:|tel:)/.test(value);
     const field = (
       <TextField
         label={label}
@@ -97,7 +128,7 @@ export function ContentField({
         }
       />
     );
-    if (!isWords) return field;
+    if (!isWords(name, value, parentKey)) return field;
     return (
       <div className="relative">
         {/* Sits on the label row, at the right. */}

@@ -20,7 +20,8 @@ Read this before changing anything. It says where each part lives, how the parts
 | Area | Files |
 |---|---|
 | Pages | `app/(website)/…` storefront · `app/admin/…` admin panel |
-| Home page sections | `app/(website)/Home/Components/*`, default text in `Home/pagedata.tsx` |
+| Home page sections | `app/(website)/Home/Components/*`, default text in `Home/pagedata.tsx` (see *Home page* below) |
+| Newsletter | Form `Home/Components/Newsletter.tsx` → `POST /newsletter`; admin list `features/admin/NewsletterView.tsx` (Admin → Newsletter). Backend `baliye-node/src/{models,services,controllers,routes}/newsletter.ts` |
 | Pre-made Designs listing | `features/catalog/ProductsView.tsx` (hero, silhouettes, sticky filters, grid, promo); default text in `app/(website)/products/pageData.ts` |
 | Product detail | `features/catalog/ProductDetailView.tsx`; gallery, zoom and viewer in `app/(website)/products/[slug]/Components/` |
 | Reviews | `…/[slug]/Components/CustomerReviews.tsx` (+ `ReviewCard`, `StarRating`). Demo reviews show until a product has real ones; turn them off with `NEXT_PUBLIC_DEMO_REVIEWS=false` |
@@ -53,6 +54,18 @@ Pages: **Home page**, **Pre-made Designs page**, **Footer**, **Terms & Condition
 5. **It never refreshes while the customer is busy** (`isCustomerBusy`): on cart, shipping/address, login, account detail pages or the design builder; while typing in any field; or while a dialog is open. It waits and refreshes once they're done.
 
 Products and prices come from Shopify, so they refresh whenever a page mounts or the tab regains focus.
+
+## Home page
+
+Sections, top to bottom: banner (photo in an arch + a live product card), four promises, shop by silhouette, statement, *A perfect fit, designed online* (a laptop showing a picture of the designer), *Ready to order* (product tabs), collections, fabric library, behind the scenes, customer photos and reviews (off until real ones exist), founders' note, newsletter. Every section except the banner has a **Show** switch in Admin → Home page.
+
+- **Live data, admin words.** The admin edits words, pictures and links. Product names, prices and photos come from Shopify; the fabric library's fabrics and prices from the Design Builder, so they never go stale.
+- **Banner card:** the product whose Shopify handle is set under *Product card on the photo*; hidden if that product is gone.
+- **Silhouettes:** each card names a Shopify product type. Its "From" price is the lowest of that type; its picture is the admin's, else the Design Builder garment photo (`garment/<slug>`), else a product photo.
+- **Designed online:** the laptop frame is drawn in code; its screen is the admin's picture (16:10 screenshot; default `public/home/designer-screen.jpg`, the designer on Anarkali Suit).
+- **Ready to order:** each tab is a Shopify tag (`bestseller`, `editors-pick`, `custom`, or any other). A tab with fewer than four designs is filled by the *design it from scratch* card.
+- **Newsletter:** sign-ups are stored in MongoDB (`NewsletterSubscriber`, one per email; signing up twice changes nothing; 10 sign-ups per 10 min per IP). Admin → Newsletter lists, searches, removes and exports a CSV for Shopify Email or Mailchimp. Nothing is emailed from our side.
+- **Photo prompts:** `docs/client-kit/home-and-product-image-prompts.md` (home photos and all 12 products) and `option-image-prompts.md` (the 33 neck, sleeve, length, lower and dupatta option pictures; embroidery to follow).
 
 ## Images
 
@@ -96,6 +109,45 @@ Extract embroidery from garment photos, split it into named pieces (each with po
 **Frontend (Vercel):** `NEXT_PUBLIC_API_URL`, and `BACKEND_ORIGIN` when the API URL is relative. Optional: `NEXT_PUBLIC_DEMO_REVIEWS=false` (hide demo reviews), `NEXT_PUBLIC_ADDRESS_LOOKUP_URL`.
 
 ## Change log (newest first)
+
+- **Admin menu on phones slides in from the left** (`AdminShell.tsx`), like the storefront's, instead of dropping down under the top bar. It sits over a dimmed page and closes with ✕, a tap outside, Escape, or picking a page. The page behind doesn't scroll while it's open. Desktop keeps its fixed sidebar.
+
+- **AI Studio: missing name is pointed out.** Pressing *Extract embroidery*, *Find & name the pieces* or *Open & save* without a name scrolls to the name field, focuses it and turns it red with "Type a name for this embroidery first… Your photos are kept." The red goes as soon as a name is typed. The admin `TextField` gained `error` and `inputRef`.
+
+- **AI Studio: easy to start another embroidery.** A *New embroidery* tile leads the *Saved embroidery* list, and a *Create new embroidery* bar sits under the open one (approved or not), next to the existing button in the page title. Starting new clears the form and scrolls to step 1; the saved one stays as it is.
+
+- **AI Studio clean-up:** deleting a saved embroidery now works even when it's shown in the designer: its Embroidery option is unlinked first (it used to refuse with "unlink it first"). *Extractions not saved yet* only lists the last 7 days, and hides any whose picture no longer loads (older sheets were kept on the server disk, which a redeploy wipes).
+
+- **AI Studio embroidery in the designer:**
+  - **Admin:** AI Studio has a new *Show in the designer* card (`studio/DesignerLinks.tsx`). Each saved embroidery is shown through an Embroidery option: a new one named after it, or an existing one. This uses the existing `PUT /admin/ai/embroidery-options/:optionId/collection`.
+  - **Designer:** once any embroidery is linked, the designer's Embroidery step lists only the linked ones plus *No Embroidery*. Each shows its extracted sheet as the card picture (or its first approved piece if there's no sheet), marked `fromStudio`.
+  - **AI preview:** the preview uses that sheet as the reference, together with every approved piece and where it goes (`collectionLooks` in `embroideryAssets.ts`, used by `design.v2.ts` and `colourRender.ts`; the embroidery rule in `prompts.ts`).
+  - **Missing pictures:** linked options no longer show up there.
+  - **Undo:** unlinking every embroidery brings the old options back.
+
+- **Backend text and vision AI on GPT-6 Astra:** *Write with AI*, embroidery piece labelling and "copy layout from source" now default to `gpt-6-astra` (was gpt-4.1 / 4.1-mini). Tested on the account's key. Override with `OPENAI_TEXT_MODEL`, `OPENAI_VISION_MODEL`, `OPENAI_LAYOUT_MODEL`. Pictures (designer previews, AI Studio) stay on the image model `gpt-image-2.5-sunburst`: Astra doesn't make images.
+
+- **Designer preview: no colour wash while designing.** The browser tint over the whole photo (and the dimming) is gone: the photo stays as it is, the *Designing your outfit…* pill shows at the bottom, and the AI result replaces the photo when ready.
+- **Backend: "Too many requests" in the admin fixed.** The general limit (`RATE_LIMIT_MAX` per 15 min per address) no longer counts requests from a signed-in admin, or the designer's free "is my preview ready?" checks (`GET /designs/render/:key`, `GET /designs/recolour/:key`, every 3 s while generating). Paid starts still have `renderRateLimiter`. In `baliye-node/src/middlewares/ratelimit.ts`.
+
+- **Drag and drop pictures in the admin:** every picture tile (`ImageSlot`) takes a dropped image as well as a click. Design Builder → *Missing pictures* has a drop zone for many at once (`BulkPictureDrop.tsx`): each file goes to the picture its name matches (`neck-round-neck.jpg`, `option-neck-round-neck.jpg`, `Round Neck.jpg`…; names that fit two pictures, like `kurti` for card and preview, are never guessed). Unmatched files get a list to choose from; uploads run one at a time with a status per file.
+
+- **Option image prompts redone** (`option-image-prompts.md`): one prompt, file name and Shopify key for every Neck Type (9), Sleeve Type (8), Length (5), Lower (6) and Dupatta (5) option in the live designer: 33 in all, same mannequin and background so the cards match. Embroidery is left for later; the Indo-Western Gown preview prompt is kept at the end. Back-neck pictures aren't needed (one picture per option card).
+
+- **Ready to order tabs slide:** the white pill slides to the chosen tab and the designs slide in from that side, one after another (`animate-slide-from-right/left` in `globals.css`). The other tabs are prefetched (`usePrefetchProducts`), so a switch shows designs straight away.
+- **Footer social icons:** Instagram and Facebook show by default, linking to instagram.com and facebook.com as placeholders; set the brand's pages in Admin → Footer → *Social media links*.
+
+- **Home page: "Compose your piece" replaced** by *A perfect fit, designed online* (the client's design: words, *Try the designer* button, and a laptop showing a picture of the designer, editable in Admin → Home page). The quick designer's colour tint coloured the whole photo, so it's gone, along with the designer's `?select=` link it needed.
+- **Footer, new layout** (same mint and dark colours): logo, line and social icons, then the link columns side by side, then the bottom bar. New admin fields: *Social media links* (icon picked from the address; empty ones hidden), *Copyright line* and *Credit line*. New defaults have Shop, Company and Contact columns; the saved footer keeps its own columns until changed (or *Reset to original*).
+- **Write with AI off for links:** no AI button on links, Shopify handles, tags and product types, on anything in footer link columns or social links, or on any value that is an address, email or phone number.
+
+- **Home page redesign** (from the *Baliye Home v5* mockup, keeping the site's own text colours, Fira Sans and the mint footer): new sections as described under *Home page*, each editable and switchable in Admin → Home page. Old sections (video banner, categories, design steps, pre-made carousel, bestsellers grid) are replaced; home content had never been saved in the admin, so nothing live was lost. The products-page promo now keeps its three design steps itself (`DesignYourOwnPromo.tsx`). The designer accepts `?select=` to start with options already chosen.
+- **Newsletter:** sign-up form on the home page, `POST /newsletter` (public, rate-limited), and Admin → Newsletter (`GET /admin/newsletter`, `GET /admin/newsletter/export`, `DELETE /admin/newsletter/:id`).
+- **Image prompts:** `option-image-prompts.md` rewritten from the live catalogue: one complete prompt and Shopify key for each of the 40 options still showing a drawing, plus the Indo-Western Gown preview. New `home-and-product-image-prompts.md`: home page photos (with sizes and Freepik searches) and a main prompt plus three follow-ups for each of the 12 products.
+
+- **Option image prompts:** added `docs/client-kit/option-image-prompts.md`, ready-to-paste Gemini / Canva AI prompts for professional option card photos (neck, sleeve, cuff, length, lower, dupatta, embroidery, fabric) to replace the SVG drawings, with the Shopify key to upload each under.
+
+- **Builder AI preview shows every choice:** the preview photo now changes for fabric, embroidery, neck, sleeve, length and every other step (size excepted), not only colour. The builder sends each choice that differs from the photo, with the picture from its option card, to `POST /designs/recolour` (`options: [{ optionId, imageUrl? }]`; `colourOptionId` still works). The backend (`colourRender.ts`, `restyleGarmentPrompt`) asks the AI to edit the real photo using those pictures as references. Results are cached per photo + choices, and colour-only previews keep their old cache. A new preview now waits 1 s after the last click whether credits are on or off, so clicking through swatches makes one generation, not many. The preview photo fills its frame (`object-cover`, 2:3) instead of showing cream side bands.
 
 - **Client kit:** added `create-your-design-requirements.md`, the client message listing everything needed for Create Your Own Design (garments, choices per step, measurements, videos, custom-order policies).
 - **Design Builder bulk import:** a *Bulk import* tab downloads the client sheet (blank or filled with the current catalogue) and imports it after a preview. It creates or updates garments, steps, options, measurement fields and rules, and never deletes. Checked read-only against the live catalogue: re-importing the current catalogue reports no changes (5 garments, 77 options), and the client-kit CSVs preview correctly. The client message now points to `design-builder-sheet.xlsx`. Backend adds the `exceljs` dependency, and `writeEntry` reads Shopify once per import instead of once per row (`withEntryCache`).

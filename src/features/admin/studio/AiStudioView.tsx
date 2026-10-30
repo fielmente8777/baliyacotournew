@@ -38,6 +38,7 @@ import { downloadImage } from '@/lib/downloadImage';
 import { cn } from '@/lib/format';
 import { Badge, Button, Card, NoticeBar, PageTitle, TextField, type Notice } from '../ui';
 import PhotoSlots, { PHOTO_SLOTS, type SlotKey, type SlotPhoto } from './PhotoSlots';
+import DesignerLinks from './DesignerLinks';
 import PieceCard from './PieceCard';
 import PositionMap, { zonesFor, type ZoneId } from './PositionMap';
 import TryOnPanel from './TryOnPanel';
@@ -93,7 +94,7 @@ function StudioGuide({ open }: { open: boolean }) {
     ['Extract', 'One AI image pulls the embroidery off the garment. When it finishes, the pieces are cut out, named and saved automatically under your name, with their images in Shopify Files.'],
     ['Check the pieces', 'Each piece has a name, a position (neckline, shoulder, hem…) and a side. Fix anything wrong, delete fabric or noise, and approve the good ones. Only approved pieces are ever placed.'],
     ['Try it on', 'Upload a plain garment. "Preview placement" (free) pastes every approved piece where it will go. "Generate try-on" blends it in with one AI image.'],
-    ['Testing only, for now', 'AI Studio is not connected to the website yet: nothing here appears in the Design Builder or to customers until that is decided with the client.'],
+    ['Show it to customers', 'Under "Show in the designer", pick how each embroidery appears in the Embroidery step. Once one is shown, customers see only the shown embroidery (plus No Embroidery), each with its picture from here, and the AI preview stitches that embroidery onto their design.'],
   ];
   const faq = [
     ['Is it saved?', 'Yes. Once the pieces are found, the embroidery appears under "Saved embroidery" at the top. The badge on each image says whether it is in Shopify Files.'],
@@ -142,6 +143,15 @@ export default function AiStudioView() {
 
   /* ---- Step 1 state ---- */
   const [collectionName, setCollectionName] = useState('');
+  /* Set when Extract / Find is pressed with no name: the field turns red. */
+  const [nameMissing, setNameMissing] = useState(false);
+  const nameInput = useRef<HTMLInputElement>(null);
+  /** The name is needed before anything is saved: point at the field rather than an alert up top. */
+  const askForName = () => {
+    setNameMissing(true);
+    nameInput.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    nameInput.current?.focus({ preventScroll: true });
+  };
   const [source, setSource] = useState<Source>('photos');
   const [photos, setPhotos] = useState<Partial<Record<SlotKey, SlotPhoto>>>({});
   const [sheet, setSheet] = useState<{ preview: string; base64: string } | null>(null);
@@ -159,7 +169,10 @@ export default function AiStudioView() {
 
   const { data: collections = [] } = useGetEmbroideryCollectionsQuery();
   const { data: extractions = [] } = useGetExtractionsQuery();
-  const unsaved = extractions.filter((x) => !x.savedAs);
+  /* Extractions whose picture no longer loads (kept on a server disk that was
+     wiped) are hidden rather than shown as blank tiles. */
+  const [brokenSheets, setBrokenSheets] = useState<Set<string>>(new Set());
+  const unsaved = extractions.filter((x) => !x.savedAs && !brokenSheets.has(x._id));
   const { data: pieces = [], isFetching: loadingPieces } = useGetEmbroideryPiecesQuery(
     { collectionId: collectionId ?? '' },
     { skip: !collectionId }
@@ -204,7 +217,7 @@ export default function AiStudioView() {
     setNotice(null);
     /* The name is what the pieces are saved under — needed up front, since
        they're saved automatically as soon as the extraction finishes. */
-    if (!collectionName.trim()) return fail('Give this embroidery a name first, e.g. "Zari Work".');
+    if (!collectionName.trim()) return askForName();
     const views = PHOTO_SLOTS.filter((s) => photos[s.key]).map((s) => ({ image: photos[s.key]!.base64, label: s.label }));
     const total = views.reduce((sum, v) => sum + base64Bytes(v.image), 0);
     if (total > MAX_UPLOAD_BYTES) {
@@ -221,7 +234,7 @@ export default function AiStudioView() {
   const findPieces = async () => {
     setNotice(null);
     const name = collectionName.trim();
-    if (!name) return fail('Give this embroidery a name first, e.g. "Zari Work".');
+    if (!name) return askForName();
     try {
       const result = await build(
         source === 'sheet'
@@ -275,10 +288,12 @@ export default function AiStudioView() {
   const startNew = () => {
     setCollectionId(null);
     setCollectionName('');
+    setNameMissing(false);
     setPhotos({});
     setSheet(null);
     setRunId(null);
     setNotice(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openCollection = (id: string, name: string) => {
@@ -321,6 +336,19 @@ export default function AiStudioView() {
       {collections.length > 0 && (
         <Card className="mb-5" title={<span className="flex items-center gap-2"><Layers className="size-4" aria-hidden /> Saved embroidery</span>}>
           <div className="scrollbar-brand -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+            <button
+              type="button"
+              onClick={startNew}
+              className={cn(
+                'flex w-44 shrink-0 items-center gap-3 rounded-lg border border-dashed p-2 text-left transition',
+                !collectionId ? 'border-secondary bg-secondary/5 text-secondary' : 'border-[#cfc6b8] text-[#666] hover:border-secondary hover:text-secondary'
+              )}
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-[#f1ece4]">
+                <Plus className="size-5" aria-hidden />
+              </span>
+              <span className="text-sm font-medium">New embroidery</span>
+            </button>
             {collections.map((c) => (
               <button
                 key={c._id}
@@ -345,6 +373,9 @@ export default function AiStudioView() {
         </Card>
       )}
 
+      {/* ---- Which embroidery customers see --------------------------- */}
+      {collections.length > 0 && <DesignerLinks collections={collections} onError={fail} />}
+
       {/* ---- Paid extractions whose pieces were never saved ----------- */}
       {!collectionId && unsaved.length > 0 && (
         <Card
@@ -359,7 +390,12 @@ export default function AiStudioView() {
             {unsaved.map((x) => (
               <div key={x._id} className="flex w-40 shrink-0 flex-col gap-2 rounded-lg border border-[#e6e0d6] p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element -- extracted sheet */}
-                <img src={x.sheetUrl} alt="" className="aspect-3/4 w-full rounded-md bg-white object-contain" />
+                <img
+                  src={x.sheetUrl}
+                  alt=""
+                  onError={() => setBrokenSheets((ids) => new Set(ids).add(x._id))}
+                  className="aspect-3/4 w-full rounded-md bg-white object-contain"
+                />
                 <span className="text-[11px] text-[#888]">
                   {new Date(x.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
                 </span>
@@ -369,7 +405,7 @@ export default function AiStudioView() {
                   onClick={() => {
                     setSource('photos');
                     setRunId(x.runId);
-                    if (!collectionName.trim()) fail('Type a name for this embroidery in step 1, then press "Find & name the pieces".');
+                    if (!collectionName.trim()) askForName();
                   }}
                 >
                   Open &amp; save
@@ -388,7 +424,12 @@ export default function AiStudioView() {
               <TextField
                 label="Name of this embroidery"
                 value={collectionName}
-                onChange={setCollectionName}
+                onChange={(value) => {
+                  setCollectionName(value);
+                  if (value.trim()) setNameMissing(false);
+                }}
+                inputRef={nameInput}
+                error={nameMissing ? 'Type a name for this embroidery first, e.g. "Zari Work". Your photos are kept.' : null}
                 placeholder="e.g. Zari Work, Mirror Work Anarkali"
                 hint="Shown in the Design Builder when you link it to an Embroidery option."
               />
@@ -594,7 +635,7 @@ export default function AiStudioView() {
                 aria-label="Delete this embroidery"
                 className="text-red-700"
                 onClick={() => {
-                  if (!window.confirm('Delete this embroidery and all its pieces?')) return;
+                  if (!window.confirm('Delete this embroidery and all its pieces? If it is shown in the designer, it is taken off there too.')) return;
                   deleteCollection(collectionId)
                     .unwrap()
                     .then(startNew)
@@ -682,9 +723,22 @@ export default function AiStudioView() {
             <TryOnPanel approved={approved} sourcePhoto={photos.front?.base64 ?? null} onError={fail} />
           )}
           <p className="mt-5 border-t border-[#eee8de] pt-3 text-xs text-[#888]">
-            Testing only: this embroidery is not shown on the website.
+            This try-on is a test for you only. Customers see this embroidery once it is chosen under &ldquo;Show in the designer&rdquo;.
           </p>
         </Card>
+      )}
+
+      {/* ---- Next one ------------------------------------------------- */}
+      {collectionId && (
+        <div className="mt-5 flex flex-col items-start gap-3 rounded-lg border border-dashed border-[#d8cdbd] bg-[#fcfaf7] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[#555]">
+            <b className="text-dark">&ldquo;{active?.collectionName ?? collectionName}&rdquo; is saved.</b> Its pieces stay as they are,
+            approved or not, and you can come back to it from &ldquo;Saved embroidery&rdquo;.
+          </p>
+          <Button onClick={startNew} className="shrink-0">
+            <Plus className="size-4" aria-hidden /> Create new embroidery
+          </Button>
+        </div>
       )}
     </div>
   );

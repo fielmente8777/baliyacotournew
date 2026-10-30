@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Coins, FileText, Home, LayoutGrid, LogOut, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { Coins, FileText, Home, LayoutGrid, LogOut, Mail, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react';
 
 import { useAppDispatch } from '@/store/hooks';
 import { adminApi, useGetAdminMeQuery } from '@/store/api/adminApi';
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/admin/content/products', label: 'Pre-made Designs page', icon: ShoppingBag },
   { href: '/admin/content/footer', label: 'Footer', icon: PanelBottom },
   { href: '/admin/content/terms', label: 'Terms & Conditions', icon: FileText },
+  { href: '/admin/newsletter', label: 'Newsletter', icon: Mail },
   /* Always here: the on/off switch for credits lives on this page. */
   { href: '/admin/credits', label: 'Design credits', icon: Coins },
 ];
@@ -52,6 +53,24 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   }, [hasSession, isLogin, pathname, router, dispatch]);
 
   const { data: me } = useGetAdminMeQuery(undefined, { skip: !hasSession || isLogin });
+
+  /* Phone drawer: Escape closes it, and the page behind doesn't scroll. */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    /* Widened to the desktop layout: the drawer is gone, so unlock the page. */
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const onWide = () => desktop.matches && setMenuOpen(false);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    desktop.addEventListener('change', onWide);
+    return () => {
+      document.body.style.overflow = overflow;
+      window.removeEventListener('keydown', onKey);
+      desktop.removeEventListener('change', onWide);
+    };
+  }, [menuOpen]);
 
   if (isLogin) return <>{children}</>;
   if (!hasSession) {
@@ -112,11 +131,55 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         <Link href="/admin" className="font-medium text-white">
           Baliye <span className="text-[#F9C365]">Admin</span>
         </Link>
-        <button type="button" onClick={() => setMenuOpen((o) => !o)} className="text-white" aria-label="Menu">
-          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="-mr-2 flex size-10 items-center justify-center text-white"
+          aria-label="Open menu"
+          aria-expanded={menuOpen}
+          aria-controls="admin-drawer"
+        >
+          <Menu className="size-5" />
         </button>
       </header>
-      {menuOpen && <div className="flex flex-col gap-4 bg-dark p-4 lg:hidden">{nav}{footer}</div>}
+
+      {/* Mobile menu: slides in from the left over a dimmed page, like the
+          storefront's. Always rendered so it can animate both ways. */}
+      <div
+        aria-hidden
+        onClick={() => setMenuOpen(false)}
+        className={cn(
+          'fixed inset-0 z-40 bg-black/45 transition-opacity duration-300 lg:hidden',
+          menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+      />
+      <aside
+        id="admin-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Admin menu"
+        inert={!menuOpen}
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto bg-dark p-4 shadow-2xl transition-transform duration-300 ease-out lg:hidden',
+          menuOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <Link href="/admin" onClick={() => setMenuOpen(false)} className="px-3 pt-1 text-lg font-medium text-white">
+            Baliye <span className="text-[#F9C365]">Admin</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            className="flex size-10 items-center justify-center rounded-md text-white hover:bg-white/10"
+            aria-label="Close menu"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+        {nav}
+        {footer}
+      </aside>
 
       <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
     </div>

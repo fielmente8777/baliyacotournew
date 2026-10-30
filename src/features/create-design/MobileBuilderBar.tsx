@@ -51,7 +51,7 @@ export default function MobileBuilderBar({
             className="relative h-12 w-10 shrink-0 overflow-hidden rounded-md bg-[#F7F3ED] ring-1 ring-[#EFE8DE]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- tiny thumbnail of an image already loaded above */}
-            <img src={previewUrl} alt="" className="h-full w-full object-contain" />
+            <img src={previewUrl} alt="" className="h-full w-full object-cover" />
             {isGenerating && (
               <span className="absolute inset-0 flex items-center justify-center bg-white/60">
                 <Loader2 size={14} className="animate-spin text-secondary" aria-hidden />

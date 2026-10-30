@@ -18,6 +18,8 @@ export interface DesignOption {
   label: string;
   value: string;
   image?: string;
+  /** Embroidery made in AI Studio: `image` is its extracted picture and wins over the Design Builder's. */
+  fromStudio?: boolean;
   hex?: string;
   /** Minor units, added to the base price when chosen. */
   priceModifier: number;

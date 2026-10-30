@@ -14,6 +14,13 @@ import type { GarmentType } from '@/@types/product';
 import { fetchDesignImages, type DesignImageMap } from '@/lib/designImages';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
+/** The photo plus every chosen option that should show in it. */
+export interface RecolourBody {
+  imageUrl: string;
+  /** imageUrl: the option's own picture, used by the AI as a reference. */
+  options: { optionId: string; imageUrl?: string }[];
+}
+
 export interface RecolourResult {
   key: string;
   status: 'generating' | 'ready' | 'failed';
@@ -62,10 +69,11 @@ const designApi = baseApi.injectEndpoints({
     }),
 
     /**
-     * The preview photo re-dyed to a colour option by AI. Cached server-side
-     * per photo + colour; while `generating`, poll getRecolour with the key.
+     * The preview photo edited by AI to show the chosen options (colour,
+     * fabric, embroidery, sleeve…). Cached server-side per photo + choices;
+     * while `generating`, poll getRecolour with the key.
      */
-    recolourPhoto: builder.mutation<RecolourResult, { imageUrl: string; colourOptionId: string }>({
+    recolourPhoto: builder.mutation<RecolourResult, RecolourBody>({
       query: (body) => ({ url: '/designs/recolour', method: 'POST', body }),
       transformResponse: (res: ApiEnvelope<RecolourResult>) => unwrap(res),
       /* A new generation may have spent tokens. A 401/402 refusal can mean
@@ -75,7 +83,7 @@ const designApi = baseApi.injectEndpoints({
     }),
 
     /** Free: the cached recolour for this photo + colour, or null. Starts nothing. */
-    lookupRecolour: builder.mutation<RecolourResult | null, { imageUrl: string; colourOptionId: string }>({
+    lookupRecolour: builder.mutation<RecolourResult | null, RecolourBody>({
       query: (body) => ({ url: '/designs/recolour/lookup', method: 'POST', body }),
       transformResponse: (res: ApiEnvelope<RecolourResult | null>) => unwrap(res),
     }),

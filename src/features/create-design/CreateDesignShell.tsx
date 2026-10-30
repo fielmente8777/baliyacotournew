@@ -387,10 +387,22 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const chosenColourId = colourGroup ? selections[colourGroup._id] : undefined;
   const chosenHex = colourGroup?.options.find((o) => o._id === chosenColourId)?.hex;
 
-  /* The product photo already shows its preset colour — only re-dye for a
-     different one. */
-  const presetColourId = config?.presetSelections.find((p) => p.groupId === colourGroup?._id)?.optionId;
-  const recolourTo = chosenColourId && chosenColourId !== presetColourId ? chosenColourId : undefined;
+  /* The product photo already shows its presets — only ask the AI for
+     choices that differ from them. Size never shows in a photo. */
+  const previewOptions = useMemo(() => {
+    if (!config) return [];
+    const presets = new Map(config.presetSelections.map((p) => [p.groupId, p.optionId]));
+    return groups.flatMap((group) => {
+      if (!group.isVisible || group.code === 'size' || group.inputType === 'size_select') return [];
+      const chosen = group.options.find((o) => o._id === selections[group._id]);
+      if (!chosen || presets.get(group._id) === chosen._id) return [];
+      /* The option's picture, as shown on its card — the AI's reference. */
+      const image = chosen.fromStudio
+        ? chosen.image
+        : (designImages[designImageKey.option(group.code, chosen.value)] ?? chosen.image);
+      return [{ optionId: chosen._id, ...(image?.startsWith('https://') && { imageUrl: image }) }];
+    });
+  }, [config, groups, selections, designImages]);
 
   /* The admin's switch. Off: AI previews are free and no credit UI shows. */
   const creditsEnabled = useCreditsEnabled();
@@ -406,7 +418,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
       : undefined;
   const recoloured = useRecolouredPreview(
     previewImage && !previewFailed ? previewImage : undefined,
-    recolourTo,
+    previewOptions,
     { credits: creditsEnabled, canSpend }
   );
   /* Back to this exact design after signing in. */
@@ -491,7 +503,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 </div>
 
                 <div className="flex flex-1 flex-col items-center justify-center">
-                  <div className="relative aspect-3/4 w-full max-w-65 overflow-hidden sm:max-w-80 lg:max-w-95 rounded-xl bg-linear-to-b from-[#F7F3ED] to-[#EFE8DE] ring-1 ring-[#EFE8DE]">
+                  <div className="relative aspect-2/3 w-full max-w-65 overflow-hidden sm:max-w-80 lg:max-w-95 rounded-xl bg-linear-to-b from-[#F7F3ED] to-[#EFE8DE] ring-1 ring-[#EFE8DE]">
                     {previewImage && !previewFailed ? (
                       <>
                         <Image
@@ -500,26 +512,16 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                           alt={config.product?.name ?? config.garmentType.name}
                           fill
                           sizes="(max-width: 768px) 80vw, 380px"
-                          className={cn(
-                            'animate-fade-in object-contain transition-opacity',
-                            recoloured.isGenerating && 'opacity-60'
-                          )}
+                          /* While a new design is made, the last photo stays as
+                             it is (no tint, no dimming): only the pill at the
+                             bottom says it's working, and the result replaces
+                             the photo when it's ready. */
+                          className="animate-fade-in object-cover"
                           priority
                           onError={() => {
                             if (!recoloured.url) setPreviewFailed(true);
                           }}
                         />
-                        {/* Instant feedback for a new colour: the photo tinted
-                            in the browser (mix-blend "color" keeps the light and
-                            shade, takes the hue). The exact AI recolour takes
-                            30–90 s and replaces this when it's ready. */}
-                        {recolourTo && !recoloured.url && chosenHex && (
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 mix-blend-color transition-colors duration-300"
-                            style={{ backgroundColor: chosenHex }}
-                          />
-                        )}
                         <RecolourOverlay
                           recoloured={recoloured}
                           tokensEnabled={Boolean(creditsEnabled)}

@@ -33,7 +33,7 @@ export interface MissingGroup {
   items: MissingImage[];
 }
 
-/** Active garments and options the builder will show without a picture. */
+/** Active garments and options the builder will show without a picture. Embroidery linked in AI Studio uses that picture. */
 export function findMissingImages(catalog: AdminCatalog): MissingImage[] {
   return groupMissingImages(catalog).flatMap((g) => g.items);
 }
@@ -66,7 +66,7 @@ export function groupMissingImages(catalog: AdminCatalog): MissingGroup[] {
   for (const group of [...catalog.groups].sort(byPosition)) {
     if (!groupUsesImages(group)) continue;
     const items = catalog.options
-      .filter((o) => o.groupId === group._id && o.isActive && !has(optionKey(group, o)))
+      .filter((o) => o.groupId === group._id && o.isActive && !o.assetCollectionId && !has(optionKey(group, o)))
       .sort(byPosition)
       .map((o) => item(optionKey(group, o), group.label, o.label));
     groups.push({ id: `step-${group._id}`, title: group.label, hint: `The ${group.label} choices customers pick from.`, items });

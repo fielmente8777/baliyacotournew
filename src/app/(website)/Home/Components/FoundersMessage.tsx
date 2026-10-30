@@ -1,28 +1,29 @@
-import { SectionWithContainer } from "@/components/sectionComponants";
-import { SectionHeading } from "@/components/typography";
 import Image from "next/image";
+import type { HomePageContent } from "../pagedata";
+import { Eyebrow, wrap } from "./ui";
 
-interface FoundersMessageProps {
-  title: string;
-  description: string;
-  image: string;
-}
-const FoundersMessage: React.FC<FoundersMessageProps> = ({
-  title,
-  description,
-  image,
-}) => {
+/** The founders' photo in an arch beside their note. */
+export default function FoundersMessage({ eyebrow, quote, description, signature, image }: HomePageContent["foundersMessage"]) {
   return (
-    <SectionWithContainer sectionClassName="" containerClassName="md:space-y-14 space-y-10">
-      <div className="text-center space-y-4">
-        <SectionHeading title={title} />
-        <p className="text-light mx-auto max-w-3xl text-base md:text-lg leading-relaxed">{description}</p>
+    <section id="founders" aria-label="A note from the founders" className={`${wrap} scroll-mt-20 py-16 md:py-24`}>
+      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-18">
+        <div className="flex justify-center p-3.5">
+          <div className="relative aspect-4/5 w-full max-w-72 overflow-hidden rounded-t-full rounded-b-sm bg-[#E6DCCB] outline outline-[#B8873B] outline-offset-[10px] sm:max-w-sm md:outline-offset-[12px] lg:max-w-100">
+            {image && (
+              <Image src={image} alt="The founders of Baliye Couture" fill sizes="(max-width: 1024px) 80vw, 400px" className="object-cover object-[22%_center]" />
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-5">
+          {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+          <span aria-hidden className="h-8 text-[80px] leading-[0.75] text-[#B8873B]">
+            &ldquo;
+          </span>
+          <p className="text-[22px] font-medium leading-snug text-dark md:text-[30px]">{quote}</p>
+          {description && <p className="text-base leading-relaxed text-light">{description}</p>}
+          {signature && <p className="pt-1 text-lg font-medium text-secondary">{signature}</p>}
+        </div>
       </div>
-      <div className="w-full aspect-4/3.5 md:aspect-16/6.5 relative overflow-hidden rounded-xl">
-        <Image src={image} alt="The founders of Baliye Couture" fill sizes="(max-width: 1280px) 100vw, 1140px" className="object-cover" />
-      </div>
-    </SectionWithContainer>
+    </section>
   );
-};
-
-export default FoundersMessage;
+}

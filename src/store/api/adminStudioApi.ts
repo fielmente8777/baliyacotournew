@@ -101,7 +101,8 @@ const adminStudioApi = adminApi.injectEndpoints({
 
     deleteEmbroideryCollection: builder.mutation<unknown, string>({
       query: (collectionId) => ({ url: `/admin/ai/assets/collections/${collectionId}`, method: 'DELETE' }),
-      invalidatesTags: ['Embroidery'],
+      /* Catalog too: an option showing it in the designer is unlinked. */
+      invalidatesTags: ['Embroidery', 'Catalog'],
     }),
 
     getEmbroideryPieces: builder.query<EmbroideryAsset[], { collectionId: string; approvedOnly?: boolean }>({

@@ -5,7 +5,7 @@
  * this is a work tool, not the storefront.
  */
 
-import { useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 import { ImageOff, Loader2, Upload } from 'lucide-react';
 import { cn } from '@/lib/format';
 
@@ -83,6 +83,8 @@ export function TextField({
   type = 'text',
   placeholder,
   className,
+  error,
+  inputRef,
 }: {
   label: string;
   value: string;
@@ -93,9 +95,17 @@ export function TextField({
   type?: 'text' | 'number' | 'email' | 'password' | 'url';
   placeholder?: string;
   className?: string;
+  /** Shown in red under the field, with a red border, in place of the hint. */
+  error?: string | null;
+  /** Single-line fields only: lets the form focus it. */
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   return (
-    <Field label={label} hint={hint} className={className}>
+    <Field
+      label={label}
+      hint={error ? <span className="font-medium text-red-700">{error}</span> : hint}
+      className={className}
+    >
       {(id) =>
         multiline ? (
           <textarea
@@ -111,9 +121,11 @@ export function TextField({
             id={id}
             type={type}
             value={value}
+            ref={inputRef}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}
-            className={inputClass}
+            aria-invalid={Boolean(error) || undefined}
+            className={cn(inputClass, error && 'border-red-500 bg-red-50/40 ring-2 ring-red-500/20 focus:border-red-500 focus:ring-red-500/20')}
           />
         )
       }
@@ -256,11 +268,26 @@ export function NoticeBar({ notice, onClose }: { notice: Notice; onClose?: () =>
 /* ---- Image upload ---- */
 
 const MAX_MB = 5;
-const ACCEPT = 'image/jpeg,image/png,image/webp';
+export const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp';
+const ACCEPT = IMAGE_ACCEPT;
+
+/** Why a file can't be uploaded as a picture, or null when it's fine. */
+export function imageFileProblem(file: File) {
+  if (!ACCEPT.split(',').includes(file.type)) return 'Use a JPG, PNG or WEBP image';
+  if (file.size > MAX_MB * 1024 * 1024) return `Images must be under ${MAX_MB} MB`;
+  return null;
+}
+
+/** Error text from a failed upload: RTK Query rejects with { data: { message } }, other code with an Error. */
+export function uploadErrorMessage(err: unknown) {
+  const e = err as { data?: { message?: string }; message?: string };
+  return e?.data?.message || e?.message || 'Upload failed';
+}
 
 /**
  * Shows the current picture (or "No image") with an upload / replace
- * button. `onUpload` does the work — usually an upload to Shopify.
+ * button. A picture can also be dragged onto it. `onUpload` does the work —
+ * usually an upload to Shopify.
  */
 export function ImageSlot({
   url,
@@ -278,20 +305,19 @@ export function ImageSlot({
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
 
   const pick = async (file?: File) => {
     if (!file) return;
     setError(null);
-    if (!ACCEPT.split(',').includes(file.type)) return setError('Use a JPG, PNG or WEBP image');
-    if (file.size > MAX_MB * 1024 * 1024) return setError(`Images must be under ${MAX_MB} MB`);
+    const problem = imageFileProblem(file);
+    if (problem) return setError(problem);
 
     setBusy(true);
     try {
       await onUpload(file);
     } catch (err) {
-      /* RTK Query rejects with { data: { message } }, other code with an Error. */
-      const e = err as { data?: { message?: string }; message?: string };
-      setError(e?.data?.message || e?.message || 'Upload failed');
+      setError(uploadErrorMessage(err));
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
@@ -304,10 +330,26 @@ export function ImageSlot({
       <button
         type="button"
         onClick={() => input.current?.click()}
+        onDragOver={(e) => {
+          if (busy || !e.dataTransfer.types.includes('Files')) return;
+          e.preventDefault();
+          /* Keeps the drop from reaching a bulk drop zone around the tile. */
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'copy';
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          if (busy || !e.dataTransfer.types.includes('Files')) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setOver(false);
+          pick(e.dataTransfer.files[0]);
+        }}
         disabled={busy}
         className={cn(
           'group relative w-full overflow-hidden rounded-md border border-dashed bg-[#faf8f4] transition',
-          url ? 'border-[#e6e0d6]' : 'border-amber-300',
+          over ? 'border-secondary ring-2 ring-secondary/25' : url ? 'border-[#e6e0d6]' : 'border-amber-300',
           aspect
         )}
         aria-label={url ? `Replace ${label ?? 'image'}` : `Upload ${label ?? 'image'}`}
@@ -324,11 +366,11 @@ export function ImageSlot({
         <span
           className={cn(
             'absolute inset-0 flex items-center justify-center gap-1.5 bg-black/55 text-xs font-medium text-white transition',
-            busy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
+            busy || over ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
           )}
         >
           {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Upload className="size-4" aria-hidden />}
-          {busy ? 'Uploading…' : url ? 'Replace' : 'Upload'}
+          {busy ? 'Uploading…' : over ? 'Drop to upload' : url ? 'Replace' : 'Upload'}
         </span>
       </button>
       <input ref={input} type="file" accept={ACCEPT} className="hidden" onChange={(e) => pick(e.target.files?.[0])} />

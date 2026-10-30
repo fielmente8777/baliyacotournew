@@ -112,10 +112,14 @@ const imageForm = (file: File, key?: string) => {
 /** Site switches the admin edits (GET /settings, PUT /admin/settings). */
 export type AppSettingsAdmin = { creditsEnabled: boolean; measureVideoUrl: string };
 
+/** One newsletter sign-up from the website form. */
+export type NewsletterSubscriber = { _id: string; email: string; source: string; createdAt: string };
+export type NewsletterPage = { items: NewsletterSubscriber[]; total: number; totalPages: number };
+
 export const adminApi = createApi({
   reducerPath: 'adminApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit', 'Embroidery'],
+  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit', 'Embroidery', 'Newsletter'],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AuthTokens, { email: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -346,6 +350,32 @@ export const adminApi = createApi({
       transformResponse: unwrap<{ userId: string; balance: number }>,
       invalidatesTags: ['Tokens'],
     }),
+
+    /* ---- Newsletter ---- */
+
+    getNewsletterSubscribers: builder.query<NewsletterPage, { search?: string; page?: number }>({
+      query: ({ search, page = 1 }) => ({ url: '/admin/newsletter', params: { search: search || undefined, page, limit: 50 } }),
+      transformResponse: (res: ApiEnvelope<NewsletterSubscriber[]>) => ({
+        items: res.data,
+        total: res.meta?.total ?? res.data.length,
+        totalPages: res.meta?.totalPages ?? 1,
+      }),
+      providesTags: ['Newsletter'],
+    }),
+
+    /** An object URL for the CSV, ready for a download link. Revoke it after use. */
+    exportNewsletterSubscribers: builder.mutation<string, void>({
+      query: () => ({
+        url: '/admin/newsletter/export',
+        responseHandler: async (response) =>
+          response.ok ? URL.createObjectURL(await response.blob()) : response.json(),
+      }),
+    }),
+
+    removeNewsletterSubscriber: builder.mutation<void, string>({
+      query: (id) => ({ url: `/admin/newsletter/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Newsletter'],
+    }),
   }),
 });
 
@@ -380,4 +410,7 @@ export const {
   useRecordAiCreditMutation,
   useGetTokenLedgerQuery,
   useGrantTokensMutation,
+  useGetNewsletterSubscribersQuery,
+  useExportNewsletterSubscribersMutation,
+  useRemoveNewsletterSubscriberMutation,
 } = adminApi;

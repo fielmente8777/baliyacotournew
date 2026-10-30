@@ -13,6 +13,7 @@ import {
 import { cn, formatINR } from '@/lib/format';
 import { Badge, Button, Card, ImageSlot, NoticeBar, PageTitle, PriceField, TextField, type Notice } from '../ui';
 import BulkImportPanel from './BulkImportPanel';
+import BulkPictureDrop from './BulkPictureDrop';
 import GarmentEditor from './GarmentEditor';
 import OptionGroupsPanel from './OptionGroupsPanel';
 import { byPosition, garmentKey, groupMissingImages, type MissingGroup } from './catalogKeys';
@@ -230,9 +231,11 @@ function MissingPictures({ groups }: { groups: MissingGroup[] }) {
     <div className="flex flex-col gap-5">
       <Card title={`${total} pictures missing in ${groups.length} ${groups.length === 1 ? 'part' : 'parts'}`}>
         <p className="mb-3 text-sm text-[#777]">
-          Customers see a blank tile for these. Pick a part to jump to it, then click a tile to upload.
+          Customers see a blank tile for these. Drop many pictures below at once, or drag one onto its tile (or click the
+          tile) further down.
         </p>
-        <nav aria-label="Parts with missing pictures" className="flex flex-wrap gap-2">
+        <BulkPictureDrop items={groups.flatMap((g) => g.items)} />
+        <nav aria-label="Parts with missing pictures" className="mt-4 flex flex-wrap gap-2">
           {groups.map((g) => (
             <a
               key={g.id}

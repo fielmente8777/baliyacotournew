@@ -1,12 +1,18 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
-import { homePageData } from '@/app/(website)/Home/pagedata';
 import { cn } from '@/lib/format';
 
+/** The three design steps beside the call to action. */
+const STEPS = [
+  { step: '01', title: 'Choose your fabric and colour', description: 'New fabrics every season. Choose from over 10 fabrics and colours.' },
+  { step: '02', title: 'Choose your embroidery', description: 'Try every embroidery style on your design before you decide.' },
+  { step: '03', title: 'Choose your details', description: 'Neckline, sleeves and fit: make your clothing exactly the way you want it.' },
+];
+
 /**
- * The burgundy "design it yourself" block, with the three design steps from
- * the homepage copy. Closes the listing and the product page.
+ * The burgundy "design it yourself" block, with the three design steps.
+ * Closes the listing and the product page.
  *
  * `href` defaults to a blank design; the product page passes its own
  * builder link so "Start designing" starts from that product.
@@ -47,7 +53,7 @@ export default function DesignYourOwnPromo({
         </div>
 
         <ol className="flex flex-col">
-          {homePageData.designProcess.steps.map((step, i, steps) => (
+          {STEPS.map((step, i, steps) => (
             <li key={step.step} className={cn('flex gap-4 py-4 md:gap-6 md:py-5', i < steps.length - 1 && 'border-b border-white/20')}>
               <span className="min-w-8 text-xl font-semibold text-[#F3D9A4] md:min-w-9 md:text-2xl">{step.step}</span>
               <div>
