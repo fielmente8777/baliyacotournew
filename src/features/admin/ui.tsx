@@ -358,7 +358,13 @@ export function ImageSlot({
           // eslint-disable-next-line @next/next/no-img-element -- arbitrary Shopify CDN urls, thumbnails only
           <img src={url} alt="" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-amber-700">
+          /* Fades out under the hover label, so "Upload" doesn't sit on top of "No image". */
+          <span
+            className={cn(
+              'absolute inset-0 flex flex-col items-center justify-center gap-1 text-amber-700 transition',
+              busy || over ? 'opacity-0' : 'group-hover:opacity-0 group-focus-visible:opacity-0'
+            )}
+          >
             <ImageOff className="size-5" aria-hidden />
             <span className="text-[11px] font-medium">No image</span>
           </span>

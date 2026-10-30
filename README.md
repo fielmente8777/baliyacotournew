@@ -65,7 +65,7 @@ Sections, top to bottom: banner (photo in an arch + a live product card), four p
 - **Designed online:** the laptop frame is drawn in code; its screen is the admin's picture (16:10 screenshot; default `public/home/designer-screen.jpg`, the designer on Anarkali Suit).
 - **Ready to order:** each tab is a Shopify tag (`bestseller`, `editors-pick`, `custom`, or any other). A tab with fewer than four designs is filled by the *design it from scratch* card.
 - **Newsletter:** sign-ups are stored in MongoDB (`NewsletterSubscriber`, one per email; signing up twice changes nothing; 10 sign-ups per 10 min per IP). Admin → Newsletter lists, searches, removes and exports a CSV for Shopify Email or Mailchimp. Nothing is emailed from our side.
-- **Photo prompts:** `docs/client-kit/home-and-product-image-prompts.md` (home photos and all 12 products) and `option-image-prompts.md` (the 33 neck, sleeve, length, lower and dupatta option pictures; embroidery to follow).
+- **Photo prompts:** `docs/client-kit/home-and-product-image-prompts.md` (home photos and all 12 products) and `option-image-prompts.md` (the 33 neck, sleeve, length, lower and dupatta option pictures; embroidery to follow), and `blank-shoot-prompts.md` (plain, no-embroidery shoots of the four garments for AI Studio try-on).
 
 ## Images
 
@@ -109,6 +109,12 @@ Extract embroidery from garment photos, split it into named pieces (each with po
 **Frontend (Vercel):** `NEXT_PUBLIC_API_URL`, and `BACKEND_ORIGIN` when the API URL is relative. Optional: `NEXT_PUBLIC_DEMO_REVIEWS=false` (hide demo reviews), `NEXT_PUBLIC_ADDRESS_LOOKUP_URL`.
 
 ## Change log (newest first)
+
+- **Embroidery accuracy, Design Builder options, blank shoots:**
+  - **Designer AI preview copies AI Studio embroidery** instead of re-inventing it. The old prompt told the AI to use every option picture "only as a reference for the look", the embroidery sheet included, so motifs came out different. Now the sheet has its own rule (`sheetEmbroideryRule` in `baliye-node/src/config/prompts.ts`): what each area of the sheet means, clear the old embroidery first, copy every piece in its listed place, borders follow their edge, add nothing. The sheet is always image 2 and never dropped for the reference limit (`colourRender.ts`), and each piece is listed numbered, with its work type, description and full region wording (`collectionLooks`). `RESTYLE_VERSION` is `r2`, so old previews are remade.
+  - **AI Studio try-on blend** (`blendCompositePrompt`): stricter about not redrawing, simplifying or re-colouring motifs and about bending borders over folds.
+  - **Design Builder → step options:** each row has **Delete** (with a confirm) instead of *Hide*; visibility is still in *Edit* → *Visible to customers*. Options linked in AI Studio show the embroidery's picture and an *AI Studio* badge instead of an empty upload tile (`GET /admin/catalog` now returns `studioImages`, option id → picture). The *No image* text fades under the *Upload* label on hover instead of overlapping it.
+  - **New `docs/client-kit/blank-shoot-prompts.md`:** prompts for plain shoots of Patiala Suit, Kurti, Anarkali Suit and Sharara Set, by editing the current photo (best: same framing) or from scratch, plus the rules that make a try-on match.
 
 - **Admin menu on phones slides in from the left** (`AdminShell.tsx`), like the storefront's, instead of dropping down under the top bar. It sits over a dimmed page and closes with ✕, a tap outside, Escape, or picking a page. The page behind doesn't scroll while it's open. Desktop keeps its fixed sidebar.
 

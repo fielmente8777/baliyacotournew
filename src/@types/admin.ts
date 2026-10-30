@@ -90,6 +90,8 @@ export interface AdminCatalog {
   measurementTemplates: AdminMeasurementTemplate[];
   /** Design image key → url, as Shopify has it. */
   images: Record<string, string>;
+  /** Option id → its AI Studio embroidery picture, for options linked in AI Studio. */
+  studioImages?: Record<string, string>;
   /** Set when Shopify couldn't be read; images then come from the last sync. */
   shopifyError?: string;
 }

@@ -215,14 +215,33 @@ function NewOptionForm({ group, isColour }: { group: AdminOptionGroup; isColour:
 function OptionRow({ option, group, catalog }: { option: AdminOption; group: AdminOptionGroup; catalog: AdminCatalog }) {
   const [open, setOpen] = useState(false);
   const [uploadImage] = useUploadCatalogImageMutation();
-  const [update, { isLoading: toggling }] = useUpdateOptionMutation();
+  const [remove, { isLoading: removing }] = useDeleteOptionMutation();
+  const [error, setError] = useState<string | null>(null);
   const key = optionKey(group, option);
   const usesImages = groupUsesImages(group);
+  /* Linked in AI Studio: the designer shows the embroidery's own picture, so
+     this does too, and an uploaded one would never be seen. */
+  const studioImage = catalog.studioImages?.[option._id];
+
+  const destroy = async () => {
+    if (!window.confirm(`Delete "${option.label}"? It is removed from every garment. Saved designs keep their copy.`)) return;
+    setError(null);
+    try {
+      await remove(option._id).unwrap();
+    } catch (err) {
+      setError(adminErrorMessage(err));
+    }
+  };
 
   return (
     <div className="rounded-md border border-[#e6e0d6]">
       <div className="flex items-center gap-3 p-2">
-        {usesImages ? (
+        {studioImage ? (
+          <span className="relative aspect-square w-14 shrink-0 overflow-hidden rounded-md border border-[#e6e0d6] bg-white">
+            {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary Shopify CDN urls, thumbnails only */}
+            <img src={studioImage} alt="" className="absolute inset-0 size-full object-contain" />
+          </span>
+        ) : usesImages ? (
           <ImageSlot url={catalog.images[key]} onUpload={(file) => uploadImage({ key, file }).unwrap()} className="w-14 shrink-0" />
         ) : (
           <span className="size-10 shrink-0 rounded border border-[#e6e0d6]" style={{ background: option.hex || '#fff' }} />
@@ -233,15 +252,13 @@ function OptionRow({ option, group, catalog }: { option: AdminOption; group: Adm
             {option.priceModifier ? `+ ${formatINR(option.priceModifier / 100)}` : 'No extra cost'}
             {option.pairsWith?.length ? ` · goes with ${option.pairsWith.length} option(s)` : ''}
           </p>
+          {error && <p className="text-xs text-red-700">{error}</p>}
         </div>
+        {studioImage && <Badge>AI Studio</Badge>}
         {!option.isActive && <Badge tone="off">Hidden</Badge>}
-        <Button
-          variant="ghost"
-          loading={toggling}
-          onClick={() => update({ id: option._id, body: { isActive: !option.isActive } })}
-          className="hidden sm:inline-flex"
-        >
-          {option.isActive ? 'Hide' : 'Show'}
+        <Button variant="ghost" loading={removing} onClick={destroy} className="text-red-700 hover:bg-red-50" aria-label={`Delete ${option.label}`}>
+          <Trash2 className="size-4" />
+          <span className="hidden sm:inline">Delete</span>
         </Button>
         <Button variant="outline" onClick={() => setOpen((o) => !o)}>
           {open ? 'Close' : 'Edit'}
