@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { adminApi, adminErrorMessage, useAdminLoginMutation } from '@/store/api/adminApi';
 import { saveAdminTokens } from '@/lib/adminAuthStorage';
 import { useAppDispatch } from '@/store/hooks';
-import { Button, NoticeBar, TextField } from './ui';
+import { Button, NoticeBar, PasswordField, TextField } from './ui';
 
 /** Only ever redirect inside the panel. */
 const safeRedirect = (value: string | null) =>
@@ -14,7 +14,8 @@ const safeRedirect = (value: string | null) =>
 
 /**
  * Email + password sign-in for the admin panel (baliye-node's admin login).
- * Admin accounts are created with `npm run seed:admin` in baliye-node.
+ * Owner accounts are created with `npm run seed:admin` in baliye-node; team
+ * members are added by an owner under Admin → Team.
  */
 export default function AdminLoginView() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function AdminLoginView() {
 
         <div className="mt-6 flex flex-col gap-4">
           <TextField label="Email" type="email" value={email} onChange={setEmail} />
-          <TextField label="Password" type="password" value={password} onChange={setPassword} />
+          <PasswordField label="Password" value={password} onChange={setPassword} />
           {error && <NoticeBar notice={{ tone: 'error', text: adminErrorMessage(error, 'Could not sign in') }} />}
           <Button type="submit" loading={isLoading} disabled={!email || !password} className="h-10">
             Sign in

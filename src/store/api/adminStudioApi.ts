@@ -11,6 +11,7 @@
 import type {
   EmbroideryAsset,
   EmbroideryCollection,
+  EmbroideryCollectionDetails,
   EmbroideryRegion,
   EmbroiderySide,
   Landmarks,
@@ -45,7 +46,7 @@ export interface PhotoInput {
 const adminStudioApi = adminApi.injectEndpoints({
   endpoints: (builder) => ({
     /** One paid generation: the photos → one sheet of embroidery on white. */
-    extractEmbroidery: builder.mutation<ImageJob, { views: PhotoInput[]; runId?: string }>({
+    extractEmbroidery: builder.mutation<ImageJob, { views: PhotoInput[]; runId?: string; notes?: string }>({
       query: (body) => ({ url: '/admin/ai/extract-motifs', method: 'POST', body }),
       transformResponse: unwrap<ImageJob>,
     }),
@@ -65,7 +66,7 @@ const adminStudioApi = adminApi.injectEndpoints({
         /** Add to this saved collection instead of starting a new one. */
         collectionId?: string;
         references?: PhotoInput[];
-      }
+      } & EmbroideryCollectionDetails
     >({
       query: (body) => ({ url: '/admin/ai/assets/build', method: 'POST', body }),
       transformResponse: unwrap<BuildResult>,
@@ -90,13 +91,15 @@ const adminStudioApi = adminApi.injectEndpoints({
       providesTags: ['Embroidery'],
     }),
 
-    renameEmbroideryCollection: builder.mutation<unknown, { collectionId: string; collectionName: string }>({
-      query: ({ collectionId, collectionName }) => ({
+    /** Name, necklines and notes, any of them. */
+    updateEmbroideryCollection: builder.mutation<unknown, { collectionId: string } & EmbroideryCollectionDetails & { collectionName?: string }>({
+      query: ({ collectionId, ...body }) => ({
         url: `/admin/ai/assets/collections/${collectionId}`,
         method: 'PATCH',
-        body: { collectionName },
+        body,
       }),
-      invalidatesTags: ['Embroidery'],
+      /* Catalog too: the necklines are the linked option's neck pairing. */
+      invalidatesTags: ['Embroidery', 'Catalog'],
     }),
 
     deleteEmbroideryCollection: builder.mutation<unknown, string>({
@@ -195,7 +198,7 @@ export const {
   useBuildPiecesMutation,
   useGetEmbroideryCollectionsQuery,
   useGetExtractionsQuery,
-  useRenameEmbroideryCollectionMutation,
+  useUpdateEmbroideryCollectionMutation,
   useDeleteEmbroideryCollectionMutation,
   useGetEmbroideryPiecesQuery,
   useUpdateEmbroideryPieceMutation,

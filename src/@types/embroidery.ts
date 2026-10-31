@@ -67,6 +67,16 @@ export interface EmbroideryCollection {
   approvedCount: number;
   thumbnailUrl: string;
   createdAt: string;
+  /** Neck Type options it suits; empty = every neckline. */
+  neckOptionIds: string[];
+  /** The admin's notes, given to every AI step for this embroidery. */
+  notes: string;
+}
+
+/** What the admin can say about a whole embroidery, beyond its pieces. */
+export interface EmbroideryCollectionDetails {
+  neckOptionIds?: string[];
+  notes?: string;
 }
 
 /** One copy of a piece as read off the source photo; fractions of the target image. */

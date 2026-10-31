@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Coins, FileText, Home, LayoutGrid, LogOut, Mail, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { Coins, FileText, Home, LayoutGrid, LogOut, Mail, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, Users, X } from 'lucide-react';
 
 import { useAppDispatch } from '@/store/hooks';
 import { adminApi, useGetAdminMeQuery } from '@/store/api/adminApi';
@@ -21,6 +21,8 @@ const NAV = [
   { href: '/admin/newsletter', label: 'Newsletter', icon: Mail },
   /* Always here: the on/off switch for credits lives on this page. */
   { href: '/admin/credits', label: 'Design credits', icon: Coins },
+  /* Owners only: who else can sign in to the panel. */
+  { href: '/admin/team', label: 'Team', icon: Users, ownerOnly: true },
 ];
 
 /**
@@ -79,7 +81,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
 
   const nav = (
     <nav className="flex flex-col gap-0.5">
-      {NAV.map(({ href, label, icon: Icon }) => {
+      {NAV.filter((item) => !item.ownerOnly || (me?.role ?? 'owner') === 'owner').map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link

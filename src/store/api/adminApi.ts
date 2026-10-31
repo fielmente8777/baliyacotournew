@@ -26,6 +26,7 @@ import type {
   AdminCreditStats,
   AdminCustomer,
   AdminProfile,
+  TeamMember,
   AdminTokenEntry,
   CatalogImportReport,
   CatalogSyncSummary,
@@ -119,7 +120,7 @@ export type NewsletterPage = { items: NewsletterSubscriber[]; total: number; tot
 export const adminApi = createApi({
   reducerPath: 'adminApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit', 'Embroidery', 'Newsletter'],
+  tagTypes: ['Me', 'Catalog', 'Content', 'Tokens', 'Settings', 'AiCredit', 'Embroidery', 'Newsletter', 'Team'],
   endpoints: (builder) => ({
     adminLogin: builder.mutation<AuthTokens, { email: string; password: string }>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
@@ -376,12 +377,41 @@ export const adminApi = createApi({
       query: (id) => ({ url: `/admin/newsletter/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Newsletter'],
     }),
+
+    /* ---- Team (owners only) ---- */
+
+    getTeam: builder.query<TeamMember[], void>({
+      query: () => '/admin/team',
+      transformResponse: unwrap<TeamMember[]>,
+      providesTags: ['Team'],
+    }),
+
+    addTeamMember: builder.mutation<TeamMember, { name: string; email: string; password: string }>({
+      query: (body) => ({ url: '/admin/team', method: 'POST', body }),
+      transformResponse: unwrap<TeamMember>,
+      invalidatesTags: ['Team'],
+    }),
+
+    updateTeamMember: builder.mutation<TeamMember, { id: string; body: { name?: string; password?: string; isActive?: boolean } }>({
+      query: ({ id, body }) => ({ url: `/admin/team/${id}`, method: 'PATCH', body }),
+      transformResponse: unwrap<TeamMember>,
+      invalidatesTags: ['Team'],
+    }),
+
+    removeTeamMember: builder.mutation<void, string>({
+      query: (id) => ({ url: `/admin/team/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Team'],
+    }),
   }),
 });
 
 export const {
   useAdminLoginMutation,
   useGetAdminMeQuery,
+  useGetTeamQuery,
+  useAddTeamMemberMutation,
+  useUpdateTeamMemberMutation,
+  useRemoveTeamMemberMutation,
   useGetCatalogQuery,
   useDownloadCatalogSheetMutation,
   useImportCatalogSheetMutation,

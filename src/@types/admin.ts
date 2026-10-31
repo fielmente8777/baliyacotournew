@@ -4,6 +4,19 @@ export interface AdminProfile {
   _id: string;
   name: string;
   email: string;
+  /** owner manages the team; member is a team member. Older accounts may omit it (= owner). */
+  role?: 'owner' | 'member';
+}
+
+/** Someone who can sign in to the admin panel (Admin → Team). */
+export interface TeamMember {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'owner' | 'member';
+  isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
 }
 
 export type GarmentFamily = 'indian' | 'western' | 'indo-western';

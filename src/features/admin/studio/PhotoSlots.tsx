@@ -8,7 +8,7 @@
  */
 
 import { useRef } from 'react';
-import { ImagePlus, RefreshCw, X } from 'lucide-react';
+import { ImagePlus, Plus, RefreshCw, X } from 'lucide-react';
 
 import { cn } from '@/lib/format';
 import PositionMap, { type ZoneId } from './PositionMap';
@@ -22,6 +22,24 @@ export interface SlotPhoto {
   /** Small copy for the AI that names the pieces. */
   small: string;
 }
+
+/**
+ * A close-up beyond the six named slots, with the admin's own words for what
+ * it shows ("left cuff, gota border, light gold"). The words go to the AI
+ * with the photo, the same way a slot's name does.
+ */
+export interface ExtraPhoto {
+  id: string;
+  photo: SlotPhoto;
+  description: string;
+}
+
+/** Six slots + six extras = the 12 photos one extraction accepts. */
+export const MAX_EXTRA_PHOTOS = 6;
+
+/** What the AI is told an extra photo shows. */
+export const extraLabel = (extra: ExtraPhoto) =>
+  `extra close-up: ${extra.description.trim() || 'a detail of the embroidery'}`;
 
 export const PHOTO_SLOTS: {
   key: SlotKey;
@@ -85,11 +103,19 @@ export default function PhotoSlots({
   photos,
   onAdd,
   onRemove,
+  extras,
+  onAddExtra,
+  onExtraChange,
+  onRemoveExtra,
   disabled,
 }: {
   photos: Partial<Record<SlotKey, SlotPhoto>>;
   onAdd: (key: SlotKey, file: File) => void;
   onRemove: (key: SlotKey) => void;
+  extras: ExtraPhoto[];
+  onAddExtra: (file: File) => void;
+  onExtraChange: (id: string, description: string) => void;
+  onRemoveExtra: (id: string) => void;
   disabled?: boolean;
 }) {
   return (
@@ -97,6 +123,88 @@ export default function PhotoSlots({
       {PHOTO_SLOTS.map((slot) => (
         <Slot key={slot.key} slot={slot} photo={photos[slot.key]} onAdd={onAdd} onRemove={onRemove} disabled={disabled} />
       ))}
+      {extras.map((extra, i) => (
+        <Extra key={extra.id} extra={extra} n={i + 1} onChange={onExtraChange} onRemove={onRemoveExtra} disabled={disabled} />
+      ))}
+      {extras.length < MAX_EXTRA_PHOTOS && <AddExtra onAdd={onAddExtra} disabled={disabled} />}
+    </div>
+  );
+}
+
+/** An extra close-up: the photo, and a box for what it shows. */
+function Extra({
+  extra,
+  n,
+  onChange,
+  onRemove,
+  disabled,
+}: {
+  extra: ExtraPhoto;
+  n: number;
+  onChange: (id: string, description: string) => void;
+  onRemove: (id: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="group relative aspect-3/4 overflow-hidden rounded-lg border border-[#e6e0d6] bg-[#faf8f4]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
+        <img src={extra.photo.preview} alt={`Extra close-up ${n}`} className="absolute inset-0 size-full object-cover" />
+        {!disabled && (
+          <button
+            type="button"
+            onClick={() => onRemove(extra.id)}
+            className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-white/90 text-red-700 opacity-0 transition hover:bg-white group-hover:opacity-100 max-md:opacity-100"
+            aria-label={`Remove extra close-up ${n}`}
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
+      <p className="mt-1.5 text-xs font-semibold text-dark">Extra close-up {n}</p>
+      <textarea
+        value={extra.description}
+        onChange={(e) => onChange(extra.id, e.target.value)}
+        disabled={disabled}
+        rows={3}
+        maxLength={200}
+        placeholder="What it shows, e.g. left cuff, gota border, light gold"
+        aria-label={`What extra close-up ${n} shows`}
+        className="mt-1 w-full resize-none rounded-md border border-[#d8d2c8] bg-white px-2 py-1.5 text-[11px] leading-snug text-dark focus:border-secondary focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function AddExtra({ onAdd, disabled }: { onAdd: (file: File) => void; disabled?: boolean }) {
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => input.current?.click()}
+        className="flex aspect-3/4 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[#d8cdbd] bg-[#fcfaf7] p-3 text-center transition hover:border-secondary/60 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-label="Add another close-up photo"
+      >
+        <span className="flex size-10 items-center justify-center rounded-full bg-[#F1EDE6] text-secondary">
+          <Plus className="size-5" aria-hidden />
+        </span>
+        <span className="text-[11px] font-medium text-secondary">Add close-up</span>
+      </button>
+      <p className="mt-1.5 text-xs font-semibold text-dark">More close-ups</p>
+      <p className="text-[11px] leading-snug text-[#888]">Any detail the six miss. Say what each one shows.</p>
+      <input
+        ref={input}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          Array.from(e.target.files ?? []).forEach((file) => onAdd(file));
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }

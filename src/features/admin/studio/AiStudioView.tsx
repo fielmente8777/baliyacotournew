@@ -19,7 +19,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, CircleHelp, CloudAlert, CloudCheck, Download, ImagePlus, Layers, Pencil, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
 
-import type { EmbroideryAsset } from '@/@types/embroidery';
+import type { EmbroideryAsset, EmbroideryCollection } from '@/@types/embroidery';
 import { REGION_LABELS } from '@/@types/embroidery';
 import {
   useApproveEmbroideryPieceMutation,
@@ -30,14 +30,14 @@ import {
   useGetExtractionsQuery,
   useGetEmbroideryPiecesQuery,
   useGetStudioRunQuery,
-  useRenameEmbroideryCollectionMutation,
 } from '@/store/api/adminStudioApi';
 import { adminErrorMessage } from '@/store/api/adminApi';
 import { MAX_UPLOAD_BYTES, base64Bytes, fileToResizedBase64 } from '@/lib/imageResize';
 import { downloadImage } from '@/lib/downloadImage';
 import { cn } from '@/lib/format';
 import { Badge, Button, Card, NoticeBar, PageTitle, TextField, type Notice } from '../ui';
-import PhotoSlots, { PHOTO_SLOTS, type SlotKey, type SlotPhoto } from './PhotoSlots';
+import PhotoSlots, { MAX_EXTRA_PHOTOS, PHOTO_SLOTS, extraLabel, type ExtraPhoto, type SlotKey, type SlotPhoto } from './PhotoSlots';
+import { CollectionDetailsFields, CollectionEditor, neckSummary, useNeckOptions } from './CollectionDetails';
 import DesignerLinks from './DesignerLinks';
 import PieceCard from './PieceCard';
 import PositionMap, { zonesFor, type ZoneId } from './PositionMap';
@@ -90,7 +90,7 @@ function StoredIn({ url }: { url?: string }) {
 /** The how-to, folded away once there's saved embroidery to work with. */
 function StudioGuide({ open }: { open: boolean }) {
   const steps = [
-    ['Name it and add photos', 'Type a name (e.g. "Zari Work"), then add photos of the embroidered garment: front, neckline and hem are enough for most suits. Or upload a clean embroidery image you already have (free).'],
+    ['Name it and add photos', 'Type a name (e.g. "Zari Work"), tick the necklines it is made for, and write what you know about the work under "Details for the AI". Then add photos of the embroidered garment: front, neckline and hem are enough for most suits, and "Add close-up" takes more, each with a line on what it shows. Or upload a clean embroidery image you already have (free).'],
     ['Extract', 'One AI image pulls the embroidery off the garment. When it finishes, the pieces are cut out, named and saved automatically under your name, with their images in Shopify Files.'],
     ['Check the pieces', 'Each piece has a name, a position (neckline, shoulder, hem…) and a side. Fix anything wrong, delete fabric or noise, and approve the good ones. Only approved pieces are ever placed.'],
     ['Try it on', 'Upload a plain garment. "Preview placement" (free) pastes every approved piece where it will go. "Generate try-on" blends it in with one AI image.'],
@@ -102,6 +102,8 @@ function StudioGuide({ open }: { open: boolean }) {
     ['A piece is wrong or empty', 'Change its position or side, or delete it with the bin icon. Deleting can\'t be undone, but you can add it again from an image.'],
     ['The whole extraction is poor', 'Start "New embroidery" with clearer, closer photos and extract again. Old embroidery can be deleted from its page.'],
     ['Is the plain garment saved?', 'No, it is only used for that try-on. The try-on results are saved, and you can download them.'],
+    ['Does the AI learn?', 'Yes, from you. Every name, position or description you correct on a piece is remembered, and the AI is shown your latest corrections each time it names new pieces. Your details for each embroidery are used in every AI step for it.'],
+    ['Edit or delete a saved one', 'Hover its card under "Saved embroidery" for the pencil (name, necklines, details) and the bin.'],
   ];
 
   return (
@@ -154,17 +156,22 @@ export default function AiStudioView() {
   };
   const [source, setSource] = useState<Source>('photos');
   const [photos, setPhotos] = useState<Partial<Record<SlotKey, SlotPhoto>>>({});
+  const [extras, setExtras] = useState<ExtraPhoto[]>([]);
+  /* Necklines and notes for the new embroidery, saved with its pieces. */
+  const [details, setDetails] = useState({ neckOptionIds: [] as string[], notes: '' });
   const [sheet, setSheet] = useState<{ preview: string; base64: string } | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
 
   /* ---- Step 2 state ---- */
   const [collectionId, setCollectionId] = useState<string | null>(null);
   const [focused, setFocused] = useState<EmbroideryAsset | null>(null);
+  /* The saved embroidery open in the edit dialog. */
+  const [editing, setEditing] = useState<EmbroideryCollection | null>(null);
+  const { options: neckOptions } = useNeckOptions();
 
   const [extract, { isLoading: extracting }] = useExtractEmbroideryMutation();
   const [build, { isLoading: building }] = useBuildPiecesMutation();
   const [approve] = useApproveEmbroideryPieceMutation();
-  const [rename] = useRenameEmbroideryCollectionMutation();
   const [deleteCollection] = useDeleteEmbroideryCollectionMutation();
 
   const { data: collections = [] } = useGetEmbroideryCollectionsQuery();
@@ -186,7 +193,7 @@ export default function AiStudioView() {
   const extractJob = [...jobs].reverse().find((j) => j.stage === 'extract');
   const sheetUrl = extractJob?.status === 'completed' ? extractJob.resultUrls[0] : undefined;
   const extractPending = extractJob?.status === 'pending';
-  const photoCount = Object.keys(photos).length;
+  const photoCount = Object.keys(photos).length + extras.length;
   const approved = pieces.filter((p) => p.isApproved);
   const active = collections.find((c) => c._id === collectionId);
 
@@ -208,23 +215,42 @@ export default function AiStudioView() {
     }
   };
 
+  const addExtra = async (file: File) => {
+    try {
+      const [base64, small] = await Promise.all([
+        fileToResizedBase64(file),
+        fileToResizedBase64(file, SMALL, { quality: 0.8 }),
+      ]);
+      const extra = { id: crypto.randomUUID(), photo: { base64, small, preview: URL.createObjectURL(file) }, description: '' };
+      setExtras((current) => (current.length >= MAX_EXTRA_PHOTOS ? current : [...current, extra]));
+    } catch {
+      fail('That photo could not be read. Export it as a JPEG and try again.');
+    }
+  };
+
+  /** Every photo with what it shows: the named slots, then the extra close-ups. */
+  const allPhotos = () => [
+    ...PHOTO_SLOTS.filter((s) => photos[s.key]).map((s) => ({ photo: photos[s.key]!, label: s.label })),
+    ...extras.map((x) => ({ photo: x.photo, label: extraLabel(x) })),
+  ];
+
   const references = () =>
-    PHOTO_SLOTS.filter((s) => photos[s.key])
+    allPhotos()
       .slice(0, 4)
-      .map((s) => ({ image: photos[s.key]!.small, label: s.label }));
+      .map((p) => ({ image: p.photo.small, label: p.label }));
 
   const runExtract = async () => {
     setNotice(null);
     /* The name is what the pieces are saved under — needed up front, since
        they're saved automatically as soon as the extraction finishes. */
     if (!collectionName.trim()) return askForName();
-    const views = PHOTO_SLOTS.filter((s) => photos[s.key]).map((s) => ({ image: photos[s.key]!.base64, label: s.label }));
+    const views = allPhotos().map((p) => ({ image: p.photo.base64, label: p.label }));
     const total = views.reduce((sum, v) => sum + base64Bytes(v.image), 0);
     if (total > MAX_UPLOAD_BYTES) {
       return fail(`These photos add up to ${(total / 1024 / 1024).toFixed(1)} MB — the limit is 9 MB. Remove a photo or use smaller ones.`);
     }
     try {
-      const job = await extract({ views, runId: runId ?? undefined }).unwrap();
+      const job = await extract({ views, runId: runId ?? undefined, notes: details.notes.trim() || undefined }).unwrap();
       setRunId(job.runId);
     } catch (err) {
       fail(adminErrorMessage(err, 'Extraction failed. Please try again.'));
@@ -238,8 +264,8 @@ export default function AiStudioView() {
     try {
       const result = await build(
         source === 'sheet'
-          ? { sheetImage: sheet!.base64, collectionName: name }
-          : { jobId: extractJob!._id, collectionName: name, references: references() }
+          ? { sheetImage: sheet!.base64, collectionName: name, ...details }
+          : { jobId: extractJob!._id, collectionName: name, references: references(), ...details }
       ).unwrap();
       setCollectionId(result.collectionId);
       const named = result.assets.filter((a) => a.aiLabelled).length;
@@ -290,6 +316,8 @@ export default function AiStudioView() {
     setCollectionName('');
     setNameMissing(false);
     setPhotos({});
+    setExtras([]);
+    setDetails({ neckOptionIds: [], notes: '' });
     setSheet(null);
     setRunId(null);
     setNotice(null);
@@ -311,6 +339,16 @@ export default function AiStudioView() {
   };
 
   const canFind = source === 'sheet' ? Boolean(sheet) : Boolean(sheetUrl);
+
+  const removeCollection = (c: EmbroideryCollection) => {
+    if (!window.confirm(`Delete "${c.collectionName}" and all its pieces? If it is shown in the designer, it is taken off there too.`)) return;
+    deleteCollection(c._id)
+      .unwrap()
+      .then(() => {
+        if (c._id === collectionId) startNew();
+      })
+      .catch((err) => fail(adminErrorMessage(err, 'Could not delete')));
+  };
 
   return (
     <div className="max-w-6xl">
@@ -350,24 +388,47 @@ export default function AiStudioView() {
               <span className="text-sm font-medium">New embroidery</span>
             </button>
             {collections.map((c) => (
-              <button
-                key={c._id}
-                type="button"
-                onClick={() => openCollection(c._id, c.collectionName)}
-                className={cn(
-                  'flex w-44 shrink-0 items-center gap-3 rounded-lg border p-2 text-left transition',
-                  c._id === collectionId ? 'border-secondary bg-secondary/5' : 'border-[#e6e0d6] hover:border-secondary/40'
-                )}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN thumbnail */}
-                <img src={c.thumbnailUrl} alt="" className="size-11 shrink-0 rounded-md bg-[#f1ece4] object-contain" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-dark">{c.collectionName}</span>
-                  <span className="text-xs text-[#888]">
-                    {c.approvedCount}/{c.assetCount} approved
+              <div key={c._id} className="group relative w-52 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => openCollection(c._id, c.collectionName)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-lg border p-2 text-left transition',
+                    c._id === collectionId ? 'border-secondary bg-secondary/5' : 'border-[#e6e0d6] hover:border-secondary/40'
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN thumbnail */}
+                  <img src={c.thumbnailUrl} alt="" className="size-11 shrink-0 rounded-md bg-[#f1ece4] object-contain" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-dark">{c.collectionName}</span>
+                    <span className="block text-xs text-[#888]">
+                      {c.approvedCount}/{c.assetCount} approved
+                    </span>
+                    <span className="block truncate text-[11px] text-[#999]">{neckSummary(c.neckOptionIds ?? [], neckOptions)}</span>
                   </span>
+                </button>
+                {/* Shown on hover (always on phones): edit or delete without opening it. */}
+                <span className="absolute right-1 top-1 flex gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(c)}
+                    className="flex size-8 items-center justify-center rounded-full bg-white text-dark shadow ring-1 ring-[#e6e0d6] hover:text-secondary"
+                    aria-label={`Edit ${c.collectionName}`}
+                    title="Edit"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeCollection(c)}
+                    className="flex size-8 items-center justify-center rounded-full bg-white text-red-700 shadow ring-1 ring-[#e6e0d6] hover:bg-red-50"
+                    aria-label={`Delete ${c.collectionName}`}
+                    title="Delete"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </Card>
@@ -434,6 +495,8 @@ export default function AiStudioView() {
                 hint="Shown in the Design Builder when you link it to an Embroidery option."
               />
 
+              <CollectionDetailsFields value={details} onChange={setDetails} />
+
               <div role="radiogroup" aria-label="Where the embroidery comes from" className="grid gap-2 sm:grid-cols-2">
                 {(
                   [
@@ -468,6 +531,10 @@ export default function AiStudioView() {
                     </p>
                     <PhotoSlots
                       photos={photos}
+                      extras={extras}
+                      onAddExtra={addExtra}
+                      onExtraChange={(id, description) => setExtras((current) => current.map((x) => (x.id === id ? { ...x, description } : x)))}
+                      onRemoveExtra={(id) => setExtras((current) => current.filter((x) => x.id !== id))}
                       disabled={extracting || extractPending}
                       onAdd={addPhoto}
                       onRemove={(key) =>
@@ -615,38 +682,32 @@ export default function AiStudioView() {
                   <Check className="size-4" aria-hidden /> Approve all
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                aria-label="Rename"
-                onClick={() => {
-                  const name = window.prompt('Rename this embroidery', active?.collectionName ?? collectionName)?.trim();
-                  if (name) {
-                    rename({ collectionId, collectionName: name })
-                      .unwrap()
-                      .then(() => setCollectionName(name))
-                      .catch((err) => fail(adminErrorMessage(err, 'Could not rename')));
-                  }
-                }}
-              >
+              <Button variant="ghost" aria-label="Edit name, necklines and details" disabled={!active} onClick={() => active && setEditing(active)}>
                 <Pencil className="size-4" />
               </Button>
-              <Button
-                variant="ghost"
-                aria-label="Delete this embroidery"
-                className="text-red-700"
-                onClick={() => {
-                  if (!window.confirm('Delete this embroidery and all its pieces? If it is shown in the designer, it is taken off there too.')) return;
-                  deleteCollection(collectionId)
-                    .unwrap()
-                    .then(startNew)
-                    .catch((err) => fail(adminErrorMessage(err, 'Could not delete')));
-                }}
-              >
+              <Button variant="ghost" aria-label="Delete this embroidery" className="text-red-700" disabled={!active} onClick={() => active && removeCollection(active)}>
                 <Trash2 className="size-4" />
               </Button>
             </>
           }
         >
+          {active && (
+            <div className="mb-5 flex flex-col gap-2 rounded-lg bg-[#faf8f4] p-3 text-sm sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <p>
+                  <span className="font-medium text-dark">Necklines:</span>{' '}
+                  <span className="text-[#555]">{neckSummary(active.neckOptionIds ?? [], neckOptions)}</span>
+                </p>
+                <p className="text-[#555]">
+                  <span className="font-medium text-dark">Details for the AI:</span>{' '}
+                  {active.notes ? active.notes : <span className="text-amber-700">none yet. Add what you know about this work for better results.</span>}
+                </p>
+              </div>
+              <Button variant="outline" className="shrink-0" onClick={() => setEditing(active)}>
+                <Pencil className="size-4" aria-hidden /> Edit details
+              </Button>
+            </div>
+          )}
           <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
             <aside className="lg:sticky lg:top-4 lg:self-start">
               <div className="mx-auto max-w-50 rounded-lg bg-[#faf8f4] p-3">
@@ -665,7 +726,8 @@ export default function AiStudioView() {
               </div>
               <p className="mt-3 text-[11px] leading-snug text-[#888]">
                 Check the position and side of each piece — that is what decides where it lands on every garment.
-                Wrong pieces (fabric, noise) can be deleted.
+                Wrong pieces (fabric, noise) can be deleted. Every correction you make is remembered, and the AI names
+                future pieces the same way.
               </p>
             </aside>
 
@@ -739,6 +801,17 @@ export default function AiStudioView() {
             <Plus className="size-4" aria-hidden /> Create new embroidery
           </Button>
         </div>
+      )}
+
+      {editing && (
+        <CollectionEditor
+          collection={editing}
+          onClose={() => setEditing(null)}
+          onSaved={(name) => {
+            if (editing._id === collectionId) setCollectionName(name);
+            setNotice({ tone: 'ok', text: `"${name}" saved.` });
+          }}
+        />
       )}
     </div>
   );

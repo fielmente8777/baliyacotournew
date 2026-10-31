@@ -6,7 +6,7 @@
  */
 
 import { useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
-import { ImageOff, Loader2, Upload } from 'lucide-react';
+import { Eye, EyeOff, ImageOff, Loader2, Upload } from 'lucide-react';
 import { cn } from '@/lib/format';
 
 /* ---- Buttons ---- */
@@ -129,6 +129,53 @@ export function TextField({
           />
         )
       }
+    </Field>
+  );
+}
+
+/** A password box with a show / hide eye. */
+export function PasswordField({
+  label,
+  value,
+  onChange,
+  hint,
+  autoComplete = 'current-password',
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  hint?: ReactNode;
+  /** 'new-password' when setting one, so the browser offers to generate and save it. */
+  autoComplete?: 'current-password' | 'new-password';
+  placeholder?: string;
+}) {
+  const [shown, setShown] = useState(false);
+  return (
+    <Field label={label} hint={hint}>
+      {(id) => (
+        <div className="relative">
+          <input
+            id={id}
+            type={shown ? 'text' : 'password'}
+            value={value}
+            autoComplete={autoComplete}
+            placeholder={placeholder}
+            onChange={(e) => onChange(e.target.value)}
+            className={cn(inputClass, 'pr-11')}
+          />
+          <button
+            type="button"
+            onClick={() => setShown((s) => !s)}
+            aria-label={shown ? 'Hide password' : 'Show password'}
+            aria-pressed={shown}
+            title={shown ? 'Hide password' : 'Show password'}
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#777] hover:text-dark"
+          >
+            {shown ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+          </button>
+        </div>
+      )}
     </Field>
   );
 }
