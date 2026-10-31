@@ -73,12 +73,12 @@ function AddressCard({
     <article
       className={cn(
         'flex flex-col rounded-lg border p-5 transition-shadow hover:shadow-[0_6px_20px_rgba(27,43,54,0.06)]',
-        a.isDefault ? 'border-[#A52C45]/40 bg-[#FDF9FA]' : 'border-[#F2EEE8] bg-[#FDFBF8]'
+        a.isDefault ? 'border-secondary/40 bg-[#FDF9FA]' : 'border-[#F2EEE8] bg-[#FDFBF8]'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
             <Icon size={18} aria-hidden />
           </span>
           <div>
@@ -87,7 +87,7 @@ function AddressCard({
           </div>
         </div>
         {a.isDefault && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#A52C45] px-2.5 py-1 text-[11px] font-medium text-white">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-white">
             <CheckCircle2 size={12} aria-hidden /> Default
           </span>
         )}
@@ -107,7 +107,7 @@ function AddressCard({
 
       {a.phone && (
         <p className="mt-3 flex items-center gap-2 text-sm text-[#444]">
-          <Phone size={14} aria-hidden className="text-[#A52C45]" />
+          <Phone size={14} aria-hidden className="text-secondary" />
           <span className="tabular-nums">{formatPhone(a.phone)}</span>
         </p>
       )}
@@ -116,7 +116,7 @@ function AddressCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-[#A52C45] transition-colors hover:bg-[#F6EEF0]"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-secondary transition-colors hover:bg-[#F6EEF0]"
         >
           <Pencil size={14} aria-hidden /> Edit
         </button>
@@ -125,14 +125,14 @@ function AddressCard({
             <button
               type="button"
               onClick={onMakeDefault}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#555] transition-colors hover:bg-[#F6EEF0] hover:text-[#A52C45]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#555] transition-colors hover:bg-[#F6EEF0] hover:text-secondary"
             >
               <Star size={14} aria-hidden /> Set as default
             </button>
             <button
               type="button"
               onClick={onDelete}
-              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#8A8A8A] transition-colors hover:bg-[#F6EEF0] hover:text-[#A52C45]"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#8A8A8A] transition-colors hover:bg-[#F6EEF0] hover:text-secondary"
             >
               <Trash2 size={14} aria-hidden /> Delete
             </button>
@@ -300,8 +300,8 @@ export default function SavedAddressesPanel() {
                     className={cn(
                       'flex h-10 items-center gap-2 rounded-full border px-5 text-sm transition-colors',
                       active
-                        ? 'border-[#A52C45] bg-[#A52C45]/5 font-medium text-[#A52C45]'
-                        : 'border-[#EAE6DF] text-[#444] hover:border-[#A52C45]/40'
+                        ? 'border-secondary bg-secondary/5 font-medium text-secondary'
+                        : 'border-[#E8DFD3] text-[#444] hover:border-secondary/40'
                     )}
                   >
                     <Icon size={15} />
@@ -312,10 +312,10 @@ export default function SavedAddressesPanel() {
             </div>
           </FormField>
 
-          {error && <p className="text-sm text-[#A52C45] sm:col-span-2">{error}</p>}
+          {error && <p className="text-sm text-secondary sm:col-span-2">{error}</p>}
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-[#E8DFD3] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
           <OutlineButton type="button" onClick={() => setFormOpen(false)}>
             Cancel
           </OutlineButton>
@@ -349,7 +349,7 @@ export default function SavedAddressesPanel() {
         </div>
       ) : !addresses?.length ? (
         <div className="flex flex-col items-center px-5 py-14 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
             <MapPin size={28} aria-hidden />
           </span>
           <h3 className="mt-4 text-base font-semibold text-[#222]">No saved addresses yet</h3>
@@ -378,9 +378,9 @@ export default function SavedAddressesPanel() {
           <button
             type="button"
             onClick={() => openForm()}
-            className="flex min-h-52 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#E5DED3] text-sm font-medium text-[#8A8A8A] transition-colors hover:border-[#A52C45]/50 hover:bg-[#FDF9FA] hover:text-[#A52C45]"
+            className="flex min-h-52 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#E5DED3] text-sm font-medium text-[#8A8A8A] transition-colors hover:border-secondary/50 hover:bg-[#FDF9FA] hover:text-secondary"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
               <Plus size={20} aria-hidden />
             </span>
             Add a new address

@@ -18,9 +18,9 @@ export default function OrdersHeader({
   resultCount,
 }: Props) {
   return (
-    <div className="flex min-h-[58px] items-center justify-between gap-3 border-b border-[#E9E4DC] px-4 sm:px-5 md:px-6">
+    <div className="flex min-h-16 items-center justify-between gap-3 border-b border-[#F1EBE2] px-5 py-4 md:px-6">
       <div className="min-w-0">
-        <h2 className="text-base font-semibold text-[#202020]">My Orders</h2>
+        <h2 className="text-[17px] font-semibold text-dark md:text-lg">My Orders</h2>
         {resultCount !== undefined && (
           <p className="text-xs text-[#8A8A8A]">
             {resultCount} {resultCount === 1 ? "item" : "items"}
@@ -33,12 +33,12 @@ export default function OrdersHeader({
         onClick={onFilterClick}
         aria-expanded={isFilterOpen}
         aria-controls="orders-filter-panel"
-        className="h-9 shrink-0 gap-2 px-4 sm:px-5"
+        className="h-10 shrink-0 gap-2 px-4 sm:px-5"
       >
         <SlidersHorizontal size={14} />
         Filter
         {activeCount > 0 && (
-          <span className="ml-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-[#A52C45]">
+          <span className="ml-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-secondary">
             {activeCount}
           </span>
         )}

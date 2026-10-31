@@ -166,7 +166,7 @@ export default function AlterationSheet({ open, onClose, orderId, items }: Props
               onChange={() => setType('alteration')}
               title={
                 <span className="inline-flex items-center gap-2">
-                  <Ruler size={15} className="text-[#A52C45]" aria-hidden="true" />
+                  <Ruler size={15} className="text-secondary" aria-hidden="true" />
                   Alter this garment
                 </span>
               }
@@ -178,7 +178,7 @@ export default function AlterationSheet({ open, onClose, orderId, items }: Props
               onChange={() => setType('replacement')}
               title={
                 <span className="inline-flex items-center gap-2">
-                  <Scissors size={15} className="text-[#A52C45]" aria-hidden="true" />
+                  <Scissors size={15} className="text-secondary" aria-hidden="true" />
                   Remake it
                 </span>
               }
@@ -225,7 +225,7 @@ export default function AlterationSheet({ open, onClose, orderId, items }: Props
                 </div>
               ))}
               {photos.length < 4 && (
-                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[#CFC6BA] text-[11px] text-[#8A8A8A] hover:border-[#A52C45]">
+                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[#CFC6BA] text-[11px] text-[#8A8A8A] hover:border-secondary">
                   <ImagePlus size={20} aria-hidden="true" />
                   Add
                   <input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => addPhotos(e.target.files)} />

@@ -26,7 +26,7 @@ export default function OrderRating({ rating, action, onAction }: Props) {
         <button
           type="button"
           onClick={onAction}
-          className="text-[13px] font-medium text-[#A52C45] hover:underline"
+          className="text-[13px] font-medium text-secondary hover:underline"
         >
           {action}
         </button>

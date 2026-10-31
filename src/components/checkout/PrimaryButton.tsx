@@ -5,6 +5,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+/** The burgundy pill, as on the home and product pages. */
 export default function PrimaryButton({
   className,
   fullWidth = true,
@@ -15,7 +16,7 @@ export default function PrimaryButton({
     <button
       {...props}
       className={clsx(
-        "h-11 rounded-md bg-[#972E47] text-white text-sm font-medium transition hover:bg-[#84263d]",
+        "inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-secondary px-7 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60",
         fullWidth && "w-full",
         className
       )}

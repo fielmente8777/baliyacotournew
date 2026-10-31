@@ -7,6 +7,7 @@ interface Props
   children: React.ReactNode;
 }
 
+/** The outlined pill, as on the home page. */
 export default function OutlineButton({
   children,
   className = "",
@@ -17,19 +18,19 @@ export default function OutlineButton({
       {...props}
       className={`
         inline-flex
-        h-10
+        h-11
         items-center
         justify-center
-        rounded-md
+        rounded-full
         border
-        border-[#A52C45]
+        border-dark
         bg-white
         px-7
         text-sm
         font-medium
-        text-[#A52C45]
-        transition
-        hover:bg-[#A52C45]
+        text-dark
+        transition-colors
+        hover:bg-dark
         hover:text-white
         disabled:cursor-not-allowed
         disabled:opacity-50

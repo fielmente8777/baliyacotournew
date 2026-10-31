@@ -51,12 +51,12 @@ function ProfileCard({
     <article
       className={cn(
         'rounded-lg border p-5',
-        p.isDefault ? 'border-[#A52C45]/40 bg-[#FDF9FA]' : 'border-[#F2EEE8] bg-[#FDFBF8]'
+        p.isDefault ? 'border-secondary/40 bg-[#FDF9FA]' : 'border-[#F2EEE8] bg-[#FDFBF8]'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
             <Ruler size={18} aria-hidden />
           </span>
           <div className="min-w-0">
@@ -68,7 +68,7 @@ function ProfileCard({
           </div>
         </div>
         {p.isDefault && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#A52C45] px-2.5 py-1 text-[11px] font-medium text-white">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-white">
             <CheckCircle2 size={12} aria-hidden /> Default
           </span>
         )}
@@ -99,7 +99,7 @@ function ProfileCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-[#A52C45] transition-colors hover:bg-[#F6EEF0]"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-secondary transition-colors hover:bg-[#F6EEF0]"
         >
           <Pencil size={14} aria-hidden /> Edit
         </button>
@@ -108,14 +108,14 @@ function ProfileCard({
             <button
               type="button"
               onClick={onMakeDefault}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#555] transition-colors hover:bg-[#F6EEF0] hover:text-[#A52C45]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#555] transition-colors hover:bg-[#F6EEF0] hover:text-secondary"
             >
               <Star size={14} aria-hidden /> Set as default
             </button>
             <button
               type="button"
               onClick={onDelete}
-              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#8A8A8A] transition-colors hover:bg-[#F6EEF0] hover:text-[#A52C45]"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm text-[#8A8A8A] transition-colors hover:bg-[#F6EEF0] hover:text-secondary"
             >
               <Trash2 size={14} aria-hidden /> Delete
             </button>
@@ -225,7 +225,7 @@ export default function SavedMeasurementsPanel() {
           <div className="grid gap-4 sm:grid-cols-2">
             {fields.map((f) => (
               <FormField key={f._id} label={f.name}>
-                <div className="flex h-12 items-center rounded-md border border-[#EAE6DF] bg-white px-4 transition-colors focus-within:border-[#A52C45]">
+                <div className="flex h-12 items-center rounded-md border border-[#E8DFD3] bg-white px-4 transition-colors focus-within:border-secondary">
                   <input
                     inputMode="decimal"
                     value={values[f._id] ?? ''}
@@ -243,10 +243,10 @@ export default function SavedMeasurementsPanel() {
             ))}
           </div>
 
-          {error && <p className="mt-4 text-sm text-[#A52C45]">{error}</p>}
+          {error && <p className="mt-4 text-sm text-secondary">{error}</p>}
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-[#E8DFD3] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
           <OutlineButton type="button" onClick={() => setFormOpen(false)}>
             Cancel
           </OutlineButton>
@@ -280,7 +280,7 @@ export default function SavedMeasurementsPanel() {
         </div>
       ) : !profiles?.length ? (
         <div className="flex flex-col items-center px-5 py-14 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
             <Ruler size={28} aria-hidden />
           </span>
           <h3 className="mt-4 text-base font-semibold text-[#222]">No measurements saved yet</h3>

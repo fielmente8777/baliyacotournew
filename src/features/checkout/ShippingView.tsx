@@ -6,30 +6,38 @@
  * Addresses come from the same /addresses endpoints as the account section, so
  * one saved here appears there and vice versa. Placing the order sends the
  * chosen address id and lets the backend resolve, snapshot and price it.
+ *
+ *   header     breadcrumb, "Step 2 of 3", title, stepper
+ *   address    saved addresses as radio cards, or the new-address form
+ *   payment    shown as what comes next (Shopify's checkout)
+ *   summary    items, figures and the button; sticky on desktop, a bar on phones
  */
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, Check, MapPin, Plus } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 
-import CheckoutStepper from "@/components/checkout/CheckoutStepper";
+import CheckoutAssurances from "@/components/checkout/CheckoutAssurances";
 import CheckoutCard from "@/components/checkout/CheckoutCard";
-import DeliveryBanner from "@/components/checkout/DeliveryBanner";
+import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import MobileCheckoutBar from "@/components/checkout/MobileCheckoutBar";
+import Notice from "@/components/checkout/Notice";
 import PriceSummary from "@/components/checkout/PriceSummary";
-import { formatINR } from "@/lib/format";
 
 import { useGetAddressesQuery } from "@/store/api/addressApi";
 import { useStartDesignCheckoutMutation } from "@/store/api/orderApi";
 import { useCart } from "@/hooks/useCart";
 import { useAppSelector } from "@/store/hooks";
 import { useGetProfileQuery } from "@/store/api/profileApi";
-import { DEFAULT_COUNTRY_CODE, getAddressCountry } from "@/lib/addressCountries";
 import { prepareShopifyCheckout } from "@/lib/shopifyAddress";
-import { formatPhone } from "@/lib/phone";
 
+import { wrap } from "../../app/(website)/Home/Components/ui";
+import AddAddressTile from "../../app/(website)/shipping/Components/AddAddressTile";
+import AddressCard, { AddressCardSkeleton } from "../../app/(website)/shipping/Components/AddressCard";
+import DeliveringTo from "../../app/(website)/shipping/Components/DeliveringTo";
+import OrderItems from "../../app/(website)/shipping/Components/OrderItems";
+import PaymentNext from "../../app/(website)/shipping/Components/PaymentNext";
 import AddressForm from "./AddressForm";
 
 export default function ShippingView() {
@@ -142,136 +150,65 @@ export default function ShippingView() {
   const buttonDisabled = isPlacing || isRedirecting || !activeId || showForm;
 
   return (
-    <main className="min-h-screen bg-[#F8F6EF]">
-      <section className="container mx-auto px-4 py-8 pb-28 md:py-12 lg:pb-12">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <Link href="/cart" className="mb-2 inline-flex items-center gap-1.5 text-sm text-[#777] transition-[gap] hover:gap-2.5 hover:text-[#972E47]">
-              <ArrowLeft size={14} aria-hidden="true" />
+    <main className="min-h-screen bg-[#FAF7F2]">
+      <section className={`${wrap} pb-32 lg:pb-24`}>
+        <CheckoutHeader
+          step={2}
+          crumb="Delivery address"
+          trail={[{ label: "Shopping bag", href: "/cart" }]}
+          title="Where should we"
+          accent="deliver?"
+          meta={
+            <Link href="/cart" className="group inline-flex min-h-11 items-center gap-2 font-medium text-secondary">
+              <ArrowLeft size={16} aria-hidden="true" className="transition-transform group-hover:-translate-x-1" />
               Back to bag
             </Link>
-            <h1 className="text-3xl font-semibold md:text-4xl">Delivery Address</h1>
-          </div>
+          }
+        />
 
-          <CheckoutStepper step={2} />
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_380px] lg:gap-8">
-          <div className="space-y-4">
-            <CheckoutCard className="animate-rise-in overflow-hidden">
-              <div className="border-b border-[#F2EEE8] px-5 py-4 sm:px-6">
-                <h2 className="text-lg font-semibold">Where should we deliver?</h2>
-                {!isLoading && !!addresses?.length && (
-                  <p className="text-xs text-[#8A8A8A]">
-                    {addresses.length} saved {addresses.length === 1 ? "address" : "addresses"}
-                  </p>
-                )}
-              </div>
-
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-10">
+          <div className="min-w-0 space-y-4">
+            <CheckoutCard
+              className="animate-rise-in overflow-hidden"
+              title="Delivery address"
+              subtitle={
+                !isLoading && !!addresses?.length
+                  ? `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`
+                  : "Saved to your account for next time"
+              }
+            >
               {isLoading && (
                 <div className="grid gap-4 p-5 sm:p-6 md:grid-cols-2" aria-busy="true" aria-label="Loading addresses">
-                  {[0, 1].map((i) => (
-                    <div key={i} className="h-40 animate-pulse rounded-md border border-[#EFE8DD] bg-black/[0.03]" />
-                  ))}
+                  <AddressCardSkeleton />
+                  <AddressCardSkeleton />
                 </div>
               )}
 
               {!isLoading && !!addresses?.length && (
                 <div className="grid gap-4 p-5 sm:p-6 md:grid-cols-2" role="radiogroup" aria-label="Delivery address">
-                  {addresses.map((address, index) => {
-                    const isSelected = activeId === address._id;
-                    return (
-                      <label
-                        key={address._id}
-                        style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
-                        className={`relative flex animate-rise-in cursor-pointer flex-col rounded-md border-2 p-4 transition-all duration-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#972E47]/30 ${
-                          isSelected
-                            ? "border-[#972E47] bg-[#FDF8F9] shadow-[0_8px_24px_-14px_rgba(151,46,71,0.5)]"
-                            : "border-[#EFE8DD] bg-white hover:border-[#D9C3C9] hover:shadow-[0_6px_18px_-12px_rgba(34,34,34,0.3)]"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="shipping-address"
-                          checked={isSelected}
-                          onChange={() => {
-                            setSelectedId(address._id);
-                            setError(null);
-                          }}
-                          className="sr-only"
-                        />
+                  {addresses.map((address, index) => (
+                    <AddressCard
+                      key={address._id}
+                      address={address}
+                      index={index}
+                      selected={activeId === address._id}
+                      onSelect={() => {
+                        setSelectedId(address._id);
+                        setError(null);
+                      }}
+                    />
+                  ))}
 
-                        {/* Custom radio: a ring that fills with a check. */}
-                        <span
-                          className={`absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors duration-300 ${
-                            isSelected ? "border-[#972E47] bg-[#972E47]" : "border-[#D9D3C8] bg-white"
-                          }`}
-                          aria-hidden="true"
-                        >
-                          {isSelected && <Check size={12} strokeWidth={3} className="animate-check-pop text-white" />}
-                        </span>
-
-                        <div className="flex flex-wrap items-center gap-2 pr-8">
-                          <h3 className="font-semibold text-[#222]">{address.fullName}</h3>
-
-                          <span className="rounded-full bg-[#F4F7F2] px-2.5 py-0.5 text-[11px] capitalize text-[#4B6B44]">
-                            {address.type}
-                          </span>
-
-                          {address.isDefault && (
-                            <span className="rounded-full bg-[#FBF6F7] px-2.5 py-0.5 text-[11px] text-[#972E47]">
-                              Default
-                            </span>
-                          )}
-                        </div>
-
-                        <address className="mt-2 space-y-0.5 text-sm not-italic leading-relaxed text-[#5C5C5C]">
-                          <p>{address.street}</p>
-                          {address.landmark && <p>{address.landmark}</p>}
-                          <p>
-                            {address.city}, {address.state} {address.pincode}
-                          </p>
-                          {address.country && address.country !== DEFAULT_COUNTRY_CODE && (
-                            <p>{getAddressCountry(address.country).name}</p>
-                          )}
-                          {address.phone && <p className="pt-1 text-[#777]">Phone: {formatPhone(address.phone)}</p>}
-                        </address>
-
-                        {/* Grows open under the picked card. */}
-                        <div
-                          className={`grid transition-all duration-300 ${
-                            isSelected ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                          }`}
-                        >
-                          <p className="flex items-center gap-1.5 overflow-hidden text-xs font-medium text-[#972E47]">
-                            <MapPin size={13} aria-hidden="true" />
-                            Delivering here
-                          </p>
-                        </div>
-                      </label>
-                    );
-                  })}
-
-                  {!showForm && (
-                    <button
-                      type="button"
-                      onClick={() => setFormOpen(true)}
-                      style={{ animationDelay: `${Math.min(addresses.length, 6) * 60}ms` }}
-                      className="group flex min-h-40 animate-rise-in flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#E0D6C8] p-4 text-sm font-medium text-[#972E47] transition-colors hover:border-[#972E47] hover:bg-[#FDF8F9]"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FBF6F7] transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110">
-                        <Plus size={20} aria-hidden="true" />
-                      </span>
-                      Add a new address
-                    </button>
-                  )}
+                  {!showForm && <AddAddressTile onClick={() => setFormOpen(true)} index={addresses.length} />}
                 </div>
               )}
 
               {!isLoading && showForm && (
-                <div className={`animate-slide-down p-5 sm:p-6 ${addresses?.length ? "border-t border-[#F2EEE8]" : ""}`}>
-                  <h3 className="mb-4 flex items-center gap-2 text-base font-semibold">
-                    <MapPin size={17} className="text-[#972E47]" aria-hidden="true" />
+                <div className={`animate-slide-down p-5 sm:p-6 ${addresses?.length ? "border-t border-[#F1EBE2]" : ""}`}>
+                  <h3 className="mb-5 flex items-center gap-2.5 text-base font-semibold text-dark">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-[#F1EDE6] text-secondary">
+                      <MapPin size={15} aria-hidden="true" />
+                    </span>
                     {addresses?.length ? "Add a new address" : "Add your delivery address"}
                   </h3>
                   <AddressForm
@@ -288,55 +225,28 @@ export default function ShippingView() {
             </CheckoutCard>
 
             {error && (
-              <p key={errorKey} role="alert" className="flex animate-shake items-start gap-2 rounded-md border border-[#F0CFD6] bg-[#FBEAEA] px-4 py-3 text-sm text-[#972E47]">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <Notice key={errorKey} tone="error" role="alert" className="animate-shake">
                 {error}
-              </p>
+              </Notice>
             )}
+
+            <PaymentNext />
           </div>
 
-          <div className="animate-rise-in [animation-delay:120ms] lg:sticky lg:top-6 lg:self-start">
+          <aside className="animate-rise-in [animation-delay:120ms] lg:sticky lg:top-6 lg:self-start">
             <PriceSummary
               totals={totals}
               buttonText={buttonText}
               onAction={handlePlaceOrder}
               disabled={buttonDisabled}
             >
-              {/* What's being delivered — so the customer never has to go back to check. */}
-              {!cartLoading && items.length > 0 && (
-                <ul className="max-h-56 space-y-3 overflow-y-auto border-b border-[#F2EEE8] px-5 py-4">
-                  {items.map((item) => (
-                    <li key={`${item.source}-${item.id}`} className="flex items-center gap-3">
-                      <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded bg-[#F5F1EA]">
-                        <Image src={item.image} alt="" fill sizes="44px" className="object-cover" />
-                        {item.quantity > 1 && (
-                          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#222]/80 px-1 text-[10px] text-white">
-                            {item.quantity}
-                          </span>
-                        )}
-                      </div>
-                      <p className="line-clamp-2 min-w-0 flex-1 text-[13px] text-[#444]">{item.title}</p>
-                      <span className="shrink-0 text-[13px] font-medium text-[#222]">
-                        {formatINR((item.unitPrice * item.quantity) / 100)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {!cartLoading && <OrderItems items={items} />}
             </PriceSummary>
 
-            {selectedAddress && !showForm && (
-              <div key={selectedAddress._id} className="mt-4 hidden animate-fade-in rounded-md border border-[#EFE8DD] bg-white p-4 text-sm lg:block">
-                <p className="text-xs font-medium uppercase tracking-wide text-[#8A8A8A]">Delivering to</p>
-                <p className="mt-1 font-medium text-[#222]">{selectedAddress.fullName}</p>
-                <p className="text-[#666]">
-                  {selectedAddress.city}, {selectedAddress.state} {selectedAddress.pincode}
-                </p>
-              </div>
-            )}
+            {selectedAddress && !showForm && <DeliveringTo address={selectedAddress} />}
 
-            <DeliveryBanner />
-          </div>
+            <CheckoutAssurances />
+          </aside>
         </div>
       </section>
 

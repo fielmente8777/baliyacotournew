@@ -63,7 +63,7 @@ export default function Sheet({ open, onClose, title, step, children, footer }: 
         <div className="flex items-start justify-between gap-4 border-b border-[#F0EBE3] px-5 py-4">
           <div>
             {step && (
-              <p className="text-[11px] font-medium uppercase tracking-[1.5px] text-[#A52C45]">
+              <p className="text-[11px] font-medium uppercase tracking-[1.5px] text-secondary">
                 Step {step.current} of {step.total}
               </p>
             )}
@@ -78,7 +78,7 @@ export default function Sheet({ open, onClose, title, step, children, footer }: 
 
         {step && (
           <div className="h-0.5 bg-[#F4EFE8]">
-            <div className="h-full bg-[#A52C45] transition-all duration-300" style={{ width: `${(step.current / step.total) * 100}%` }} />
+            <div className="h-full bg-secondary transition-all duration-300" style={{ width: `${(step.current / step.total) * 100}%` }} />
           </div>
         )}
 

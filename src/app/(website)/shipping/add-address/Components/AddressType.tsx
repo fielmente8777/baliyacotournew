@@ -21,9 +21,9 @@ interface Props {
 export default function AddressType({ value, onChange }: Props) {
   return (
     <div className="pt-1">
-      <p className="mb-4 text-sm font-semibold">Address Type</p>
+      <p className="mb-2.5 text-xs font-medium uppercase tracking-wide text-[#777]">Address type</p>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-2.5">
         {types.map((item) => {
           const Icon = item.icon;
           const isActive = value === item.value;
@@ -34,13 +34,13 @@ export default function AddressType({ value, onChange }: Props) {
               type="button"
               onClick={() => onChange(item.value)}
               aria-pressed={isActive}
-              className={`flex items-center gap-2 rounded-full border px-5 py-3 transition ${
+              className={`flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "border-[#972E47] bg-[#972E47] text-white"
-                  : "border-[#DDD] bg-white"
+                  ? "border-dark bg-dark text-white"
+                  : "border-[#E0D6C8] bg-white text-dark hover:border-dark"
               }`}
             >
-              <Icon size={18} />
+              <Icon size={16} aria-hidden="true" />
               {item.label}
             </button>
           );

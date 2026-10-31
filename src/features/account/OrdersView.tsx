@@ -118,7 +118,7 @@ export default function OrdersView() {
       {isFilterOpen && <OrdersFilterPanel filters={filters} onChange={setFilters} />}
 
       {!isError && lines.length > 0 && (
-        <div className="flex flex-col gap-3 border-b border-[#E9E4DC] px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between md:px-6">
+        <div className="flex flex-col gap-3 border-b border-[#E8DFD3] px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between md:px-6">
           <div
             className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
             role="tablist"
@@ -135,7 +135,7 @@ export default function OrdersView() {
                     aria-selected={selected}
                     onClick={() => setFilters({ ...filters, status: option.value })}
                     className={`h-8 whitespace-nowrap rounded-full px-3.5 text-[13px] transition-colors ${
-                      selected ? 'bg-[#A52C45] text-white' : 'bg-[#FAF8F4] text-[#555] hover:bg-[#F5F1EA] hover:text-[#A52C45]'
+                      selected ? 'bg-secondary text-white' : 'bg-[#FAF8F4] text-[#555] hover:bg-[#F5F1EA] hover:text-secondary'
                     }`}
                   >
                     {option.label}
@@ -156,7 +156,7 @@ export default function OrdersView() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by product or order no."
-              className="h-9 w-full rounded-md border border-[#E4DED4] bg-white pl-9 pr-8 text-[13px] text-[#222] outline-none transition-colors placeholder:text-[#A9A9A9] focus:border-[#A52C45] [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 w-full rounded-md border border-[#E4DED4] bg-white pl-9 pr-8 text-[13px] text-[#222] outline-none transition-colors placeholder:text-[#A9A9A9] focus:border-secondary [&::-webkit-search-cancel-button]:hidden"
             />
             {query && (
               <button
@@ -189,7 +189,7 @@ export default function OrdersView() {
 
       {isError && (
         <div className="px-5 py-8 md:px-6">
-          <p className="text-sm text-[#A52C45]">We couldn&apos;t load your orders.</p>
+          <p className="text-sm text-secondary">We couldn&apos;t load your orders.</p>
           <button type="button" onClick={() => refetch()} className="mt-3 text-sm underline">
             Try again
           </button>
@@ -197,7 +197,7 @@ export default function OrdersView() {
       )}
 
       {!isLoading && partialError && (
-        <p className="px-5 pt-5 text-sm text-[#A52C45] md:px-6">
+        <p className="px-5 pt-5 text-sm text-secondary md:px-6">
           {shopifyError
             ? 'Your ready-to-wear orders couldn\u2019t be loaded right now.'
             : 'Your custom-design orders couldn\u2019t be loaded right now.'}{' '}
@@ -226,7 +226,7 @@ export default function OrdersView() {
       )}
 
       {visibleLines.length > 0 && (
-        <div className="space-y-4 bg-[#FCFBF8] p-3 sm:p-5">
+        <div className="space-y-4 bg-[#FAF7F2] p-3 sm:p-5">
           {visibleLines.map((line) => (
             <OrderCard key={line.key} order={line} />
           ))}

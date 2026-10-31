@@ -104,10 +104,10 @@ function ExchangeSizes({
               onClick={() => onChange(`${optionName}: ${s.value}`)}
               className={`relative h-10 min-w-[3.25rem] rounded-lg border px-3 text-sm font-medium transition ${
                 selected
-                  ? 'border-[#A52C45] bg-[#A52C45] text-white'
+                  ? 'border-secondary bg-secondary text-white'
                   : disabled
                     ? 'cursor-not-allowed border-[#EEE9E2] text-[#BDB5AA]'
-                    : 'border-[#DDD6CC] text-dark hover:border-[#A52C45]'
+                    : 'border-[#DDD6CC] text-dark hover:border-secondary'
               } ${!s.inStock && !isCurrent ? 'line-through' : ''}`}
             >
               {s.value}
@@ -326,7 +326,7 @@ export default function ReturnSheet({ order, open, onClose }: { order: ShopifyOr
               onChange={() => setResolution('replacement')}
               title={
                 <span className="inline-flex items-center gap-2">
-                  <RefreshCcw size={15} className="text-[#A52C45]" aria-hidden="true" />
+                  <RefreshCcw size={15} className="text-secondary" aria-hidden="true" />
                   Exchange for another size
                 </span>
               }
@@ -338,7 +338,7 @@ export default function ReturnSheet({ order, open, onClose }: { order: ShopifyOr
               onChange={() => setResolution('refund')}
               title={
                 <span className="inline-flex items-center gap-2">
-                  <Undo2 size={15} className="text-[#A52C45]" aria-hidden="true" />
+                  <Undo2 size={15} className="text-secondary" aria-hidden="true" />
                   Return for a refund
                 </span>
               }

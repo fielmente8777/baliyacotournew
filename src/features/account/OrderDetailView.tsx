@@ -66,7 +66,7 @@ function Panel({ icon: Icon, title, children }: { icon: LucideIcon; title: strin
   return (
     <section className="rounded-lg border border-[#EFEAE2] p-4 sm:p-5">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#222]">
-        <Icon size={16} className="text-[#A52C45]" aria-hidden="true" />
+        <Icon size={16} className="text-secondary" aria-hidden="true" />
         {title}
       </h3>
       {children}
@@ -93,10 +93,10 @@ interface HeaderProps {
 
 function DetailHeader({ orderNumber, placedAt, stage, statusTitle, statusDescription }: HeaderProps) {
   return (
-    <div className="border-b border-[#E9E4DC] px-4 py-4 sm:px-6 sm:py-5">
+    <div className="border-b border-[#E8DFD3] px-4 py-4 sm:px-6 sm:py-5">
       <Link
         href="/my-account/orders"
-        className="inline-flex items-center gap-1.5 text-[13px] text-[#6B6B6B] transition-colors hover:text-[#A52C45]"
+        className="inline-flex items-center gap-1.5 text-[13px] text-[#6B6B6B] transition-colors hover:text-secondary"
       >
         <ArrowLeft size={14} aria-hidden="true" />
         All orders
@@ -105,7 +105,7 @@ function DetailHeader({ orderNumber, placedAt, stage, statusTitle, statusDescrip
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-1.5 text-lg font-semibold text-[#222]">
-            <Hash size={18} className="text-[#A52C45]" aria-hidden="true" />
+            <Hash size={18} className="text-secondary" aria-hidden="true" />
             Order {orderNumber.replace(/^#/, '')}
           </h2>
           <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
@@ -128,7 +128,7 @@ function DetailHeader({ orderNumber, placedAt, stage, statusTitle, statusDescrip
 function Progress({ timeline }: { timeline: TimelineItem[] }) {
   if (timeline.length === 0) return null;
   return (
-    <div className="border-b border-[#E9E4DC] px-4 py-6 sm:px-6">
+    <div className="border-b border-[#E8DFD3] px-4 py-6 sm:px-6">
       <OrderTimeline items={timeline} bare />
     </div>
   );
@@ -222,7 +222,7 @@ function CustomOrderDetail({ order, tracking }: { order: Order; tracking: Parame
 
       <div className="px-4 sm:px-6">
         <h3 className="flex items-center gap-2 pt-5 text-sm font-semibold text-[#222]">
-          <ShoppingBag size={16} className="text-[#A52C45]" aria-hidden="true" />
+          <ShoppingBag size={16} className="text-secondary" aria-hidden="true" />
           Items ({order.items.length})
         </h3>
         <ul className="divide-y divide-[#F2EEE8]">
@@ -236,7 +236,7 @@ function CustomOrderDetail({ order, tracking }: { order: Order; tracking: Parame
             >
               {item.measurementSnapshot?.values?.length > 0 && (
                 <details className="group mt-2 text-[13px]">
-                  <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-[#A52C45]">
+                  <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-secondary">
                     <Ruler size={14} aria-hidden="true" />
                     Measurements: {item.measurementSnapshot.profileName}
                     <span className="transition-transform duration-300 group-open:rotate-180" aria-hidden="true">
@@ -307,7 +307,7 @@ function ShopifyOrderDetail({ order }: { order: ShopifyOrder }) {
 
       <div className="px-4 sm:px-6">
         <h3 className="flex items-center gap-2 pt-5 text-sm font-semibold text-[#222]">
-          <ShoppingBag size={16} className="text-[#A52C45]" aria-hidden="true" />
+          <ShoppingBag size={16} className="text-secondary" aria-hidden="true" />
           Items ({order.items.length})
         </h3>
         <ul className="divide-y divide-[#F2EEE8]">

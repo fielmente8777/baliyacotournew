@@ -84,8 +84,8 @@ function ChipGroup<T extends string>({ label, value, options, onChange }: GroupP
               onClick={() => onChange(option.value)}
               className={`h-8 rounded-full border px-3.5 text-[13px] transition-colors ${
                 selected
-                  ? 'border-[#A52C45] bg-[#A52C45] text-white'
-                  : 'border-[#E4DED4] bg-white text-[#444] hover:border-[#A52C45] hover:text-[#A52C45]'
+                  ? 'border-secondary bg-secondary text-white'
+                  : 'border-[#E4DED4] bg-white text-[#444] hover:border-secondary hover:text-secondary'
               }`}
             >
               {option.label}
@@ -108,7 +108,7 @@ export default function OrdersFilterPanel({ filters, onChange }: Props) {
   return (
     <div
       id="orders-filter-panel"
-      className="grid animate-slide-down gap-5 border-b border-[#E9E4DC] bg-[#FCFBF8] px-4 py-5 sm:px-5 md:grid-cols-2 md:px-6"
+      className="grid animate-slide-down gap-5 border-b border-[#E8DFD3] bg-[#FAF7F2] px-4 py-5 sm:px-5 md:grid-cols-2 md:px-6"
     >
       <ChipGroup
         label="Type"
@@ -127,7 +127,7 @@ export default function OrdersFilterPanel({ filters, onChange }: Props) {
         <button
           type="button"
           onClick={() => onChange({ ...DEFAULT_ORDER_FILTERS, status: filters.status })}
-          className="justify-self-start text-sm font-medium text-[#A52C45] underline underline-offset-2 md:col-span-2"
+          className="justify-self-start text-sm font-medium text-secondary underline underline-offset-2 md:col-span-2"
         >
           Clear filters
         </button>

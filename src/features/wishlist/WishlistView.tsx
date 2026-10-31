@@ -59,14 +59,14 @@ function WishlistCard({ item }: { item: WishlistItem }) {
   );
 
   return (
-    <li className="group relative flex flex-col overflow-hidden rounded-lg border border-[#EAE6DF] bg-white transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.3)]">
+    <li className="group relative flex flex-col overflow-hidden rounded-lg border border-[#E8DFD3] bg-white transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.3)]">
       {canOpen ? <Link href={href!}>{body}</Link> : <div>{body}</div>}
 
       <div className="mt-auto p-3">
         {canOpen ? (
           <Link
             href={href!}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-[#A52C45] text-[13px] font-medium text-white transition hover:bg-[#8F243A]"
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-secondary text-[13px] font-medium text-white transition hover:bg-secondary/90"
           >
             View product
             <ArrowRight size={14} aria-hidden="true" />
@@ -76,7 +76,7 @@ function WishlistCard({ item }: { item: WishlistItem }) {
             type="button"
             onClick={() => remove(item._id)}
             disabled={isLoading}
-            className="flex h-9 w-full items-center justify-center rounded-md border border-[#E4DED4] text-[13px] font-medium text-[#555] transition hover:border-[#A52C45] hover:text-[#A52C45] disabled:opacity-50"
+            className="flex h-9 w-full items-center justify-center rounded-md border border-[#E4DED4] text-[13px] font-medium text-[#555] transition hover:border-secondary hover:text-secondary disabled:opacity-50"
           >
             Remove
           </button>
@@ -89,7 +89,7 @@ function WishlistCard({ item }: { item: WishlistItem }) {
         disabled={isLoading}
         aria-label={`Remove ${item.title} from wishlist`}
         title="Remove from wishlist"
-        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#444] shadow-sm transition hover:bg-white hover:text-[#A52C45] disabled:opacity-50"
+        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#444] shadow-sm transition hover:bg-white hover:text-secondary disabled:opacity-50"
       >
         <X size={16} aria-hidden="true" />
       </button>
@@ -102,10 +102,10 @@ export default function WishlistView() {
 
   return (
     <AccountContent>
-      <div className="flex min-h-[58px] items-center justify-between gap-3 border-b border-[#E9E4DC] px-4 py-3 sm:px-6">
+      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-[#F1EBE2] px-5 py-4 md:px-6">
         <div>
-          <h2 className="flex items-center gap-2 text-base font-semibold text-[#202020]">
-            <Heart size={16} className="fill-[#A52C45] text-[#A52C45]" aria-hidden="true" />
+          <h2 className="flex items-center gap-2 text-[17px] font-semibold text-dark md:text-lg">
+            <Heart size={16} className="fill-secondary text-secondary" aria-hidden="true" />
             Wishlist
           </h2>
           {data && data.count > 0 && (
@@ -115,7 +115,7 @@ export default function WishlistView() {
           )}
         </div>
         {data && data.count > 0 && (
-          <Link href="/products" className="text-[13px] font-medium text-[#A52C45] hover:underline">
+          <Link href="/products" className="text-[13px] font-medium text-secondary hover:underline">
             Continue shopping
           </Link>
         )}
@@ -142,7 +142,7 @@ export default function WishlistView() {
           action={{ label: 'Browse the collection', href: '/products' }}
         />
       ) : (
-        <ul className="grid grid-cols-2 gap-3 bg-[#FCFBF8] p-3 sm:gap-4 sm:p-5 lg:grid-cols-3 2xl:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 bg-[#FAF7F2] p-3 sm:gap-4 sm:p-5 lg:grid-cols-3 2xl:grid-cols-4">
           {data.items.map((item) => (
             <WishlistCard key={item._id} item={item} />
           ))}

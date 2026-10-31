@@ -5,13 +5,13 @@
 import { CheckCircle2, Info } from 'lucide-react';
 
 export const btnPrimary =
-  'flex h-11 flex-1 items-center justify-center rounded-lg bg-[#A52C45] px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
+  'flex h-11 flex-1 items-center justify-center rounded-lg bg-secondary px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 export const btnDanger =
   'flex h-11 flex-1 items-center justify-center rounded-lg bg-[#9B1C14] px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50';
 export const btnSecondary =
   'flex h-11 flex-1 items-center justify-center rounded-lg border border-[#DDD6CC] px-5 text-sm font-medium text-dark transition hover:bg-[#FAF8F4]';
 export const textArea =
-  'w-full rounded-lg border border-[#DDD6CC] bg-white px-3 py-2.5 text-sm text-[#222] outline-none transition placeholder:text-[#A9A9A9] focus:border-[#A52C45]';
+  'w-full rounded-lg border border-[#DDD6CC] bg-white px-3 py-2.5 text-sm text-[#222] outline-none transition placeholder:text-[#A9A9A9] focus:border-secondary';
 
 /** A tappable option row — radio or checkbox — styled as a card. */
 export function ChoiceCard({
@@ -36,10 +36,10 @@ export function ChoiceCard({
   return (
     <label
       className={`flex cursor-pointer gap-3 rounded-xl border p-3.5 transition ${
-        checked ? 'border-[#A52C45] bg-[#FDF5F7]' : 'border-[#E9E4DC] hover:border-[#CFC6BA]'
+        checked ? 'border-secondary bg-[#FDF5F7]' : 'border-[#E8DFD3] hover:border-[#CFC6BA]'
       }`}
     >
-      <input type={type} name={name} checked={checked} onChange={onChange} className="mt-0.5 h-4 w-4 shrink-0 accent-[#A52C45]" />
+      <input type={type} name={name} checked={checked} onChange={onChange} className="mt-0.5 h-4 w-4 shrink-0 accent-secondary" />
       {children}
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-[#222]">{title}</span>
@@ -88,7 +88,7 @@ export function SuccessView({
       <ol className="mx-auto mt-6 max-w-xs space-y-0 text-left">
         {steps.map((s, i) => (
           <li key={s} className="relative flex gap-3 pb-5 last:pb-0">
-            {i < steps.length - 1 && <span className="absolute left-[9px] top-5 h-full w-px bg-[#E9E4DC]" aria-hidden="true" />}
+            {i < steps.length - 1 && <span className="absolute left-[9px] top-5 h-full w-px bg-[#E8DFD3]" aria-hidden="true" />}
             <span
               className={`relative mt-0.5 flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
                 i === 0 ? 'bg-[#2F7D32] text-white' : 'border border-[#DDD6CC] bg-white text-[#8A8A8A]'

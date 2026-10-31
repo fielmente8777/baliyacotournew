@@ -7,6 +7,7 @@ interface Props
   children: React.ReactNode;
 }
 
+/** The burgundy pill, as on the home and product pages. */
 export default function PrimaryButton({
   children,
   className = "",
@@ -17,17 +18,18 @@ export default function PrimaryButton({
       {...props}
       className={`
         inline-flex
-        h-10
+        h-11
         items-center
         justify-center
-        rounded-md
-        bg-[#A52C45]
+        rounded-full
+        bg-secondary
         px-7
         text-sm
-        font-medium
+        font-semibold
         text-white
         transition
-        hover:bg-[#8F243A]
+        hover:opacity-90
+        active:scale-[0.99]
         disabled:cursor-not-allowed
         disabled:opacity-50
         ${className}

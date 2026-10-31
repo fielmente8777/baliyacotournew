@@ -57,15 +57,15 @@ export default function NotificationsView() {
 
   const tabClass = (t: Tab) =>
     `h-8 rounded-full px-3.5 text-[13px] transition-colors ${
-      tab === t ? 'bg-[#A52C45] text-white' : 'text-[#555] hover:bg-[#F5F1EA]'
+      tab === t ? 'bg-secondary text-white' : 'text-[#555] hover:bg-[#F5F1EA]'
     }`;
 
   return (
     <AccountContent>
-      <div className="flex flex-col gap-3 border-b border-[#E9E4DC] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-col gap-3 border-b border-[#F1EBE2] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
-          <h2 className="text-base font-semibold text-[#202020]">Notifications</h2>
-          <p className="text-xs text-[#8A8A8A]">
+          <h2 className="text-[17px] font-semibold text-dark md:text-lg">Notifications</h2>
+          <p className="text-[13px] mt-0.5 text-[#8A8A8A]">
             {unread > 0 ? `${unread} unread` : 'All caught up'}
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function NotificationsView() {
               type="button"
               onClick={() => markAllRead()}
               disabled={markingAll}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#A52C45] transition-opacity hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary transition-opacity hover:underline disabled:opacity-50"
             >
               <CheckCheck size={15} aria-hidden="true" />
               Mark all read
@@ -110,7 +110,7 @@ export default function NotificationsView() {
 
       {isError && (
         <div className="px-4 py-8 sm:px-6">
-          <p className="text-sm text-[#A52C45]">We couldn&apos;t load your notifications.</p>
+          <p className="text-sm text-secondary">We couldn&apos;t load your notifications.</p>
           <button type="button" onClick={() => refetch()} className="mt-2 text-sm underline">
             Try again
           </button>
@@ -150,14 +150,14 @@ export default function NotificationsView() {
                     </div>
                     <p className="mt-0.5 text-[13px] leading-relaxed text-[#6B6B6B]">{n.message}</p>
                     {n.meta?.orderId && (
-                      <span className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#A52C45] transition-[gap] duration-300 group-hover:gap-1.5">
+                      <span className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-medium text-secondary transition-[gap] duration-300 group-hover:gap-1.5">
                         View order
                         <ChevronRight size={13} aria-hidden="true" />
                       </span>
                     )}
                   </div>
 
-                  {!n.isRead && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#A52C45]" aria-label="unread" />}
+                  {!n.isRead && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-secondary" aria-label="unread" />}
                 </button>
               </li>
             ))}

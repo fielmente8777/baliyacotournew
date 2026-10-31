@@ -155,7 +155,7 @@ export default function ReviewModal({ open, onClose, orderId, orderNumber, produ
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
           placeholder="Enter your review in brief"
-          className="mt-4 h-10 w-full rounded-md border border-[#E3E3E3] px-3 text-[13px] outline-none placeholder:text-[#9A9A9A] focus:border-[#A52C45]"
+          className="mt-4 h-10 w-full rounded-md border border-[#E3E3E3] px-3 text-[13px] outline-none placeholder:text-[#9A9A9A] focus:border-secondary"
         />
 
         <textarea
@@ -163,7 +163,7 @@ export default function ReviewModal({ open, onClose, orderId, orderNumber, produ
           onChange={(e) => setBody(e.target.value.slice(0, 2000))}
           rows={5}
           placeholder="Enter your review in detail"
-          className="mt-4 w-full resize-none rounded-md border border-[#E3E3E3] p-3 text-[13px] outline-none placeholder:text-[#9A9A9A] focus:border-[#A52C45]"
+          className="mt-4 w-full resize-none rounded-md border border-[#E3E3E3] p-3 text-[13px] outline-none placeholder:text-[#9A9A9A] focus:border-secondary"
         />
 
         <h3 className="mt-5 text-[17px] font-medium text-[#222]">Upload product photos</h3>
@@ -175,7 +175,7 @@ export default function ReviewModal({ open, onClose, orderId, orderNumber, produ
                 type="button"
                 onClick={() => fileRefs.current[slot]?.click()}
                 aria-label={photo ? `Replace photo ${slot + 1}` : `Add photo ${slot + 1}`}
-                className="flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-sm border border-dashed border-[#D5D5D5] text-[#444] transition-colors hover:border-[#A52C45]"
+                className="flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-sm border border-dashed border-[#D5D5D5] text-[#444] transition-colors hover:border-secondary"
               >
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -211,13 +211,13 @@ export default function ReviewModal({ open, onClose, orderId, orderNumber, produ
           ))}
         </div>
 
-        {error && <p className="mt-4 text-[13px] text-[#A52C45]">{error}</p>}
+        {error && <p className="mt-4 text-[13px] text-secondary">{error}</p>}
 
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="mt-5 h-10 w-full rounded-md bg-[#A52C45] text-[13px] font-medium text-white transition-opacity disabled:opacity-60"
+          className="mt-5 h-10 w-full rounded-md bg-secondary text-[13px] font-medium text-white transition-opacity disabled:opacity-60"
         >
           {isSaving ? 'Saving…' : 'Save Review'}
         </button>

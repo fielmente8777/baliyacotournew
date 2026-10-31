@@ -55,7 +55,7 @@ export default function TokensPanel() {
       <PageHeader
         title="Design Credits"
         action={
-          <Link href="/create-your-own-design" className="text-sm font-medium text-[#A52C45] hover:underline">
+          <Link href="/create-your-own-design" className="text-sm font-medium text-secondary hover:underline">
             Start designing
           </Link>
         }
@@ -104,10 +104,10 @@ function Balance({ wallet }: { wallet: TokenWallet }) {
   ];
 
   return (
-    <section className="rounded-2xl border border-[#EAE6DF] bg-[#FAF7F2] p-5 md:p-6">
+    <section className="rounded-2xl border border-[#E8DFD3] bg-[#FAF7F2] p-5 md:p-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#A52C45] text-white">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-white">
             <Coins className="h-7 w-7" aria-hidden />
           </span>
           <div>
@@ -122,16 +122,16 @@ function Balance({ wallet }: { wallet: TokenWallet }) {
         </div>
         <a
           href="#offers"
-          className="inline-flex h-10 items-center justify-center rounded-md bg-[#A52C45] px-6 text-sm font-medium text-white hover:bg-[#8F243A]"
+          className="inline-flex h-10 items-center justify-center rounded-md bg-secondary px-6 text-sm font-medium text-white hover:bg-secondary/90"
         >
           {balance === 0 ? 'Get credits' : 'Top up'}
         </a>
       </div>
 
       <div className="mt-5">
-        <div className="h-2 overflow-hidden rounded-full bg-[#EAE6DF]" role="presentation">
+        <div className="h-2 overflow-hidden rounded-full bg-[#E8DFD3]" role="presentation">
           <div
-            className={cn('h-full rounded-full transition-all', low ? 'bg-amber-500' : 'bg-[#A52C45]')}
+            className={cn('h-full rounded-full transition-all', low ? 'bg-amber-500' : 'bg-secondary')}
             style={{ width: `${leftPercent}%` }}
           />
         </div>
@@ -169,17 +169,17 @@ function Offers({ wallet }: { wallet: TokenWallet }) {
             key={pack.id}
             className={cn(
               'relative flex flex-col gap-4 rounded-2xl border p-5',
-              pack.highlight ? 'border-[#A52C45] shadow-[0_8px_24px_rgba(165,44,69,0.12)]' : 'border-[#EAE6DF]'
+              pack.highlight ? 'border-secondary shadow-[0_8px_24px_rgba(155,44,64,0.12)]' : 'border-[#E8DFD3]'
             )}
           >
             {pack.highlight && (
-              <span className="absolute -top-3 left-5 rounded-full bg-[#A52C45] px-3 py-1 text-[11px] font-medium text-white">
+              <span className="absolute -top-3 left-5 rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-white">
                 {pack.highlight}
               </span>
             )}
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#A52C45]">{pack.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-secondary">{pack.label}</p>
               <p className="mt-0.5 text-xs text-[#6B6B6B]">{pack.tagline}</p>
             </div>
 
@@ -197,11 +197,11 @@ function Offers({ wallet }: { wallet: TokenWallet }) {
 
             <ul className="flex flex-col gap-1.5 text-xs text-[#4A4A4A]">
               <li className="flex items-center gap-2">
-                <Palette className="h-3.5 w-3.5 text-[#A52C45]" aria-hidden />
+                <Palette className="h-3.5 w-3.5 text-secondary" aria-hidden />
                 {Math.floor(pack.total / cost)} AI dress designs
               </li>
               <li className="flex items-center gap-2">
-                <BadgeCheck className="h-3.5 w-3.5 text-[#A52C45]" aria-hidden />
+                <BadgeCheck className="h-3.5 w-3.5 text-secondary" aria-hidden />
                 {formatINR(pack.perToken / 100)} per credit
                 {pack.savingsPercent > 0 && <strong className="text-green-700">· save {pack.savingsPercent}%</strong>}
               </li>
@@ -245,11 +245,11 @@ function Limits({ wallet }: { wallet: TokenWallet }) {
   return (
     <section>
       <h3 className={sectionTitle}>Limits &amp; rules</h3>
-      <dl className="divide-y divide-[#EAE6DF] rounded-xl border border-[#EAE6DF]">
+      <dl className="divide-y divide-[#E8DFD3] rounded-xl border border-[#E8DFD3]">
         {rows.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
             <dt className="flex items-center gap-2.5 text-[#4A4A4A]">
-              <Icon className="h-4 w-4 text-[#A52C45]" aria-hidden />
+              <Icon className="h-4 w-4 text-secondary" aria-hidden />
               {label}
             </dt>
             <dd className="text-right font-medium text-[#222]">{value}</dd>
@@ -279,16 +279,16 @@ function History({ history }: { history: TokenEntry[] }) {
           options={HISTORY_FILTERS}
           aria-label="Filter history"
           wrapperClassName="w-44"
-          className="h-9 rounded-md border border-[#EAE6DF] bg-white px-3 text-sm"
+          className="h-9 rounded-md border border-[#E8DFD3] bg-white px-3 text-sm"
         />
       </div>
 
       {shown.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[#EAE6DF] px-4 py-6 text-center text-sm text-[#6B6B6B]">
+        <p className="rounded-xl border border-dashed border-[#E8DFD3] px-4 py-6 text-center text-sm text-[#6B6B6B]">
           {history.length === 0 ? 'No credit activity yet.' : 'Nothing here for this filter.'}
         </p>
       ) : (
-        <ul className="scrollbar-brand max-h-[420px] divide-y divide-[#EAE6DF] overflow-y-auto rounded-xl border border-[#EAE6DF]">
+        <ul className="scrollbar-brand max-h-[420px] divide-y divide-[#E8DFD3] overflow-y-auto rounded-xl border border-[#E8DFD3]">
           {shown.map((entry) => (
             <li key={entry._id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
               <div className="min-w-0">

@@ -9,8 +9,8 @@
  */
 
 import { useState } from "react";
-import { AlertCircle } from "lucide-react";
 
+import Notice from "@/components/checkout/Notice";
 import PrimaryButton from "@/components/checkout/PrimaryButton";
 import SecondaryButton from "@/components/checkout/SecondaryButton";
 import PhoneField from "@/components/inputs/PhoneField";
@@ -49,7 +49,7 @@ interface Props {
 }
 
 export const addressInputClass =
-  "h-12 w-full rounded-md border border-[#E4E0D8] bg-white px-4 text-sm outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#972E47] focus:shadow-[0_0_0_3px_rgba(151,46,71,0.1)]";
+  "h-12 w-full rounded-md border border-[#E0D6C8] bg-white px-4 text-sm outline-none transition-[border-color,box-shadow] duration-200 focus:border-secondary focus:shadow-[0_0_0_3px_rgba(155,44,64,0.1)]";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#777]">{children}</span>;
@@ -216,23 +216,17 @@ export default function AddressForm({ onSaved, onCancel, saveLabel = "Save Addre
       />
 
       {error && (
-        <p key={errorKey} role="alert" className="flex animate-shake items-center gap-2 rounded-md bg-[#FBEAEA] px-3 py-2.5 text-sm text-[#972E47]">
-          <AlertCircle size={16} className="shrink-0" aria-hidden="true" />
+        <Notice key={errorKey} tone="error" role="alert" className="animate-shake">
           {error}
-        </p>
+        </Notice>
       )}
 
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-        <SecondaryButton type="button" fullWidth={false} className="px-8" onClick={onCancel}>
+        <SecondaryButton type="button" onClick={onCancel}>
           Cancel
         </SecondaryButton>
 
-        <PrimaryButton
-          type="submit"
-          fullWidth={false}
-          className="px-8 active:scale-[0.99] disabled:opacity-60"
-          disabled={isLoading}
-        >
+        <PrimaryButton type="submit" fullWidth={false} disabled={isLoading}>
           {isLoading ? (
             <span className="inline-flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />

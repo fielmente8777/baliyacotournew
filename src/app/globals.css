@@ -81,7 +81,10 @@ body {
  * ------------------------------------------------------------------ */
 @theme {
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-page-in: page-in 0.4s var(--ease-smooth) both;
+  /* backwards, not both: a transform kept after the animation (even an identity
+     one) makes the page wrapper the containing block for position: fixed, so
+     the pinned bottom bars on cart, shipping and product pages scrolled away. */
+  --animate-page-in: page-in 0.4s var(--ease-smooth) backwards;
   --animate-pop-in: pop-in 0.18s var(--ease-smooth) both;
   --animate-fade-in: fade-in 0.3s ease-out both;
   --animate-slide-down: slide-down 0.25s var(--ease-smooth) both;

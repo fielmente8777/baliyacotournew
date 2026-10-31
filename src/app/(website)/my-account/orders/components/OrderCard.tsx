@@ -26,7 +26,7 @@ export default function OrderCard({ order }: Props) {
   const [isReviewOpen, setReviewOpen] = useState(false);
 
   return (
-    <article className="overflow-hidden rounded-lg border border-[#EAE6DF] bg-white transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.25)]">
+    <article className="overflow-hidden rounded-lg border border-[#E8DFD3] bg-white transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.25)]">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-[#F2EEE8] bg-[#FAF8F4] px-4 py-2.5 text-xs text-[#6B6B6B] sm:px-5">
         <p>
           Placed on <span className="font-medium text-dark">{shortDate(order.placedAt)}</span>
@@ -53,7 +53,7 @@ export default function OrderCard({ order }: Props) {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="min-w-0">
                 <h3 className="break-words text-sm text-[#222] sm:text-[15px]">
-                  <Link href={order.detailHref} className="transition-colors hover:text-[#A52C45]">
+                  <Link href={order.detailHref} className="transition-colors hover:text-secondary">
                     {order.productName}
                   </Link>
                 </h3>
@@ -82,7 +82,7 @@ export default function OrderCard({ order }: Props) {
 
               <Link
                 href={order.detailHref}
-                className="inline-flex h-9 items-center gap-1 rounded-md border border-[#A52C45] px-4 text-[13px] font-medium text-[#A52C45] transition hover:bg-[#A52C45] hover:text-white"
+                className="inline-flex h-9 items-center gap-1 rounded-md border border-secondary px-4 text-[13px] font-medium text-secondary transition hover:bg-secondary hover:text-white"
               >
                 {order.stage === 'active' ? 'Track order' : 'View details'}
                 <ChevronRight size={14} aria-hidden="true" />

@@ -10,12 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import CheckoutStepper from "@/components/checkout/CheckoutStepper";
+import CheckoutAssurances from "@/components/checkout/CheckoutAssurances";
 import CheckoutCard from "@/components/checkout/CheckoutCard";
-import DeliveryBanner from "@/components/checkout/DeliveryBanner";
+import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import PriceSummary from "@/components/checkout/PriceSummary";
 import { useCart } from "@/hooks/useCart";
 
+import { wrap } from "../../app/(website)/Home/Components/ui";
 import AddressForm from "./AddressForm";
 
 export default function AddAddressView() {
@@ -23,33 +24,36 @@ export default function AddAddressView() {
   const { totals } = useCart();
 
   return (
-    <main className="min-h-screen bg-[#F8F6EF]">
-      <section className="container mx-auto px-4 py-8 md:py-12">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <Link href="/shipping" className="mb-2 inline-flex items-center gap-1.5 text-sm text-[#777] hover:text-[#972E47]">
-              <ArrowLeft size={14} aria-hidden="true" />
+    <main className="min-h-screen bg-[#FAF7F2]">
+      <section className={`${wrap} pb-16 md:pb-24`}>
+        <CheckoutHeader
+          step={2}
+          crumb="New address"
+          trail={[
+            { label: "Shopping bag", href: "/cart" },
+            { label: "Delivery address", href: "/shipping" },
+          ]}
+          title="Add a new"
+          accent="address"
+          meta={
+            <Link href="/shipping" className="group inline-flex min-h-11 items-center gap-2 font-medium text-secondary">
+              <ArrowLeft size={16} aria-hidden="true" className="transition-transform group-hover:-translate-x-1" />
               Back to addresses
             </Link>
-            <h1 className="text-3xl font-semibold md:text-4xl">Delivery Address</h1>
-          </div>
-          <CheckoutStepper step={2} />
-        </div>
+          }
+        />
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_380px] lg:gap-8">
-          <CheckoutCard className="animate-rise-in">
-            <div className="border-b border-[#F2EEE8] px-5 py-4 sm:px-6">
-              <h2 className="text-lg font-semibold">Add New Address</h2>
-            </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-10">
+          <CheckoutCard className="animate-rise-in" title="Delivery address" subtitle="Saved to your account for next time">
             <div className="p-5 sm:p-6">
               <AddressForm onSaved={() => router.push("/shipping")} onCancel={() => router.push("/shipping")} />
             </div>
           </CheckoutCard>
 
-          <div className="animate-rise-in [animation-delay:120ms] lg:sticky lg:top-6 lg:self-start">
+          <aside className="animate-rise-in [animation-delay:120ms] lg:sticky lg:top-6 lg:self-start">
             <PriceSummary totals={totals} />
-            <DeliveryBanner />
-          </div>
+            <CheckoutAssurances />
+          </aside>
         </div>
       </section>
     </main>

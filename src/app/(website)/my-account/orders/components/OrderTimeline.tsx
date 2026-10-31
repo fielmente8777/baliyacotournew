@@ -53,7 +53,7 @@ export default function OrderTimeline({ items, bare = false }: Props) {
                     'absolute left-[19px] bottom-1/2 h-[calc(100%+1.25rem)] w-0.5 origin-bottom',
                     'sm:bottom-auto sm:left-auto sm:right-1/2 sm:top-[19px] sm:h-0.5 sm:w-full sm:origin-left',
                     'transition-colors duration-500',
-                    reached ? 'bg-[#A52C45]' : 'bg-[#E2DDD5]',
+                    reached ? 'bg-secondary' : 'bg-[#E2DDD5]',
                   ].join(' ')}
                 />
               )}
@@ -62,9 +62,9 @@ export default function OrderTimeline({ items, bare = false }: Props) {
                 className={[
                   'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-500',
                   isDone
-                    ? 'border-[#A52C45] bg-[#A52C45] text-white'
+                    ? 'border-secondary bg-secondary text-white'
                     : isCurrent
-                      ? 'border-[#A52C45] bg-white text-[#A52C45] shadow-[0_0_0_5px_rgba(165,44,69,0.12)]'
+                      ? 'border-secondary bg-white text-secondary shadow-[0_0_0_5px_rgba(155,44,64,0.12)]'
                       : 'border-[#DEDAD3] bg-white text-[#B5B0A8]',
                 ].join(' ')}
               >

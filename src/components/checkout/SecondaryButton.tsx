@@ -5,6 +5,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+/** The outlined pill, as on the home page. */
 export default function SecondaryButton({
   className,
   fullWidth = false,
@@ -15,7 +16,7 @@ export default function SecondaryButton({
     <button
       {...props}
       className={clsx(
-        "h-11 rounded-md border border-[#972E47] bg-white px-6 text-[#972E47] text-sm font-medium hover:bg-[#972E47] hover:text-white transition",
+        "inline-flex min-h-12 items-center justify-center rounded-full border border-dark bg-white px-7 text-[15px] font-medium text-dark transition-colors hover:bg-dark hover:text-white",
         fullWidth && "w-full",
         className
       )}

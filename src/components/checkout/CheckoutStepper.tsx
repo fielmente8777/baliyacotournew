@@ -23,12 +23,12 @@ export default function CheckoutStepper({ step }: Props) {
 
         const circle = (
           <span
-            className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500 ${
+            className={`relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500 ${
               isDone
-                ? "bg-[#6D8C54] text-white"
+                ? "bg-dark text-white"
                 : isCurrent
-                  ? "bg-[#972E47] text-white shadow-[0_0_0_5px_rgba(151,46,71,0.14)]"
-                  : "border border-[#D9D3C8] bg-white text-[#9A9A9A]"
+                  ? "bg-secondary text-white shadow-[0_0_0_5px_rgba(155,44,64,0.14)]"
+                  : "border border-[#D9CFC2] bg-white text-[#9A9A9A]"
             }`}
           >
             {isDone ? <Check size={14} strokeWidth={3} className="animate-check-pop" aria-hidden="true" /> : number}
@@ -37,8 +37,8 @@ export default function CheckoutStepper({ step }: Props) {
 
         const label = (
           <span
-            className={`text-sm transition-colors ${
-              isCurrent ? "font-semibold text-[#222]" : isDone ? "font-medium text-[#4E6B3C]" : "text-[#9A9A9A]"
+            className={`text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors md:text-xs ${
+              isCurrent ? "text-dark" : isDone ? "text-[#8B6E54]" : "text-[#A9A9A9]"
             }`}
           >
             {item.label}
@@ -48,21 +48,21 @@ export default function CheckoutStepper({ step }: Props) {
         return (
           <li key={item.label} className={`flex items-center ${index < STEPS.length - 1 ? "flex-1" : ""}`}>
             {isDone && item.href ? (
-              <Link href={item.href} className="flex items-center gap-2 hover:opacity-80">
+              <Link href={item.href} className="flex min-h-11 items-center gap-2 hover:opacity-80">
                 {circle}
                 {label}
               </Link>
             ) : (
-              <span className="flex items-center gap-2" aria-current={isCurrent ? "step" : undefined}>
+              <span className="flex min-h-11 items-center gap-2" aria-current={isCurrent ? "step" : undefined}>
                 {circle}
                 {label}
               </span>
             )}
 
             {index < STEPS.length - 1 && (
-              <span className="mx-3 h-0.5 flex-1 overflow-hidden rounded-full bg-[#E4DED4]" aria-hidden="true">
+              <span className="mx-3 h-px flex-1 overflow-hidden bg-[#E0D6C8]" aria-hidden="true">
                 <span
-                  className={`block h-full origin-left rounded-full bg-[#6D8C54] transition-transform duration-700 ease-out ${
+                  className={`block h-full origin-left bg-dark transition-transform duration-700 ease-out ${
                     isDone ? "scale-x-100" : "scale-x-0"
                   }`}
                 />

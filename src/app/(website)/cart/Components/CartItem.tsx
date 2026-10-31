@@ -3,20 +3,43 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
-import CheckoutCard from "@/components/checkout/CheckoutCard";
+import { Trash2 } from "lucide-react";
 
+import CheckoutCard from "@/components/checkout/CheckoutCard";
 import {
   useRemoveCartItemMutation,
   useUpdateCartItemMutation,
 } from "@/store/api/cartApi";
 import { useCart, type MergedCartItem } from "@/hooks/useCart";
-import { formatINR } from "@/lib/format";
+import { cn, formatINR } from "@/lib/format";
+
+import DesignSelections from "./DesignSelections";
+import QuantityStepper from "./QuantityStepper";
 
 interface Props {
   item: MergedCartItem;
   /** Position in the list — staggers the entrance animation. */
   index?: number;
+}
+
+/** The photo, linked to the product when there is one. */
+function Thumb({ item }: { item: MergedCartItem }) {
+  const image = (
+    <Image
+      src={item.image}
+      alt={item.title}
+      width={132}
+      height={176}
+      className="h-32 w-24 object-cover transition-transform duration-500 group-hover:scale-105 sm:h-44 sm:w-33"
+    />
+  );
+  return item.slug ? (
+    <Link href={`/products/${item.slug}`} className="group block shrink-0 self-start overflow-hidden rounded-sm bg-[#F1EDE6]">
+      {image}
+    </Link>
+  ) : (
+    <div className="shrink-0 self-start overflow-hidden rounded-sm bg-[#F1EDE6]">{image}</div>
+  );
 }
 
 /**
@@ -39,6 +62,7 @@ export default function CartItem({ item, index = 0 }: Props) {
   const isRemoving = isShopify ? isRemovingShopify : isRemovingDesign;
 
   const lineTotal = item.unitPrice * item.quantity;
+  const outOfStock = item.availableForSale === false;
 
   const handleQuantityChange = async (nextQuantity: number) => {
     if (nextQuantity < 1) return;
@@ -85,120 +109,71 @@ export default function CartItem({ item, index = 0 }: Props) {
   };
 
   return (
-    <div
+    <li
       className={isLeaving ? "animate-collapse-out" : "animate-rise-in"}
       style={isLeaving ? undefined : { animationDelay: `${Math.min(index, 6) * 70}ms` }}
     >
-    <CheckoutCard className={`relative p-3 transition-shadow duration-300 hover:shadow-[0_8px_24px_-14px_rgba(34,34,34,0.3)] sm:p-4 ${isUpdating ? "opacity-80" : ""}`}>
-      <div className="flex gap-3 sm:gap-5">
-        {item.slug ? (
-          <Link href={`/products/${item.slug}`} className="group shrink-0 overflow-hidden rounded">
-            <Image
-              src={item.image}
-              alt={item.title}
-              width={120}
-              height={150}
-              className="h-[124px] w-[96px] object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[150px] sm:w-[120px]"
-            />
-          </Link>
-        ) : (
-          <Image
-            src={item.image}
-            alt={item.title}
-            width={120}
-            height={150}
-            className="h-[124px] w-[96px] shrink-0 rounded object-cover sm:h-[150px] sm:w-[120px]"
-          />
+      <CheckoutCard
+        className={cn(
+          "p-3 transition-shadow duration-300 hover:shadow-[0_10px_28px_-16px_rgba(34,34,34,0.3)] sm:p-5",
+          isUpdating && "opacity-80"
         )}
+      >
+        <div className="flex gap-4 sm:gap-6">
+          <Thumb item={item} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="line-clamp-2 text-[15px] font-medium leading-snug text-[#222] sm:text-lg">
-                {item.slug ? (
-                  <Link href={`/products/${item.slug}`} className="transition-colors hover:text-[#972E47]">
-                    {item.title}
-                  </Link>
-                ) : (
-                  item.title
-                )}
-              </h3>
-
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <span className="inline-block rounded-full bg-[#F2EEE8] px-2.5 py-0.5 text-[11px] text-[#6B6B6B]">
-                  {item.kind === "design" ? "Customised" : "Ready to wear"}
-                </span>
-
-                {item.availableForSale === false && (
-                  <span className="inline-block rounded-full bg-[#FBEAEA] px-2.5 py-0.5 text-[11px] font-medium text-[#972E47]">
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Phones: price under the title. Wider: price top right. */}
+            <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B6E54] sm:text-[11px]">
+                  {item.kind === "design" ? "Custom design" : "Ready to wear"}
+                </p>
+                <h3 className="mt-1 line-clamp-2 text-[15px] font-medium leading-snug text-dark sm:text-lg">
+                  {item.slug ? (
+                    <Link href={`/products/${item.slug}`} className="transition-colors hover:text-secondary">
+                      {item.title}
+                    </Link>
+                  ) : (
+                    item.title
+                  )}
+                </h3>
+                {outOfStock && (
+                  <span className="mt-1.5 inline-block rounded-sm bg-[#FBEAEA] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-secondary">
                     Out of stock
                   </span>
                 )}
               </div>
+
+              <div className="flex shrink-0 items-baseline gap-2 sm:block sm:text-right">
+                <p key={lineTotal} className="animate-fade-in text-base font-semibold text-dark sm:text-xl">
+                  {formatINR(lineTotal / 100)}
+                </p>
+                {item.quantity > 1 && (
+                  <p className="text-xs text-[#8A8A8A]">{formatINR(item.unitPrice / 100)} each</p>
+                )}
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRemove}
-              disabled={isRemoving || isLeaving}
-              aria-label={`Remove ${item.title} from bag`}
-              title="Remove"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#8A8A8A] transition-colors hover:bg-[#FBEAEA] hover:text-[#972E47] disabled:opacity-50"
-            >
-              <Trash2 size={16} aria-hidden="true" />
-            </button>
-          </div>
+            {item.selections && <DesignSelections selections={item.selections} />}
 
-          {item.selections && item.selections.length > 0 && (
-            <dl className="mt-2.5 grid grid-cols-1 gap-x-6 gap-y-0.5 text-[13px] text-[#666] sm:grid-cols-2 xl:grid-cols-3">
-              {item.selections.map((selection) => (
-                <div key={selection.groupLabel} className="flex min-w-0 gap-1.5">
-                  <dt className="shrink-0 text-[#999]">{selection.groupLabel}:</dt>
-                  <dd className="truncate text-dark">{selection.optionLabel}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-
-          <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-3">
-            <div className="flex h-9 items-center overflow-hidden rounded-md border border-[#E4E0D8]" role="group" aria-label="Quantity">
-              <button
-                type="button"
-                aria-label="Decrease quantity"
-                disabled={isUpdating || item.quantity <= 1}
-                onClick={() => handleQuantityChange(item.quantity - 1)}
-                className="flex h-full w-9 items-center justify-center text-[#444] transition-colors hover:bg-[#F8F6EF] active:scale-90 disabled:opacity-35 disabled:hover:bg-transparent"
-              >
-                <Minus size={14} />
-              </button>
-
-              <span key={item.quantity} className="w-9 animate-check-pop text-center text-sm font-medium" aria-live="polite">
-                {item.quantity}
-              </span>
+            <div className="mt-auto flex items-center gap-1 pt-4 sm:gap-3">
+              <QuantityStepper quantity={item.quantity} disabled={isUpdating} onChange={handleQuantityChange} />
 
               <button
                 type="button"
-                aria-label="Increase quantity"
-                disabled={isUpdating}
-                onClick={() => handleQuantityChange(item.quantity + 1)}
-                className="flex h-full w-9 items-center justify-center text-[#444] transition-colors hover:bg-[#F8F6EF] active:scale-90 disabled:opacity-35"
+                onClick={handleRemove}
+                disabled={isRemoving || isLeaving}
+                aria-label={`Remove ${item.title} from bag`}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-[#6B6B6B] transition-colors hover:bg-[#FBEAEA] hover:text-secondary disabled:opacity-50"
               >
-                <Plus size={14} />
+                <Trash2 size={15} aria-hidden="true" />
+                <span className="hidden sm:inline">Remove</span>
               </button>
-            </div>
-
-            <div className="text-right">
-              <p key={lineTotal} className="animate-fade-in text-lg font-semibold text-[#222] sm:text-xl">
-                {formatINR(lineTotal / 100)}
-              </p>
-              {item.quantity > 1 && (
-                <p className="text-xs text-[#8A8A8A]">{formatINR(item.unitPrice / 100)} each</p>
-              )}
             </div>
           </div>
         </div>
-      </div>
-    </CheckoutCard>
-    </div>
+      </CheckoutCard>
+    </li>
   );
 }

@@ -39,9 +39,9 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-xl border border-[#E9E4DC] bg-white px-4 py-3 text-left transition hover:border-[#CFC6BA] sm:w-auto sm:min-w-[260px]"
+      className="group flex w-full items-center gap-3 rounded-xl border border-[#E8DFD3] bg-white px-4 py-3 text-left transition hover:border-[#CFC6BA] sm:w-auto sm:min-w-[260px]"
     >
-      <Icon size={20} className={tone === 'danger' ? 'text-[#9B1C14]' : 'text-[#A52C45]'} aria-hidden="true" />
+      <Icon size={20} className={tone === 'danger' ? 'text-[#9B1C14]' : 'text-secondary'} aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-[#222]">{label}</span>
         {hint && <span className="block text-xs text-[#6B6B6B]">{hint}</span>}
@@ -66,7 +66,7 @@ function StatusRow({ title, subtitle, status, tone }: { title: string; subtitle?
 }
 
 function Strip({ children }: { children: React.ReactNode }) {
-  return <div className="space-y-3 border-t border-[#E9E4DC] px-4 py-5 sm:px-6">{children}</div>;
+  return <div className="space-y-3 border-t border-[#E8DFD3] px-4 py-5 sm:px-6">{children}</div>;
 }
 
 /* ------------------------------------------------------------- Shopify */

@@ -58,7 +58,7 @@ function DetailTile({
 }) {
   return (
     <div className="flex items-start gap-3.5 rounded-lg border border-[#F2EEE8] bg-[#FDFBF8] p-4">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-[#A52C45]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F6EEF0] text-secondary">
         <Icon size={18} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
@@ -68,7 +68,7 @@ function DetailTile({
         ) : (
           <p className="mt-0.5 text-sm text-[#9A9A9A]">
             Not added ·{' '}
-            <button type="button" onClick={onAdd} className="font-medium text-[#A52C45] hover:underline">
+            <button type="button" onClick={onAdd} className="font-medium text-secondary hover:underline">
               Add
             </button>
           </p>
@@ -152,7 +152,7 @@ export default function PersonalDetailsPanel() {
       <AccountContent>
         <PageHeader title="Personal Details" />
         <div className="p-5 md:p-6">
-          <p className="text-sm text-[#A52C45]">We couldn&apos;t load your profile.</p>
+          <p className="text-sm text-secondary">We couldn&apos;t load your profile.</p>
           <OutlineButton type="button" onClick={() => refetch()} className="mt-4">
             Try again
           </OutlineButton>
@@ -175,7 +175,7 @@ export default function PersonalDetailsPanel() {
 
         {/* Who this is, at a glance. */}
         <div className="flex items-center gap-4 border-b border-[#F2EEE8] bg-linear-to-r from-[#FBF6F7] to-white px-5 py-6 md:px-6">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#A52C45] text-xl font-semibold tracking-wide text-white ring-4 ring-white">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-secondary text-xl font-semibold tracking-wide text-white ring-4 ring-white">
             {initialsOf(profile.name)}
           </span>
           <div className="min-w-0">
@@ -220,7 +220,7 @@ export default function PersonalDetailsPanel() {
           <DetailTile icon={Cake} label="Date of birth" value={formatDob(profile.dob)} onAdd={startEditing} />
         </div>
 
-        <div className="border-t border-[#EAE6DF] p-5 md:p-6">
+        <div className="border-t border-[#E8DFD3] p-5 md:p-6">
           <OutlineButton type="button" onClick={startEditing} className="w-full gap-2 sm:w-auto">
             <Pencil size={15} aria-hidden />
             Edit Profile Details
@@ -290,10 +290,10 @@ export default function PersonalDetailsPanel() {
           />
         </FormField>
 
-        {error && <p className="text-sm text-[#A52C45] sm:col-span-2">{error}</p>}
+        {error && <p className="text-sm text-secondary sm:col-span-2">{error}</p>}
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-[#EAE6DF] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+      <div className="flex flex-col-reverse gap-3 border-t border-[#E8DFD3] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
         <OutlineButton type="button" onClick={() => setEditing(false)}>
           Cancel
         </OutlineButton>
