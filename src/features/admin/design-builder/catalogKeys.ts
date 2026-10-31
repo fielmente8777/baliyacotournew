@@ -33,11 +33,6 @@ export interface MissingGroup {
   items: MissingImage[];
 }
 
-/** Active garments and options the builder will show without a picture. Embroidery linked in AI Studio uses that picture. */
-export function findMissingImages(catalog: AdminCatalog): MissingImage[] {
-  return groupMissingImages(catalog).flatMap((g) => g.items);
-}
-
 /**
  * The same missing pictures, grouped: the garment cards and previews first,
  * then one group per step (Fabric, Neck, Dupatta…) in step order. Empty

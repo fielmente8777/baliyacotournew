@@ -37,7 +37,7 @@ import { downloadImage } from '@/lib/downloadImage';
 import { cn } from '@/lib/format';
 import { Badge, Button, Card, NoticeBar, PageTitle, TextField, type Notice } from '../ui';
 import PhotoSlots, { MAX_EXTRA_PHOTOS, PHOTO_SLOTS, extraLabel, type ExtraPhoto, type SlotKey, type SlotPhoto } from './PhotoSlots';
-import { CollectionDetailsFields, CollectionEditor, neckSummary, useNeckOptions } from './CollectionDetails';
+import { CollectionDetailsFields, CollectionEditor, detailsProblem, detailsSummary, emptyDetails, usePairingOptions } from './CollectionDetails';
 import DesignerLinks from './DesignerLinks';
 import PieceCard from './PieceCard';
 import PositionMap, { zonesFor, type ZoneId } from './PositionMap';
@@ -90,11 +90,11 @@ function StoredIn({ url }: { url?: string }) {
 /** The how-to, folded away once there's saved embroidery to work with. */
 function StudioGuide({ open }: { open: boolean }) {
   const steps = [
-    ['Name it and add photos', 'Type a name (e.g. "Zari Work"), tick the necklines it is made for, and write what you know about the work under "Details for the AI". Then add photos of the embroidered garment: front, neckline and hem are enough for most suits, and "Add close-up" takes more, each with a line on what it shows. Or upload a clean embroidery image you already have (free).'],
+    ['Name it and add photos', 'Type a name (e.g. "Zari Work"), tick what it goes with (neck, sleeve and a length or lower are required; colour and dupatta are optional), and write what you know about the work under "Details for the AI". Then add photos of the embroidered garment: front, neckline and hem are enough for most suits (add the Lower photo if the salwar or pajama is embroidered too), and "Add close-up" takes more, each with a line on what it shows. Or upload a clean embroidery image you already have (free).'],
     ['Extract', 'One AI image pulls the embroidery off the garment. When it finishes, the pieces are cut out, named and saved automatically under your name, with their images in Shopify Files.'],
-    ['Check the pieces', 'Each piece has a name, a position (neckline, shoulder, hem…) and a side. Fix anything wrong, delete fabric or noise, and approve the good ones. Only approved pieces are ever placed.'],
+    ['Check the pieces', 'Each piece has a name, a position (neckline, shoulder, hem, lower…) and a side. Fix anything wrong, delete fabric or noise, and approve the good ones. Only approved pieces are ever placed.'],
     ['Try it on', 'Upload a plain garment. "Preview placement" (free) pastes every approved piece where it will go. "Generate try-on" blends it in with one AI image.'],
-    ['Show it to customers', 'Under "Show in the designer", pick how each embroidery appears in the Embroidery step. Once one is shown, customers see only the shown embroidery (plus No Embroidery), each with its picture from here, and the AI preview stitches that embroidery onto their design.'],
+    ['Show it to customers', 'Under "Show in the designer", pick how each embroidery appears in the Embroidery step. Once one is shown, customers see only the shown embroidery (plus No Embroidery), each with its picture from here, and the AI preview stitches that embroidery onto their design. Each one appears only for the colours and necks it goes with, and once picked, the Sleeve, Length, Lower and Dupatta steps offer only its choices.'],
   ];
   const faq = [
     ['Is it saved?', 'Yes. Once the pieces are found, the embroidery appears under "Saved embroidery" at the top. The badge on each image says whether it is in Shopify Files.'],
@@ -103,7 +103,9 @@ function StudioGuide({ open }: { open: boolean }) {
     ['The whole extraction is poor', 'Start "New embroidery" with clearer, closer photos and extract again. Old embroidery can be deleted from its page.'],
     ['Is the plain garment saved?', 'No, it is only used for that try-on. The try-on results are saved, and you can download them.'],
     ['Does the AI learn?', 'Yes, from you. Every name, position or description you correct on a piece is remembered, and the AI is shown your latest corrections each time it names new pieces. Your details for each embroidery are used in every AI step for it.'],
-    ['Edit or delete a saved one', 'Hover its card under "Saved embroidery" for the pencil (name, necklines, details) and the bin.'],
+    ['Edit or delete a saved one', 'Hover its card under "Saved embroidery" for the pencil (name, what it goes with, details) and the bin.'],
+    ['A card says "details missing"', 'It was saved before sleeve, length and lower existed. Open the pencil, tick its sleeve and a length or lower, and save. Until then it shows with every sleeve and lower.'],
+    ['Customers can\'t see an embroidery', 'Check it is shown under "Show in the designer", has approved pieces, and that the customer picked one of its colours (if any are ticked) and one of its necks.'],
   ];
 
   return (
@@ -154,11 +156,21 @@ export default function AiStudioView() {
     nameInput.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     nameInput.current?.focus({ preventScroll: true });
   };
+  /* What it goes with (neck, sleeve, length or lower, optional dupatta and
+     colour) is needed before anything is saved too, like the name. */
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+  const detailsBox = useRef<HTMLDivElement>(null);
+  const detailsReady = () => {
+    const problem = detailsProblem(details);
+    setDetailsError(problem);
+    if (problem) detailsBox.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return !problem;
+  };
   const [source, setSource] = useState<Source>('photos');
   const [photos, setPhotos] = useState<Partial<Record<SlotKey, SlotPhoto>>>({});
   const [extras, setExtras] = useState<ExtraPhoto[]>([]);
-  /* Necklines and notes for the new embroidery, saved with its pieces. */
-  const [details, setDetails] = useState({ neckOptionIds: [] as string[], notes: '' });
+  /* What the new embroidery goes with, and notes, saved with its pieces. */
+  const [details, setDetails] = useState(emptyDetails);
   const [sheet, setSheet] = useState<{ preview: string; base64: string } | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
 
@@ -167,7 +179,7 @@ export default function AiStudioView() {
   const [focused, setFocused] = useState<EmbroideryAsset | null>(null);
   /* The saved embroidery open in the edit dialog. */
   const [editing, setEditing] = useState<EmbroideryCollection | null>(null);
-  const { options: neckOptions } = useNeckOptions();
+  const { byCode: pairingOptions } = usePairingOptions();
 
   const [extract, { isLoading: extracting }] = useExtractEmbroideryMutation();
   const [build, { isLoading: building }] = useBuildPiecesMutation();
@@ -244,6 +256,7 @@ export default function AiStudioView() {
     /* The name is what the pieces are saved under — needed up front, since
        they're saved automatically as soon as the extraction finishes. */
     if (!collectionName.trim()) return askForName();
+    if (!detailsReady()) return;
     const views = allPhotos().map((p) => ({ image: p.photo.base64, label: p.label }));
     const total = views.reduce((sum, v) => sum + base64Bytes(v.image), 0);
     if (total > MAX_UPLOAD_BYTES) {
@@ -261,6 +274,7 @@ export default function AiStudioView() {
     setNotice(null);
     const name = collectionName.trim();
     if (!name) return askForName();
+    if (!detailsReady()) return;
     try {
       const result = await build(
         source === 'sheet'
@@ -317,7 +331,8 @@ export default function AiStudioView() {
     setNameMissing(false);
     setPhotos({});
     setExtras([]);
-    setDetails({ neckOptionIds: [], notes: '' });
+    setDetails(emptyDetails());
+    setDetailsError(null);
     setSheet(null);
     setRunId(null);
     setNotice(null);
@@ -404,7 +419,7 @@ export default function AiStudioView() {
                     <span className="block text-xs text-[#888]">
                       {c.approvedCount}/{c.assetCount} approved
                     </span>
-                    <span className="block truncate text-[11px] text-[#999]">{neckSummary(c.neckOptionIds ?? [], neckOptions)}</span>
+                    <span className="block truncate text-[11px] text-[#999]">{detailsSummary(c, pairingOptions)}</span>
                   </span>
                 </button>
                 {/* Shown on hover (always on phones): edit or delete without opening it. */}
@@ -495,7 +510,15 @@ export default function AiStudioView() {
                 hint="Shown in the Design Builder when you link it to an Embroidery option."
               />
 
-              <CollectionDetailsFields value={details} onChange={setDetails} />
+              <CollectionDetailsFields
+                ref={detailsBox}
+                value={details}
+                onChange={(next) => {
+                  setDetails(next);
+                  if (detailsError) setDetailsError(detailsProblem(next));
+                }}
+                error={detailsError}
+              />
 
               <div role="radiogroup" aria-label="Where the embroidery comes from" className="grid gap-2 sm:grid-cols-2">
                 {(
@@ -527,7 +550,7 @@ export default function AiStudioView() {
                     <p className="mb-1 text-sm font-medium text-dark">Photos of the embroidered garment</p>
                     <p className="mb-3 text-xs text-[#777]">
                       Each box shows what that photo should cover. Front + neckline + hem is enough for most suits; add the
-                      sleeves or back only if they have their own work.
+                      sleeves, back or lower (salwar, pajama) only if they have their own work.
                     </p>
                     <PhotoSlots
                       photos={photos}
@@ -682,7 +705,7 @@ export default function AiStudioView() {
                   <Check className="size-4" aria-hidden /> Approve all
                 </Button>
               )}
-              <Button variant="ghost" aria-label="Edit name, necklines and details" disabled={!active} onClick={() => active && setEditing(active)}>
+              <Button variant="ghost" aria-label="Edit name, what it goes with and details" disabled={!active} onClick={() => active && setEditing(active)}>
                 <Pencil className="size-4" />
               </Button>
               <Button variant="ghost" aria-label="Delete this embroidery" className="text-red-700" disabled={!active} onClick={() => active && removeCollection(active)}>
@@ -695,8 +718,8 @@ export default function AiStudioView() {
             <div className="mb-5 flex flex-col gap-2 rounded-lg bg-[#faf8f4] p-3 text-sm sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
                 <p>
-                  <span className="font-medium text-dark">Necklines:</span>{' '}
-                  <span className="text-[#555]">{neckSummary(active.neckOptionIds ?? [], neckOptions)}</span>
+                  <span className="font-medium text-dark">Goes with:</span>{' '}
+                  <span className="text-[#555]">{detailsSummary(active, pairingOptions)}</span>
                 </p>
                 <p className="text-[#555]">
                   <span className="font-medium text-dark">Details for the AI:</span>{' '}

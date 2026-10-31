@@ -46,14 +46,4 @@ export const COUNTRIES: Country[] = [
 ];
 
 export const DEFAULT_COUNTRY = COUNTRIES[0];
-
-/**
- * Flag emoji from the ISO code — no image assets, no icon library, and it
- * renders on every modern OS. Falls back to nothing on platforms without
- * regional-indicator support (older Windows), where the dial code still shows.
- */
-export const flagEmoji = (iso: string) =>
-  iso
-    .toUpperCase()
-    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 

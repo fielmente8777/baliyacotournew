@@ -65,28 +65,55 @@ interface Props {
 const CUSTOM_SIZE_LABEL = 'Custom Measurement';
 
 /**
- * Steps that must come before another, whatever order the dashboard stored:
- * Embroidery designs are chosen to suit the neckline, so Neck Type always
- * comes first. [before, after] by option-group code.
+ * The steps in the order the Design Builder set, the same order the server
+ * checks pairing in (`stepOrder`, baliye-node services/customization.ts).
+ * Pairing works both ways, so any order is valid: Embroidery before Neck
+ * narrows the necks to the embroidery's; after it, the embroidery list.
  */
-const MUST_PRECEDE: [string, string][] = [['neck', 'embroidery']];
-
 function orderGroups(groups: DesignGroup[]): DesignGroup[] {
-  const ordered = [...groups].sort((a, b) => a.position - b.position);
-  for (const [first, second] of MUST_PRECEDE) {
-    const i = ordered.findIndex((g) => g.code === first);
-    const j = ordered.findIndex((g) => g.code === second);
-    if (i > j && j !== -1) {
-      const [moved] = ordered.splice(i, 1);
-      ordered.splice(j, 0, moved);
-    }
-  }
-  return ordered;
+  return [...groups].sort((a, b) => a.position - b.position);
 }
 
-/** An option with a pairing rule is offered only once a paired option is chosen. */
-const isOptionAvailable = (option: DesignOption, chosenIds: Set<string>) =>
-  !option.availableWith?.length || option.availableWith.some((id) => chosenIds.has(id));
+/**
+ * Narrows each step to the options that suit every choice made in an earlier
+ * step. Pairing works both ways: A suits B when A's pairs in B's step (if it
+ * has any there) include B, and B's pairs in A's step include A. So Colour and
+ * Neck narrow the Embroidery list, and the chosen embroidery narrows Sleeve,
+ * Length, Lower and Dupatta. Each step is checked on its own, so the neck and
+ * the sleeve must both fit.
+ *
+ * Same rule as the server's `isPairable` (baliye-node services/customization.ts),
+ * which also drops options that could never be completed on this garment.
+ */
+function filterByPairing(ordered: DesignGroup[], selections: Record<string, string | undefined>): DesignGroup[] {
+  const groupOf = new Map<string, string>();
+  const byId = new Map<string, DesignOption>();
+  for (const g of ordered) {
+    for (const o of g.options) {
+      groupOf.set(o._id, g._id);
+      byId.set(o._id, o);
+    }
+  }
+  const pairsIn = (o: DesignOption, groupId: string) => (o.pairsWith ?? []).filter((id) => groupOf.get(id) === groupId);
+
+  return ordered.map((group, rank) => {
+    const earlier = ordered
+      .slice(0, rank)
+      .map((g) => byId.get(selections[g._id] ?? ''))
+      .filter((o): o is DesignOption => Boolean(o));
+    return {
+      ...group,
+      options: group.options.filter((option) =>
+        earlier.every((chosen) => {
+          const mine = pairsIn(option, groupOf.get(chosen._id) ?? '');
+          if (mine.length && !mine.includes(chosen._id)) return false;
+          const theirs = pairsIn(chosen, group._id);
+          return !theirs.length || theirs.includes(option._id);
+        })
+      ),
+    };
+  });
+}
 
 /**
  * Shown while the design options load. Usually a second; after a quiet spell
@@ -197,25 +224,22 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     return Boolean(chosen && chosen.label !== CUSTOM_SIZE_LABEL);
   }, [sizeGroup, selections]);
 
-  /** Every option id currently chosen, across all groups. */
-  const chosenIds = useMemo(() => new Set(Object.values(selections).filter(Boolean)), [selections]);
-
   /**
    * Groups in step order, with visibility worked out from the live selections
    * (so "Full Sleeve" reveals Sleeve Cuff the moment it's picked, rather than
    * only after a reload) and each group's options narrowed by pairing rules
-   * (Embroidery → only designs that suit the chosen Neck Type).
+   * (Embroidery → only designs that suit the chosen Colour and Neck Type;
+   * Sleeve, Length, Lower, Dupatta → only what the chosen embroidery goes with).
    */
   const groups = useMemo(() => {
     if (!config) return [];
-    return orderGroups(config.groups).map((group) => ({
+    return filterByPairing(orderGroups(config.groups), selections).map((group) => ({
       ...group,
       isVisible: group.dependsOn
         ? group.dependsOn.optionIds.includes(selections[group.dependsOn.groupId] ?? '')
         : group.isVisible,
-      options: group.options.filter((option) => isOptionAvailable(option, chosenIds)),
     }));
-  }, [config, selections, chosenIds]);
+  }, [config, selections]);
 
   const steps: BuilderStep[] = useMemo(() => {
     if (!config) return [];
@@ -430,28 +454,37 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const nextStep = stepIndex < steps.length - 1 ? steps[stepIndex + 1] : undefined;
 
   /**
-   * For a group whose options pair with another group (Embroidery with Neck
-   * Type): a note naming the choice it's filtered by, or — if that choice
-   * hasn't been made yet — a message sending the customer back to make it.
+   * For a step narrowed by pairing: a note naming what it's matched to, or, if
+   * an earlier step it depends on has no choice yet, a message sending the
+   * customer back to make it. Embroidery is matched to Colour and Neck Type
+   * (picked before it); Sleeve, Length, Lower and Dupatta to the embroidery.
    */
   const pairingCopy = (group: DesignGroup): { note?: string; blockedMessage?: string } => {
-    const raw = config.groups.find((g) => g._id === group._id);
-    const pairedIds = new Set(raw?.options.flatMap((o) => o.availableWith ?? []) ?? []);
-    if (pairedIds.size === 0) return {};
+    const ordered = orderGroups(config.groups);
+    const rank = ordered.findIndex((g) => g._id === group._id);
+    const earlierSteps = ordered.slice(0, rank);
+    const raw = ordered[rank];
+    const pairedIds = new Set(raw?.options.flatMap((o) => o.pairsWith ?? []) ?? []);
 
-    /* The group those ids belong to — Neck Type, for Embroidery. */
-    const source = config.groups.find(
-      (g) => g._id !== group._id && g.options.some((o) => pairedIds.has(o._id))
-    );
-    if (!source) return {};
-
-    const choice = source.options.find((o) => o._id === selections[source._id]);
-    if (!choice) {
-      return {
-        blockedMessage: `Choose your ${source.label} first. ${group.label} designs are matched to it.`,
-      };
+    /* Earlier steps this step's options are matched to (Colour, Neck Type for Embroidery). */
+    const sources = earlierSteps.filter((g) => g.options.some((o) => pairedIds.has(o._id)));
+    const unchosen = sources.filter((g) => !selections[g._id]);
+    if (unchosen.length) {
+      const names = unchosen.map((g) => g.label).join(' and ');
+      return { blockedMessage: `Choose your ${names} first. ${group.label} designs are matched to it.` };
     }
-    return { note: `${group.label} designs that suit your ${choice.label}` };
+
+    /* Earlier choices that narrow this step: the picked embroidery, for Sleeve. */
+    const narrowing = earlierSteps
+      .map((g) => g.options.find((o) => o._id === selections[g._id]))
+      .filter((o): o is DesignOption => Boolean(o))
+      .filter((o) => (o.pairsWith ?? []).some((id) => raw?.options.some((opt) => opt._id === id)));
+    const matchedTo = [
+      ...sources.map((g) => g.options.find((o) => o._id === selections[g._id])?.label),
+      ...narrowing.map((o) => o.label),
+    ].filter(Boolean);
+    if (!matchedTo.length) return {};
+    return { note: `${group.label} options that go with your ${[...new Set(matchedTo)].join(' · ')}` };
   };
 
   const selectedProfile = profiles.find((p) => p._id === measurementProfileId);

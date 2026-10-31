@@ -149,7 +149,7 @@ def cover(canvas, doc):
         y -= 44
     canvas.setFillColor(GREY)
     canvas.setFont('Helvetica', 9)
-    canvas.drawString(MARGIN, 20 * mm, 'Version: 30 October 2026')
+    canvas.drawString(MARGIN, 20 * mm, 'Version: 31 October 2026')
     canvas.restoreState()
 
 
@@ -183,6 +183,12 @@ table([
     ['<b>Website</b>', link(SITE_URL), 'The shop your customers see: pre-made designs, Create Your Own Design, cart and checkout.'],
     ['<b>Admin panel</b>', link(ADMIN_URL), 'Where you and your team manage everything in this guide. Sign in with your email and password.'],
 ], [28 * mm, 68 * mm, W - 2 * MARGIN - 96 * mm])
+box('Which dashboard?', [
+    'Everything in this guide is done in the <b>Baliye admin panel</b> above, not in the Shopify admin. AI Studio, the Design Builder, '
+    'measurements, website words and pictures, the newsletter, design credits and your team all live here.',
+    'Shopify is still where you manage the <b>pre-made products</b> (their names, prices, photos and tags), <b>orders</b> and <b>payments</b>. '
+    'The website reads those from Shopify automatically.',
+])
 box('How to read this guide', [
     'Words in <b>bold</b> are buttons, tabs or fields exactly as they appear on screen. '
     'A path like <b>AI Studio › Saved embroidery</b> means: open AI Studio from the menu, then go to the Saved embroidery section.',
@@ -211,7 +217,7 @@ table([
     ['<b>Home page</b>, <b>Pre-made Designs page</b>, <b>Footer</b>, <b>Terms &amp; Conditions</b>', 'Words and pictures on those website pages.'],
     ['<b>Newsletter</b>', 'People who signed up for the newsletter.'],
     ['<b>Design credits</b>', 'Credits customers use for AI designs, and your remaining AI balance.'],
-    ['<b>Team</b> (owners only)', 'Add or remove people who can sign in to this panel.'],
+    ['<b>Team</b> (owners only)', 'Add or remove people who can sign in to this panel, including other owner accounts.'],
 ], [55 * mm, W - 2 * MARGIN - 55 * mm])
 
 h2('Owners and team members')
@@ -233,22 +239,34 @@ p('Each embroidery you make is saved under a name, for example <i>Gota Rose</i>,
 h2('The three steps at a glance')
 table([
     ['Step', 'What you do', 'Cost'],
-    ['<b>1. Add the embroidery</b>', 'Name it, tick its necklines, write details, add photos, press <b>Extract embroidery</b>.', 'One AI image'],
+    ['<b>1. Add the embroidery</b>', 'Name it, tick what it goes with (neck, sleeve, length or lower, and optionally colour and dupatta), write details, add photos, press <b>Extract embroidery</b>.', 'One AI image'],
     ['<b>2. Check the pieces</b>', 'Correct each piece’s name, position and side. Approve the good ones.', 'Free'],
     ['<b>3. Try it on</b>', 'Upload a plain garment photo, preview where pieces land, then generate.', 'Preview free, one AI image per variation'],
 ], [42 * mm, 95 * mm, W - 2 * MARGIN - 137 * mm])
 
 h2('Step 1: Add the embroidery')
-h3('Name, necklines and details')
+h3('Name, what it goes with, and details')
 steps([
     '<b>Name of this embroidery</b>: a short name customers will understand, for example <i>Zari Work</i> or <i>Mirror Work Anarkali</i>. '
     'This is required before anything is saved; if it is missing the box turns red.',
-    '<b>Made for which necklines?</b> Tick each neckline this embroidery is designed for (V-Neck, Round Neck, High Neck…). '
-    'In Create Your Own Design, customers only see it after picking one of these necklines. Tick none if it suits every neckline.',
+    '<b>What does this embroidery go with?</b> Tick the choices from Create Your Own Design this embroidery is made for (see the table below). '
+    'Neck type and sleeve type are required, plus a length or a lower. Colour and dupatta are optional. '
+    'If something required is missing, <b>Extract embroidery</b> stops and the box shows what to tick. Your photos are kept.',
     '<b>Details for the AI</b>: write what someone who knows the work would say. Technique, colours, widths, and where each part sits. '
     'For example: <i>Hand gota patti in light gold with small pearls. Neckline border about 3 cm wide. Paisley butis only on the sleeves. '
     'Hem border sits just above the kurta hem.</i> These words are used every time the AI extracts, names or stitches this embroidery.',
 ])
+table([
+    ['Choice', 'Needed?', 'What it does on the website'],
+    ['<b>Colour</b>', 'Optional', 'The embroidery shows only for these colours. Tick none and it shows for every colour.'],
+    ['<b>Neck type</b>', 'Required', 'The embroidery shows only after the customer picks one of these necks. A V-neck embroidery only shows for a V-neck.'],
+    ['<b>Sleeve type</b>', 'Required', 'Once the customer picks this embroidery, the Sleeve step offers only these sleeves.'],
+    ['<b>Length</b>', 'Length or Lower', 'For kurti and anarkali. Once picked, the Length step offers only these.'],
+    ['<b>Lower</b>', 'Length or Lower', 'For patiala and sharara: the salwar, pajama or sharara that goes with it, for example the one with the embroidered ankle border.'],
+    ['<b>Dupatta</b>', 'Optional', 'Once picked, the Dupatta step offers only these. Tick none for any dupatta.'],
+], [26 * mm, 28 * mm, W - 2 * MARGIN - 54 * mm])
+p('Tick both a length and a lower if the embroidery suits every garment. A step can have several choices ticked, '
+  'for example V-Neck and Sweetheart Neck.')
 box('Why the details matter', [
     'The AI does not know embroidery the way you do. One or two sentences about the real technique and colours are the single '
     'biggest help to accuracy. Silver work, pastel threads and thin borders especially benefit from being described.',
@@ -262,7 +280,7 @@ bullets([
 ])
 
 h3('Adding photos')
-p('There are six photo boxes. Each one shows a small drawing of the part of the garment it should cover.')
+p('There are seven photo boxes. Each one shows a small drawing of the part of the garment it should cover.')
 table([
     ['Photo box', 'What to show'],
     ['<b>Front, full garment</b> (recommended)', 'Neck to hem, straight on. The most important photo.'],
@@ -270,10 +288,11 @@ table([
     ['<b>Left sleeve</b>', 'Shoulder to cuff on the left of the photo.'],
     ['<b>Right sleeve</b>', 'Only if it differs from the left one.'],
     ['<b>Hem / daaman close-up</b> (recommended)', 'The bottom border, laid flat if you can.'],
+    ['<b>Lower (salwar / pajama)</b>', 'Only if the lower has embroidery, for example an ankle border. That work is extracted too, as its own pieces.'],
     ['<b>Back</b>', 'Only if the back has embroidery.'],
 ], [62 * mm, W - 2 * MARGIN - 62 * mm])
-p('<b>More close-ups.</b> After the six boxes there is an <b>Add close-up</b> tile with a + sign. Use it for any detail the six boxes miss: '
-  'a cuff from closer, a motif, a second border. You can add up to six more. Under each one, write what it shows, for example '
+p('<b>More close-ups.</b> After the seven boxes there is an <b>Add close-up</b> tile with a + sign. Use it for any detail the seven boxes miss: '
+  'a cuff from closer, a motif, a second border. You can add up to five more (12 photos in all). Under each one, write what it shows, for example '
   '<i>left cuff, gota border, light gold</i>. The AI reads that line together with the photo.')
 p('To replace or remove a photo, hover over it (on a phone the buttons are always shown) and use the arrows or the cross.')
 
@@ -289,13 +308,13 @@ box('Page reloaded before it finished?', [
     'then press <b>Open &amp; save</b> on the one you want. Nothing is charged again.',
 ], tone='warn')
 
-story.append(PageBreak())
 h2('Step 2: Check the pieces')
 p('Every piece has a picture and these fields. The small garment drawing on the left lights up where the piece you point at will go.')
 table([
     ['Field', 'What it means'],
     ['<b>Piece name</b>', 'A clear name, for example <i>Zari Paisley Shoulder Motif</i>.'],
-    ['<b>Position</b>', 'Where it belongs: neckline, yoke, placket, shoulder, chest, sleeve, sleeve cuff, waist, buti (small repeated motif), hem border, lower border or back.'],
+    ['<b>Position</b>', 'Where it belongs: neckline, yoke, placket, shoulder, chest, sleeve, sleeve cuff, waist, buti (small repeated motif), hem border, lower border, '
+     '<b>lower (salwar, pajama)</b> for work on the bottom wear, or back.'],
     ['<b>Side (as in the photo)</b>', '<b>Pair</b> = on both sides, mirrored (most shoulders and cuffs). <b>Left</b> or <b>Right</b> = one side only. <b>Center</b> = on the centre line.'],
     ['<b>Work type</b>', 'The technique: Zari, Resham, Mirror, Sequin, Gota Patti, Zardozi, Beads, Cutdana, Aari…'],
     ['<b>Description</b>', 'One sentence on what it looks like and where it sits. The AI uses this when stitching it.'],
@@ -312,14 +331,16 @@ box('The AI learns from your corrections', [
     'and what you changed it to. The next time it names pieces, it is shown your latest corrections as examples and follows your way of naming things. '
     'The more carefully the first few embroideries are corrected, the better the next ones come out.',
 ])
-p('At the top of step 2 you can see the embroidery’s <b>Necklines</b> and <b>Details for the AI</b>, with an <b>Edit details</b> button.')
+p('At the top of step 2 you can see what the embroidery <b>Goes with</b> (for example <i>Red · V-Neck · Full Sleeve · Salwar</i>) '
+  'and its <b>Details for the AI</b>, with an <b>Edit details</b> button.')
 
 h2('Step 3: Try it on a plain garment')
 p('This is a test for you only. Customers do not see it.')
 steps([
     'Upload a <b>Plain garment (no embroidery)</b> photo: front view, whole garment in frame. Its colour, cut and pose are kept exactly.',
     'Keep <b>Copy the layout from the source photo</b> ticked. AI Studio reads where each piece sits on the finished design and puts it '
-    'in the same place on the plain garment. It uses the front photo from step 1, or you can add a <b>Source design photo</b> of the embroidered garment.',
+    'in the same place on the plain garment. It uses the front photo from step 1, or you can add a <b>Source design photo</b> of the embroidered garment. '
+    'Pieces on the lower (salwar, pajama) are only placed when this is ticked.',
     'If the garment is too close in colour to its background, AI Studio asks you to tap six points once (neckline, both shoulders, both cuffs, hem). '
     'They are reused for every try-on on that garment.',
     'Press <b>Preview placement</b>. This is free and shows exactly where every piece will land.',
@@ -335,7 +356,6 @@ box('Plain garment photos', [
     'Best of all: attach the embroidered photo and ask the tool to <i>remove all embroidery and keep everything else the same</i>.',
 ])
 
-story.append(PageBreak())
 h2('Showing embroidery to customers')
 p('Section <b>Show in the designer</b> decides which saved embroidery customers can pick in the <b>Embroidery</b> step of Create Your Own Design.')
 p('Each saved embroidery has a dropdown:')
@@ -350,15 +370,19 @@ bullets([
     'An embroidery can only be shown once at least one of its pieces is approved.',
     '<b>Once any embroidery is shown</b>, the Embroidery step lists only the shown embroidery (plus <i>No Embroidery</i>), each with its picture from AI Studio. '
     'The older Embroidery options come back if you set every embroidery to Not shown.',
-    'Customers see each embroidery only after choosing one of its necklines (see step 1).',
+    'Customers see each embroidery only for the colours and necks it goes with (see step 1). After they pick it, the Sleeve, Length, Lower '
+    'and Dupatta steps offer only the choices you ticked, so nothing clashes. If they go back and change the neck, an embroidery that no '
+    'longer fits is cleared and they choose again.',
     'When a customer picks it, the AI preview stitches that exact embroidery onto their design.',
 ])
 
 h2('Editing and deleting saved embroidery')
 bullets([
     'Under <b>Saved embroidery</b>, hover over a card. A <b>pencil</b> (edit) and a <b>bin</b> (delete) appear. On a phone they are always shown.',
-    'The pencil opens <b>Edit embroidery</b>: change the name, the necklines and the details for the AI, then press <b>Save</b>. '
-    'New necklines take effect in Create Your Own Design straight away.',
+    'The pencil opens <b>Edit embroidery</b>: change the name, what it goes with and the details for the AI, then press <b>Save</b>. '
+    'Changes take effect in Create Your Own Design straight away.',
+    'Embroidery saved before sleeve, length and lower existed shows <i>details missing</i> on its card. Open the pencil, tick its sleeve and '
+    'length or lower, and save; until then it shows with every sleeve and lower.',
     'Delete removes the embroidery and all its pieces. If it was shown in the designer it is taken off there too. This cannot be undone.',
     'Click a card to open it and continue checking its pieces. The <b>New embroidery</b> tile starts a fresh one.',
 ])
@@ -413,7 +437,8 @@ table([
     ['A piece is missing.', 'Open the embroidery and use <b>Add a missing piece</b> with a clean image of that piece on white.'],
     ['A piece is wrong or empty.', 'Change its position or side, or delete it with the bin icon.'],
     ['The plain garment photo: is it saved?', 'No, it is only used for that try-on. The try-on results are saved and can be downloaded.'],
-    ['A customer can’t see an embroidery.', 'Check it is shown under Show in the designer, has approved pieces, and that the customer picked one of its necklines.'],
+    ['A customer can’t see an embroidery.', 'Check it is shown under Show in the designer, has approved pieces, and that the customer picked one of its colours (if you ticked any) and one of its necks.'],
+    ['A sleeve or lower is missing in the designer.', 'The customer picked an embroidery that only goes with other sleeves or lowers. Tick more of them on that embroidery, or the customer picks another embroidery.'],
 ], [55 * mm, W - 2 * MARGIN - 55 * mm])
 
 # ---------------------------------------------------------------- 4
@@ -427,7 +452,18 @@ box('Saved to Shopify too', [
 ])
 
 h2('Tab 1: Garments')
-p('Each card is a garment customers can design, for example Patiala Suit, Kurti, Anarkali Suit or Sharara Set. Click one to edit it.')
+p('Each card is a garment customers can design, for example Patiala Suit, Kurti, Anarkali Suit or Sharara Set. Click one to edit it below the cards.')
+bullets([
+    'Hover over a card (on a phone the buttons are always shown) for a <b>pencil</b> and a <b>bin</b>.',
+    'The <b>pencil</b> opens that garment’s editor and scrolls to it.',
+    'The <b>bin</b> deletes the garment after you confirm. It disappears from the Design Builder and the website. Saved designs and orders keep their copy.',
+    '<b>New garment</b>, the last tile, adds one: type its name and starting price, then set it up below.',
+])
+box('Starting fresh with your own garments', [
+    'The four garments there now (Patiala Suit, Kurti, Anarkali Suit, Sharara Set) were set up for testing. To replace them, delete each with the bin, '
+    'then add your own with <b>New garment</b>: details, pictures, the steps in the builder and the measurements asked for. '
+    'Steps and options under <b>Steps &amp; options</b> are shared by all garments and are not deleted with a garment.',
+], tone='warn')
 h3('Details')
 bullets([
     '<b>Garment name</b>, <b>Description</b> and <b>Collection</b> (Indian, Western or Indo-western).',
@@ -449,9 +485,12 @@ bullets([
     '<b>Pre-selected option</b>: the choice already selected when the customer arrives.',
     '<b>Only show this step when</b>: for example show Cuff only when Sleeve is Full Sleeve.',
 ])
-box('Keep Neck before Embroidery', [
-    'Embroidery is filtered by neckline. Make sure the Neck step comes before the Embroidery step for every garment, so customers pick the neckline first.',
-], tone='warn')
+box('Step order and embroidery', [
+    'Customers see the steps in exactly the order you set here, and embroidery matching works in any order. '
+    'With Embroidery after Neck (the usual order: Fabric, Colour, Neck, Embroidery, Sleeve, Lower, Dupatta, Size), the neck the customer picked '
+    'decides which embroidery is offered. With Embroidery before Neck, the embroidery they picked decides which necks are offered. '
+    'Steps after the embroidery always offer only what it goes with.',
+])
 h3('Measurements asked for')
 p('Tick which measurement fields this garment needs. The fields themselves are set up under <b>Measurement fields</b> (section 5).')
 
@@ -464,7 +503,9 @@ bullets([
     'Options linked to AI Studio embroidery show the AI Studio picture and an <b>AI Studio</b> badge instead of an upload box.',
     '<b>Delete</b> removes an option from every garment (you are asked to confirm). Saved designs keep their copy.',
     '<b>Edit</b> opens: Name, Adds to price, Description, Display order, <b>Visible to customers</b>, and <b>Only offer with</b>.',
-    '<b>Only offer with</b>: tick options from other steps this one goes with. Nothing ticked means it goes with everything. Example: an embroidery that only suits some necklines.',
+    '<b>Only offer with</b>: tick options from other steps this one goes with. Nothing ticked means it goes with everything. It works both ways: '
+    'whichever of the two is picked first limits the other. For AI Studio embroidery, set this in AI Studio instead (its <i>what it goes with</i> choices); '
+    'AI Studio keeps those ticks up to date.',
     '<b>Add an option</b> at the bottom of the list: name, price (and colour for colour steps), then <b>Add</b>.',
 ])
 
@@ -542,8 +583,15 @@ p('A word-processor style editor: headings, bold, lists and links, with undo. No
   'but always read legal text yourself before saving.')
 
 h2('Measurement fields')
-p('The fields customers fill in when they save their measurements: Name, Unit, Help text, Default value and Order. '
-  'A <b>How to measure</b> video can be added. Tick which fields each garment needs in the Design Builder.')
+p('The fields customers fill in when they save their measurements for a made-to-measure garment.')
+bullets([
+    'Each row is one field: <b>Name</b> (for example <i>Bust</i>, <i>Waist</i>, <i>Hip</i>), <b>Unit</b> (inches or cm), <b>Default</b> value, '
+    '<b>Help text</b> that tells the customer how to measure, <b>Order</b> (lower shows first) and <b>Shown</b>. Press <b>Save</b> on the row after changing it.',
+    '<b>Add field</b> at the bottom: type a name, for example <i>Hip</i>, then fill in its row.',
+    'The bin deletes a field after you confirm. Measurements customers already saved keep their values.',
+    '<b>“How to measure” video</b> at the top: paste a YouTube link and press <b>Save</b>. Customers see it beside the fields.',
+    'Which fields a garment asks for is ticked per garment in <b>Design Builder › Garments › Measurements asked for</b>.',
+])
 
 h2('Newsletter')
 bullets([
@@ -569,7 +617,8 @@ steps([
 bullets([
     '<b>Can sign in</b> switch: turn someone off without deleting them.',
     '<b>New password</b>: set a new password for them. They are signed out and must use the new one.',
-    '<b>Remove</b>: deletes their login after you confirm.',
+    '<b>Remove</b>: deletes their login after you confirm. Owners can also remove another <b>owner</b> account, for example an old test login. '
+    'You can never remove your own account, and the last owner always stays, so someone can always sign in.',
     'Switching off, removing or changing a password signs the person out on every device within seconds.',
 ])
 
@@ -580,12 +629,14 @@ table([
     ['I want to…', 'Go to'],
     ['Create a new AI embroidery', 'AI Studio › New embroidery'],
     ['Add more detail photos', 'AI Studio › step 1 › Add close-up'],
-    ['Say which necklines an embroidery suits', 'AI Studio › step 1, or the pencil on its Saved embroidery card'],
+    ['Say what an embroidery goes with (neck, sleeve, length, lower, colour, dupatta)', 'AI Studio › step 1, or the pencil on its Saved embroidery card'],
+    ['Extract embroidery on a salwar or pajama', 'AI Studio › step 1 › Lower (salwar / pajama) photo'],
     ['Correct a piece’s position or name', 'AI Studio › open the embroidery › step 2'],
     ['Test embroidery on a plain garment', 'AI Studio › step 3 › Preview placement, then Generate try-on'],
     ['Let customers pick an embroidery', 'AI Studio › Show in the designer'],
     ['Edit or delete a saved embroidery', 'AI Studio › Saved embroidery › hover the card'],
-    ['Change a garment’s price or photo', 'Design Builder › Garments'],
+    ['Change a garment’s price or photo', 'Design Builder › Garments › pencil on the card'],
+    ['Delete a garment', 'Design Builder › Garments › bin on the card'],
     ['Change the order of steps for a garment', 'Design Builder › Garments › Steps in the builder'],
     ['Add, price or delete an option', 'Design Builder › Steps &amp; options'],
     ['Upload missing pictures', 'Design Builder › Missing pictures'],
@@ -595,6 +646,8 @@ table([
     ['Give a customer credits', 'Design credits › Find a customer'],
     ['Check the AI balance', 'Design credits › Your AI credit (OpenAI)'],
     ['Add a colleague', 'Team › Add a team member'],
+    ['Remove an old login', 'Team › Remove on that row'],
+    ['Change measurement fields', 'Measurement fields'],
 ], [80 * mm, W - 2 * MARGIN - 80 * mm])
 
 # ---------------------------------------------------------------- build

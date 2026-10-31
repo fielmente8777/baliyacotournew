@@ -21,7 +21,8 @@ const MIN_PASSWORD = 8;
  * Admin → Team: the people who can sign in to this panel. An owner adds a
  * team member with their email and a password; they sign in at /admin/login
  * with those and see the whole panel. Switching someone off or removing them
- * signs them out at once. Only owners see or change this page.
+ * signs them out at once. Owners can also remove another owner, never
+ * themselves. Only owners see or change this page.
  */
 export default function TeamView() {
   const { data: me } = useGetAdminMeQuery();
@@ -127,6 +128,9 @@ function MemberRow({ member, isMe, onNotice }: { member: TeamMember; isMe: boole
   const [update, { isLoading: saving }] = useUpdateTeamMemberMutation();
   const [remove, { isLoading: removing }] = useRemoveTeamMemberMutation();
   const isMember = member.role === 'member';
+  /* Another owner (e.g. a leftover seed account) can be removed too, never yourself.
+     The backend also keeps the last active owner. */
+  const canRemove = isMember || !isMe;
 
   const run = async (action: () => Promise<unknown>, ok: string) => {
     try {
@@ -142,6 +146,23 @@ function MemberRow({ member, isMe, onNotice }: { member: TeamMember; isMe: boole
   const lastSeen = member.lastLoginAt
     ? `Last signed in ${new Date(member.lastLoginAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`
     : 'Not signed in yet';
+
+  const removeButton = canRemove && (
+    <Button
+      variant="ghost"
+      loading={removing}
+      className="text-red-700 hover:bg-red-50"
+      aria-label={`Remove ${member.name} (${member.email})`}
+      onClick={() => {
+        const what = isMember ? 'They are signed out and can no longer sign in.' : 'This owner account is signed out and deleted.';
+        if (!window.confirm(`Remove ${member.name} (${member.email})? ${what}`)) return;
+        void run(() => remove(member._id).unwrap(), `${member.email} was removed.`);
+      }}
+    >
+      <Trash2 className="size-4" aria-hidden />
+      <span className="hidden sm:inline">Remove</span>
+    </Button>
+  );
 
   return (
     <li className="py-3">
@@ -176,21 +197,10 @@ function MemberRow({ member, isMe, onNotice }: { member: TeamMember; isMe: boole
             <Button variant="outline" onClick={() => setSettingPassword((s) => !s)}>
               <KeyRound className="size-4" aria-hidden /> {settingPassword ? 'Cancel' : 'New password'}
             </Button>
-            <Button
-              variant="ghost"
-              loading={removing}
-              className="text-red-700 hover:bg-red-50"
-              aria-label={`Remove ${member.name}`}
-              onClick={() => {
-                if (!window.confirm(`Remove ${member.name}? They are signed out and can no longer sign in.`)) return;
-                void run(() => remove(member._id).unwrap(), `${member.name} was removed.`);
-              }}
-            >
-              <Trash2 className="size-4" aria-hidden />
-              <span className="hidden sm:inline">Remove</span>
-            </Button>
+            {removeButton}
           </div>
         )}
+        {!isMember && canRemove && removeButton}
       </div>
 
       {isMember && settingPassword && (

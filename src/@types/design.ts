@@ -24,12 +24,13 @@ export interface DesignOption {
   /** Minor units, added to the base price when chosen. */
   priceModifier: number;
   /**
-   * Pairing rule: when set, this option is only offered once one of these
-   * option ids (from another group) is selected. Used so each Embroidery
-   * design only appears for the Neck Types it suits. Missing or empty means
-   * "always offered".
+   * Pairing rule: option ids from other groups this option goes with. It
+   * works both ways, in step order: an Embroidery design only appears for the
+   * colours and necks it suits (picked before it), and once picked, the
+   * Sleeve, Length, Lower and Dupatta steps offer only its choices. Missing or
+   * empty means "goes with anything". See `filterByPairing`.
    */
-  availableWith?: string[];
+  pairsWith?: string[];
 }
 
 /**

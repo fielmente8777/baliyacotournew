@@ -12,6 +12,7 @@ export const EMBROIDERY_REGIONS = [
   'buti',
   'hem_border',
   'lower_hem',
+  'lower_garment',
   'back',
 ] as const;
 
@@ -67,17 +68,30 @@ export interface EmbroideryCollection {
   approvedCount: number;
   thumbnailUrl: string;
   createdAt: string;
-  /** Neck Type options it suits; empty = every neckline. */
+  /** Neck Type options it suits; empty (older embroidery) = every neckline. */
   neckOptionIds: string[];
+  sleeveOptionIds: string[];
+  lengthOptionIds: string[];
+  lowerOptionIds: string[];
+  /** Optional; empty = any dupatta. */
+  dupattaOptionIds: string[];
+  /** Optional; empty = every colour. */
+  colourOptionIds: string[];
   /** The admin's notes, given to every AI step for this embroidery. */
   notes: string;
 }
 
+/** The designer steps an embroidery is matched to. Mirrors baliye-node `PAIRING_FIELDS`. */
+export type PairingField =
+  | 'neckOptionIds'
+  | 'sleeveOptionIds'
+  | 'lengthOptionIds'
+  | 'lowerOptionIds'
+  | 'dupattaOptionIds'
+  | 'colourOptionIds';
+
 /** What the admin can say about a whole embroidery, beyond its pieces. */
-export interface EmbroideryCollectionDetails {
-  neckOptionIds?: string[];
-  notes?: string;
-}
+export type EmbroideryCollectionDetails = Partial<Record<PairingField, string[]>> & { notes?: string };
 
 /** One copy of a piece as read off the source photo; fractions of the target image. */
 export interface PlannedPiece {
@@ -120,6 +134,7 @@ export const REGION_LABELS: Record<EmbroideryRegion, string> = {
   buti: 'Buti (all over)',
   hem_border: 'Hem border (daaman)',
   lower_hem: 'Lower border',
+  lower_garment: 'Lower (salwar, pajama)',
   back: 'Back',
 };
 
@@ -136,6 +151,7 @@ export const REGION_HINTS: Record<EmbroideryRegion, string> = {
   buti: 'A small motif repeated all over — one piece, scattered automatically',
   hem_border: 'The long border along the bottom edge',
   lower_hem: 'A second, thinner band near the hem',
+  lower_garment: 'Work on the salwar, pajama or sharara itself, e.g. its ankle border. Placed on try-ons when the layout is copied from the source photo',
   back: 'Work on the back — kept for reference, not placed on try-ons',
 };
 

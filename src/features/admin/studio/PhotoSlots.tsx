@@ -13,7 +13,7 @@ import { ImagePlus, Plus, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/format';
 import PositionMap, { type ZoneId } from './PositionMap';
 
-export type SlotKey = 'front' | 'back' | 'neck' | 'sleeveLeft' | 'sleeveRight' | 'hem';
+export type SlotKey = 'front' | 'back' | 'neck' | 'sleeveLeft' | 'sleeveRight' | 'hem' | 'lower';
 
 export interface SlotPhoto {
   preview: string;
@@ -24,7 +24,7 @@ export interface SlotPhoto {
 }
 
 /**
- * A close-up beyond the six named slots, with the admin's own words for what
+ * A close-up beyond the seven named slots, with the admin's own words for what
  * it shows ("left cuff, gota border, light gold"). The words go to the AI
  * with the photo, the same way a slot's name does.
  */
@@ -34,8 +34,8 @@ export interface ExtraPhoto {
   description: string;
 }
 
-/** Six slots + six extras = the 12 photos one extraction accepts. */
-export const MAX_EXTRA_PHOTOS = 6;
+/** Seven slots + five extras = the 12 photos one extraction accepts. */
+export const MAX_EXTRA_PHOTOS = 5;
 
 /** What the AI is told an extra photo shows. */
 export const extraLabel = (extra: ExtraPhoto) =>
@@ -88,6 +88,13 @@ export const PHOTO_SLOTS: {
     hint: 'The bottom border, laid flat if you can.',
     zones: ['hem_border', 'lower_hem'],
     recommended: true,
+  },
+  {
+    key: 'lower',
+    title: 'Lower (salwar / pajama)',
+    label: 'close-up of the lower garment (salwar, pajama or sharara) and its embroidery',
+    hint: 'Only if the lower has embroidery, e.g. an ankle border. It is extracted too.',
+    zones: ['lower_garment'],
   },
   {
     key: 'back',
@@ -193,7 +200,7 @@ function AddExtra({ onAdd, disabled }: { onAdd: (file: File) => void; disabled?:
         <span className="text-[11px] font-medium text-secondary">Add close-up</span>
       </button>
       <p className="mt-1.5 text-xs font-semibold text-dark">More close-ups</p>
-      <p className="text-[11px] leading-snug text-[#888]">Any detail the six miss. Say what each one shows.</p>
+      <p className="text-[11px] leading-snug text-[#888]">Any detail the seven miss. Say what each one shows.</p>
       <input
         ref={input}
         type="file"

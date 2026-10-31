@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { ImageOff, Plus, RefreshCw } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ImageOff, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 
 import {
   adminErrorMessage,
   useCreateGarmentMutation,
+  useDeleteGarmentMutation,
   useGetCatalogQuery,
   useSyncCatalogMutation,
   useUploadCatalogImageMutation,
@@ -26,6 +27,9 @@ export default function DesignBuilderView() {
   const [tab, setTab] = useState<Tab>('garments');
   const [garmentId, setGarmentId] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  const editorBox = useRef<HTMLDivElement>(null);
+  const [removeGarment] = useDeleteGarmentMutation();
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   if (isLoading) return <p className="text-sm text-[#888]">Loading the design catalogue…</p>;
   if (error || !catalog) {
@@ -43,6 +47,27 @@ export default function DesignBuilderView() {
   const selected = garments.find((g) => g._id === garmentId) ?? garments[0];
   const missingGroups = groupMissingImages(catalog);
   const missing = missingGroups.flatMap((g) => g.items);
+
+  const editGarment = (id: string) => {
+    setGarmentId(id);
+    requestAnimationFrame(() => editorBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
+  /* Soft delete: hidden from the designer and Shopify; saved designs and orders keep their copy. */
+  const deleteGarment = async (g: (typeof garments)[number]) => {
+    if (!window.confirm(`Delete "${g.name}"? It disappears from the design builder and the website. Saved designs and orders keep their copy.`)) return;
+    setNotice(null);
+    setRemovingId(g._id);
+    try {
+      await removeGarment(g._id).unwrap();
+      if (garmentId === g._id) setGarmentId(null);
+      setNotice({ tone: 'ok', text: `"${g.name}" was deleted.` });
+    } catch (err) {
+      setNotice({ tone: 'error', text: adminErrorMessage(err, `Could not delete "${g.name}"`) });
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   const pull = async () => {
     setNotice(null);
@@ -111,43 +136,68 @@ export default function DesignBuilderView() {
             {garments.map((g) => {
               const image = catalog.images[garmentKey(g)];
               return (
-                <button
-                  key={g._id}
-                  type="button"
-                  onClick={() => setGarmentId(g._id)}
-                  className={cn(
-                    'overflow-hidden rounded-lg border bg-white text-left transition',
-                    selected?._id === g._id ? 'border-secondary ring-2 ring-secondary/20' : 'border-[#e6e0d6] hover:border-secondary/50'
-                  )}
-                >
-                  <div className="relative aspect-4/3 bg-[#faf8f4]">
-                    {image ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN thumbnail
-                      <img src={image} alt="" className="absolute inset-0 size-full object-cover" />
-                    ) : (
-                      <span className="absolute inset-0 flex items-center justify-center text-amber-700">
-                        <ImageOff className="size-5" />
-                      </span>
+                <div key={g._id} className="group relative">
+                  <button
+                    type="button"
+                    onClick={() => setGarmentId(g._id)}
+                    className={cn(
+                      'w-full overflow-hidden rounded-lg border bg-white text-left transition',
+                      selected?._id === g._id ? 'border-secondary ring-2 ring-secondary/20' : 'border-[#e6e0d6] hover:border-secondary/50'
                     )}
-                    {!g.isActive && (
-                      <span className="absolute left-2 top-2">
-                        <Badge tone="off">Hidden</Badge>
-                      </span>
-                    )}
+                  >
+                    <div className="relative aspect-4/3 bg-[#faf8f4]">
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN thumbnail
+                        <img src={image} alt="" className="absolute inset-0 size-full object-cover" />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-amber-700">
+                          <ImageOff className="size-5" />
+                        </span>
+                      )}
+                      {!g.isActive && (
+                        <span className="absolute left-2 top-2">
+                          <Badge tone="off">Hidden</Badge>
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="truncate text-sm font-medium text-dark">{g.name}</p>
+                      <p className="text-xs text-[#888]">
+                        from {formatINR(g.basePrice / 100)} · {g.optionConfigs?.length ?? 0} steps
+                      </p>
+                    </div>
+                  </button>
+                  {/* Shown on hover (always on phones): edit or delete without opening it first. */}
+                  <div className="absolute right-2 top-2 flex gap-1.5 transition sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => editGarment(g._id)}
+                      aria-label={`Edit ${g.name}`}
+                      title="Edit"
+                      className="flex size-9 items-center justify-center rounded-full bg-white/95 text-dark shadow ring-1 ring-black/10 hover:bg-white"
+                    >
+                      <Pencil className="size-4" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void deleteGarment(g)}
+                      disabled={removingId === g._id}
+                      aria-label={`Delete ${g.name}`}
+                      title="Delete"
+                      className="flex size-9 items-center justify-center rounded-full bg-white/95 text-red-700 shadow ring-1 ring-black/10 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
                   </div>
-                  <div className="p-2.5">
-                    <p className="truncate text-sm font-medium text-dark">{g.name}</p>
-                    <p className="text-xs text-[#888]">
-                      from {formatINR(g.basePrice / 100)} · {g.optionConfigs?.length ?? 0} steps
-                    </p>
-                  </div>
-                </button>
+                </div>
               );
             })}
             <NewGarmentTile onCreated={setGarmentId} />
           </div>
 
-          {selected && <GarmentEditor key={selected._id} garment={selected} catalog={catalog} />}
+          <div ref={editorBox} className="scroll-mt-4">
+            {selected && <GarmentEditor key={selected._id} garment={selected} catalog={catalog} />}
+          </div>
         </div>
       )}
 

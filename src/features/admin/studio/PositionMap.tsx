@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * A front view of a kurta with every embroidery position drawn on it.
+ * A front view of a kurta, with the lower (salwar) below it, and every
+ * embroidery position drawn on it.
  *
  * Used three ways: as the example on each photo slot ("this photo should show
  * the left sleeve"), as the legend that names the positions, and beside the
@@ -32,6 +33,9 @@ export function zonesFor(region: EmbroideryRegion, side: EmbroiderySide): ZoneId
 const BODY =
   'M84 30 Q100 44 116 30 L142 38 L178 112 L162 122 L140 82 L146 244 L54 244 L60 82 L38 122 L22 112 L58 38 Z';
 
+/* The two legs of the lower, showing below the kurta hem. */
+const LEGS = 'M64 240 L66 276 L96 276 L99 240 Z M101 240 L104 276 L134 276 L136 240 Z';
+
 /* Each zone's shape. Kept simple — it is a guide, not a pattern. */
 const ZONES: { id: ZoneId; el: 'path' | 'rect' | 'ellipse'; props: Record<string, number | string> }[] = [
   { id: 'yoke', el: 'path', props: { d: 'M78 40 Q100 62 122 40 L126 66 Q100 76 74 66 Z' } },
@@ -49,6 +53,8 @@ const ZONES: { id: ZoneId; el: 'path' | 'rect' | 'ellipse'; props: Record<string
   { id: 'waist', el: 'rect', props: { x: 61, y: 124, width: 78, height: 8, rx: 2 } },
   { id: 'hem_border', el: 'rect', props: { x: 55, y: 226, width: 90, height: 10, rx: 2 } },
   { id: 'lower_hem', el: 'rect', props: { x: 54, y: 238, width: 92, height: 5, rx: 1.5 } },
+  /* Ankle borders (mohri) of the lower. */
+  { id: 'lower_garment', el: 'path', props: { d: 'M66 266 L96 266 L96 275 L66 275 Z M104 266 L134 266 L134 275 L104 275 Z' } },
 ];
 
 const BUTIS = [
@@ -78,7 +84,12 @@ export default function PositionMap({
     on(id) ? 'fill-secondary/85 stroke-secondary' : muted ? 'fill-secondary/12 stroke-secondary/30' : 'fill-transparent stroke-transparent';
 
   return (
-    <svg viewBox="0 0 200 256" className={cn('h-auto w-full', className)} aria-hidden>
+    <svg viewBox="0 0 200 288" className={cn('h-auto w-full', className)} aria-hidden>
+      <path
+        d={LEGS}
+        className={cn('stroke-[1.5] transition-colors', garmentOn ? 'fill-secondary/10 stroke-secondary' : 'fill-[#f2ece2] stroke-[#cbbfae]')}
+        strokeLinejoin="round"
+      />
       <path
         d={back ? BODY.replace('Q100 44 116 30', 'Q100 34 116 30') : BODY}
         className={cn(
@@ -120,6 +131,7 @@ export default function PositionMap({
           <text x="100" y="142" textAnchor="middle">Waist</text>
           <text x="100" y="185" textAnchor="middle" className="fill-[#a0907c]">Buti</text>
           <text x="100" y="254" textAnchor="middle">Hem border (daaman)</text>
+          <text x="100" y="286" textAnchor="middle">Lower (salwar, pajama)</text>
         </g>
       )}
     </svg>
