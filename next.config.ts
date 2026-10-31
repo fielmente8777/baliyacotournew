@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
          and old bookmarks update; query strings (?badge=bestseller) carry over. */
       { source: "/collections", destination: "/products", permanent: true },
       { source: "/product/:id", destination: "/products", permanent: false },
+      /* The panel's front door. A real 307 here, not redirect() in a page: the
+         prerendered page carried the redirect inside its payload, and acting on
+         it while AdminShell was still checking the session sometimes crashed
+         the page ("This page couldn't load"). */
+      { source: "/admin", destination: "/admin/design-builder", permanent: false },
     ];
   },
 
