@@ -47,6 +47,8 @@ import MeasurementPanel from './panels/MeasurementPanel';
 import { useRecolouredPreview } from './useRecolouredPreview';
 import { useStepInUrl } from './useStepInUrl';
 import RecolourOverlay, { TokenBalanceChip } from './RecolourOverlay';
+import FitProfileBar from './FitProfile';
+import { adviceFor, useFitProfile } from './fitAdvice';
 import { useGetWalletQuery } from '@/store/api/tokenApi';
 import { useCreditsEnabled } from '@/store/api/settingsApi';
 import { useAuth } from '@/features/auth/useAuth';
@@ -160,6 +162,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
      of a broken-image icon. */
   const [previewFailed, setPreviewFailed] = useState(false);
   const optionsRef = useRef<HTMLElement>(null);
+  const [fit, setFit] = useFitProfile();
 
   const { data: config, isLoading } = useGetDesignConfigQuery(
     { garmentTypeId, productId },
@@ -616,11 +619,16 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           {/* ---- Options panel ------------------------------------------- */}
           {/* scroll-mt: lands below the sticky StepTabs. */}
           <section ref={optionsRef} className="min-w-0 scroll-mt-16">
+            {activeStep?.kind === 'option' && activeStep.group.inputType !== 'color_select' && (
+              <FitProfileBar fit={fit} onChange={setFit} />
+            )}
+
             {activeStep?.kind === 'option' && (
               <OptionStep
                 key={activeStep.group._id}
                 group={activeStep.group}
                 {...pairingCopy(activeStep.group)}
+                fitAdvice={adviceFor(fit, activeStep.group.code)}
                 tint={chosenHex}
                 selectedId={selections[activeStep.group._id]}
                 onSelect={(optionId) =>

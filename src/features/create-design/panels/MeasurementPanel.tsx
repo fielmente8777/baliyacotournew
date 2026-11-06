@@ -14,7 +14,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Check, CheckCircle2, PlayCircle, Plus, Ruler } from 'lucide-react';
+import { Check, CheckCircle2, PlayCircle, Plus, Ruler, Table2 } from 'lucide-react';
 
 import {
   useGetMeasurementFieldsQuery,
@@ -23,6 +23,7 @@ import {
 import { useMeasureVideoUrl } from '@/store/api/settingsApi';
 import { cn } from '@/lib/format';
 import MeasureGuide from './MeasureGuide';
+import SizeGuide from './SizeGuide';
 
 interface Props {
   selectedId: string | null;
@@ -36,6 +37,7 @@ export default function MeasurementPanel({ selectedId, onSelect }: Props) {
   const { data: fields = [] } = useGetMeasurementFieldsQuery();
   const videoUrl = useMeasureVideoUrl();
   const [guideOpen, setGuideOpen] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   /* Preselect the default so a single-profile customer never stops here. */
   useEffect(() => {
@@ -63,6 +65,14 @@ export default function MeasurementPanel({ selectedId, onSelect }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSizeGuideOpen(true)}
+            className="inline-flex h-11 items-center gap-2 rounded-md border border-secondary bg-white px-4 text-sm font-medium text-secondary transition-colors hover:bg-[#FBF6F7]"
+          >
+            <Table2 size={18} aria-hidden />
+            Size guide
+          </button>
           {howTo}
           <Link
             href="/my-account/saved-measurements"
@@ -175,6 +185,7 @@ export default function MeasurementPanel({ selectedId, onSelect }: Props) {
       </div>
 
       {guideOpen && <MeasureGuide videoUrl={videoUrl} fields={fields} onClose={() => setGuideOpen(false)} />}
+      {sizeGuideOpen && <SizeGuide onClose={() => setSizeGuideOpen(false)} />}
     </div>
   );
 }

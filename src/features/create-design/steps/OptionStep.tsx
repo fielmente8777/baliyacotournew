@@ -7,7 +7,11 @@
  */
 
 import Image from 'next/image';
-import { Check, Lock } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Lock, Sparkles, Table2 } from 'lucide-react';
+
+import SizeGuide from '../panels/SizeGuide';
+import type { GroupFitAdvice } from '../fitAdvice';
 
 import type { DesignGroup } from '@/@types/design';
 import { OptionIllustration } from '@/components/illustrations/optionIllustrations';
@@ -26,6 +30,8 @@ interface Props {
   blockedMessage?: string;
   /** The chosen colour — tints the drawings shown for options with no photo. */
   tint?: string;
+  /** Body-shape advice for this step: tips, and which options suit. */
+  fitAdvice?: GroupFitAdvice | null;
 }
 
 const priceText = (paise: number) => (paise > 0 ? `+ ${formatINR(paise / 100)}` : 'Included');
@@ -38,11 +44,12 @@ function isLight(hex?: string) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 170;
 }
 
-export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage, tint }: Props) {
+export default function OptionStep({ group, selectedId, onSelect, note, blockedMessage, tint, fitAdvice }: Props) {
   const isColour = group.inputType === 'color_select';
   const isSize = group.inputType === 'size_select';
   const { data: images = {} } = useGetDesignImagesQuery(undefined, LIVE);
   const selected = group.options.find((o) => o._id === selectedId);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   return (
     <div>
@@ -57,6 +64,16 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
             )}
           </div>
           {note && <p className="mt-1.5 text-sm text-[#8B6E54]">{note}</p>}
+          {isSize && (
+            <button
+              type="button"
+              onClick={() => setSizeGuideOpen(true)}
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-secondary underline-offset-4 hover:underline"
+            >
+              <Table2 size={16} aria-hidden />
+              Size guide
+            </button>
+          )}
         </div>
 
         {selected && (
@@ -69,6 +86,19 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
           </p>
         )}
       </div>
+
+      {!blockedMessage && fitAdvice && fitAdvice.tips.length > 0 && (
+        <div className="mb-5 flex animate-fade-in gap-3 rounded-2xl border border-[#F0E2E5] bg-[#FBF6F7] p-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-secondary">
+            <Sparkles size={15} aria-hidden />
+          </span>
+          <ul className="space-y-1 pt-1 text-sm text-dark/80">
+            {fitAdvice.tips.map((tip) => (
+              <li key={tip}>{tip}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {blockedMessage && (
         <div className="flex animate-fade-in items-start gap-3 rounded-2xl border border-dashed border-[#E2D8CB] bg-white p-5 text-sm text-[#6B6B6B]">
@@ -95,6 +125,7 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
       >
         {group.options.map((option) => {
           const active = selectedId === option._id;
+          const suitsYou = Boolean(fitAdvice?.suits(option));
           const image = option.fromStudio
             ? option.image
             : (images[designImageKey.option(group.code, option.value)] ?? option.image);
@@ -210,6 +241,12 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
                 >
                   {active && <Check size={14} strokeWidth={3} />}
                 </span>
+
+                {suitsYou && (
+                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-medium text-secondary shadow-sm">
+                    <Sparkles size={11} aria-hidden /> Suits you
+                  </span>
+                )}
               </div>
 
               <div className="px-1.5 pb-1 pt-2.5 md:px-2 md:pt-3">
@@ -224,6 +261,8 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
           );
         })}
       </div>
+
+      {sizeGuideOpen && <SizeGuide highlight={selected?.label} onClose={() => setSizeGuideOpen(false)} />}
     </div>
   );
 }

@@ -2,7 +2,7 @@
  * Public catalog endpoints.
  *
  * Products, variants and specs now come straight from Shopify's Storefront
- * API (see lib/shopifyStorefront.ts) — this app's own backend is not in the
+ * API (see lib/shopifyStorefront.ts) — this app's  ownbackend is not in the
  * request path for browsing at all, so it keeps working even if
  * baliye-node is down. Garment types are a different story: Shopify has no
  * such concept, so those two endpoints at the bottom are untouched and
