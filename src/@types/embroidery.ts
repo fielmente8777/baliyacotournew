@@ -77,6 +77,10 @@ export interface EmbroideryCollection {
   dupattaOptionIds: string[];
   /** Optional; empty = every colour. */
   colourOptionIds: string[];
+  /** Optional; empty = every size. */
+  sizeOptionIds?: string[];
+  /** Optional; body shape ids (Size & fit guide) it flatters. */
+  bodyShapeIds?: string[];
   /** The admin's notes, given to every AI step for this embroidery. */
   notes: string;
 }
@@ -88,10 +92,11 @@ export type PairingField =
   | 'lengthOptionIds'
   | 'lowerOptionIds'
   | 'dupattaOptionIds'
-  | 'colourOptionIds';
+  | 'colourOptionIds'
+  | 'sizeOptionIds';
 
 /** What the admin can say about a whole embroidery, beyond its pieces. */
-export type EmbroideryCollectionDetails = Partial<Record<PairingField, string[]>> & { notes?: string };
+export type EmbroideryCollectionDetails = Partial<Record<PairingField, string[]>> & { notes?: string; bodyShapeIds?: string[] };
 
 /** One copy of a piece as read off the source photo; fractions of the target image. */
 export interface PlannedPiece {

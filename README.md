@@ -113,6 +113,10 @@ Extract embroidery from garment photos, split it into named pieces (each with po
 
 ## Change log (newest first)
 
+- **Size and body shape in AI Studio; Body fit in Design Builder.**
+  - **AI Studio → "What does this embroidery go with?"** has two new optional rows. **Size** is a pairing field like Dupatta (`sizeOptionIds`, backend `PAIRING_FIELDS` code `size`): the embroidery only shows with the sizes ticked, and none ticked means every size. **Suits body shape** (`bodyShapeIds`, ids from the Size & fit guide) is stored on `EmbroideryCollection`, returned as `suitsShapes` on the Embroidery option in `GET /designs/config`, and merged into the fit advice by `withOptionShapes` (`fitAdvice.ts`). Customers with that shape see "Suits you" on it.
+  - **Design Builder → a step → Body fit** (`design-builder/BodyFitCard.tsx`): a card under Options, on every step except Colour and Size. For each option, tap shapes and concerns to cycle Suits → Avoid → not marked, then Save body fit. It edits the same `guides` content as Admin → Size & fit guide. Existing option rows are unchanged.
+
 - **The finished design's picture reaches the Shopify order.** Add To Cart sends `previewImageUrl` in `POST /designs`: the AI preview if it's ready, or the plain photo when no choice differs from it (`CreateDesignShell.tsx`). The backend keeps it on `CustomDesign.previewImageUrl` only if it is `https://cdn.shopify.com/...` or this server's own `/uploads/` (`trustedImageUrl` in `services/design.v2.ts`; anything else is dropped, so customers can't put arbitrary links on orders). `startDesignCheckout` (`services/designCheckout.ts`) adds it to the draft order line as **Design image**, a link under the line in Shopify admin (custom lines can't show a thumbnail). The cart shows the picture instead of the placeholder (`useCart.ts`). Designs saved before this change have no picture.
 
 - **Size guide and "Find my fit" in the design builder, both editable in Admin → Size & fit guide** (`/admin/style-guides`, `features/admin/StyleGuidesView.tsx`).

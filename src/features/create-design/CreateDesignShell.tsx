@@ -49,7 +49,7 @@ import { useRecolouredPreview } from './useRecolouredPreview';
 import { useStepInUrl } from './useStepInUrl';
 import RecolourOverlay, { TokenBalanceChip } from './RecolourOverlay';
 import FitProfileBar from './FitProfile';
-import { adviceFor, useFitProfile } from './fitAdvice';
+import { adviceFor, useFitProfile, withOptionShapes } from './fitAdvice';
 import { useGetWalletQuery } from '@/store/api/tokenApi';
 import { useCreditsEnabled } from '@/store/api/settingsApi';
 import { useAuth } from '@/features/auth/useAuth';
@@ -642,7 +642,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 key={activeStep.group._id}
                 group={activeStep.group}
                 {...pairingCopy(activeStep.group)}
-                fitAdvice={adviceFor(fit, activeStep.group.code, guides)}
+                fitAdvice={adviceFor(fit, activeStep.group.code, withOptionShapes(guides, activeStep.group))}
                 tint={chosenHex}
                 selectedId={selections[activeStep.group._id]}
                 onSelect={(optionId) =>

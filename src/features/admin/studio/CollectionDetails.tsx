@@ -21,7 +21,8 @@ import { X } from 'lucide-react';
 
 import type { AdminOption } from '@/@types/admin';
 import type { EmbroideryCollection, EmbroideryCollectionDetails, PairingField } from '@/@types/embroidery';
-import { adminErrorMessage, useGetCatalogQuery } from '@/store/api/adminApi';
+import { adminErrorMessage, useGetCatalogQuery, useGetContentQuery } from '@/store/api/adminApi';
+import { GUIDES_PAGE, mergeGuides } from '@/lib/styleGuides';
 import { useUpdateEmbroideryCollectionMutation } from '@/store/api/adminStudioApi';
 import { cn } from '@/lib/format';
 import { Button, NoticeBar, TextField } from '../ui';
@@ -86,6 +87,13 @@ const PAIRING_STEPS: {
     need: 'optional',
     hint: 'Tick none for any dupatta.',
   },
+  {
+    field: 'sizeOptionIds',
+    code: 'size',
+    title: 'Size',
+    need: 'optional',
+    hint: 'Sizes it is made in. Tick none for every size. Tick Custom Measurement too if it can be made to measure.',
+  },
 ];
 
 export const emptyDetails = (): CollectionDetailsValue => ({
@@ -95,6 +103,8 @@ export const emptyDetails = (): CollectionDetailsValue => ({
   lowerOptionIds: [],
   dupattaOptionIds: [],
   colourOptionIds: [],
+  sizeOptionIds: [],
+  bodyShapeIds: [],
   notes: '',
 });
 
@@ -105,6 +115,8 @@ export const detailsFrom = (c: EmbroideryCollection): CollectionDetailsValue => 
   lowerOptionIds: c.lowerOptionIds ?? [],
   dupattaOptionIds: c.dupattaOptionIds ?? [],
   colourOptionIds: c.colourOptionIds ?? [],
+  sizeOptionIds: c.sizeOptionIds ?? [],
+  bodyShapeIds: c.bodyShapeIds ?? [],
   notes: c.notes ?? '',
 });
 
@@ -157,6 +169,14 @@ export const CollectionDetailsFields = forwardRef<
   }
 >(function CollectionDetailsFields({ value, onChange, error }, ref) {
   const { byCode, isLoading } = usePairingOptions();
+  /* Body shapes from Admin → Size & fit guide (its defaults until saved). */
+  const { data: guidesContent } = useGetContentQuery(GUIDES_PAGE);
+  const bodyShapes = useMemo(() => mergeGuides(guidesContent?.data).bodyShapes, [guidesContent]);
+  const toggleShape = (id: string) =>
+    onChange({
+      ...value,
+      bodyShapeIds: value.bodyShapeIds.includes(id) ? value.bodyShapeIds.filter((n) => n !== id) : [...value.bodyShapeIds, id],
+    });
   const toggle = (field: PairingField, id: string) =>
     onChange({
       ...value,
@@ -168,8 +188,8 @@ export const CollectionDetailsFields = forwardRef<
       <div>
         <p className="text-sm font-medium text-dark">What does this embroidery go with?</p>
         <p className="text-xs text-[#777]">
-          Neck and sleeve are required, plus a length or a lower. Colour and dupatta are optional. In the designer it only
-          shows with these choices, so nothing clashes.
+          Neck and sleeve are required, plus a length or a lower. Colour, dupatta, size and body shape are optional. In the
+          designer it only shows with these choices, so nothing clashes.
         </p>
         {error && <p className="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{error}</p>}
       </div>
@@ -220,6 +240,40 @@ export const CollectionDetailsFields = forwardRef<
             </fieldset>
           );
         })
+      )}
+
+      {bodyShapes.length > 0 && (
+        <fieldset>
+          <legend className="flex flex-wrap items-baseline gap-2 text-sm font-medium text-dark">
+            Suits body shape
+            <span className="rounded-full bg-[#f1ece4] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#7a6d5c]">
+              Optional
+            </span>
+          </legend>
+          <p className="mb-2 text-xs text-[#777]">
+            Customers who pick one of these shapes in &ldquo;Find my fit&rdquo; see &ldquo;Suits you&rdquo; on this embroidery. Tick none to
+            leave it neutral.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {bodyShapes.map((shape) => {
+              const on = value.bodyShapeIds.includes(shape.id);
+              return (
+                <button
+                  key={shape.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleShape(shape.id)}
+                  className={cn(
+                    'flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs transition',
+                    on ? 'border-secondary bg-secondary text-white' : 'border-[#d8d2c8] bg-white text-[#444] hover:border-secondary'
+                  )}
+                >
+                  {shape.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
       )}
 
       <TextField

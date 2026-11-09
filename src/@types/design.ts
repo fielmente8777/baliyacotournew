@@ -20,6 +20,8 @@ export interface DesignOption {
   image?: string;
   /** Embroidery made in AI Studio: `image` is its extracted picture and wins over the Design Builder's. */
   fromStudio?: boolean;
+  /** Body shape ids ticked for this embroidery in AI Studio ("Suits you" for those shapes). */
+  suitsShapes?: string[];
   hex?: string;
   /** Minor units, added to the base price when chosen. */
   priceModifier: number;

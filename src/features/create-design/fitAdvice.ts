@@ -14,7 +14,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 
-import type { DesignOption } from '@/@types/design';
+import type { DesignGroup, DesignOption } from '@/@types/design';
 import { slugify, type FitChoice, type StyleGuides } from '@/lib/styleGuides';
 
 type Guides = Pick<StyleGuides, 'bodyShapes' | 'fitConcerns'>;
@@ -92,6 +92,28 @@ export function adviceFor(fit: FitProfile, groupCode: string, guides: Guides): G
     suits: (option) => suitsKeys(keysOf(option)),
     avoids: (option) => avoided(keysOf(option)),
     conflicting: recommenders.length > 1 && common.length === 0,
+  };
+}
+
+/**
+ * Adds body shapes ticked on an option itself (embroidery, in AI Studio) to
+ * the guide's advice for that step, so they count like the admin's Size & fit
+ * guide picks. Returns the guides unchanged when no option has any.
+ */
+export function withOptionShapes(guides: Guides, group: DesignGroup): Guides {
+  const ticked = group.options.filter((o) => o.suitsShapes?.length);
+  if (!ticked.length) return guides;
+  return {
+    ...guides,
+    bodyShapes: guides.bodyShapes.map((shape) => {
+      const values = ticked.filter((o) => o.suitsShapes!.includes(shape.id)).map((o) => slugify(o.value) || slugify(o.label));
+      if (!values.length) return shape;
+      const current = shape.advice[group.code] ?? { suits: [], avoid: [], tip: '' };
+      return {
+        ...shape,
+        advice: { ...shape.advice, [group.code]: { ...current, suits: [...new Set([...current.suits, ...values])] } },
+      };
+    }),
   };
 }
 
