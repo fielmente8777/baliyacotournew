@@ -50,6 +50,9 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
   const { data: images = {} } = useGetDesignImagesQuery(undefined, LIVE);
   const selected = group.options.find((o) => o._id === selectedId);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  /* Names for the advice box — only options actually on this step. */
+  const bestForYou = fitAdvice ? group.options.filter((o) => fitAdvice.suits(o)).map((o) => o.label) : [];
+  const toAvoid = fitAdvice ? group.options.filter((o) => fitAdvice.avoids(o)).map((o) => o.label) : [];
 
   return (
     <div>
@@ -87,16 +90,40 @@ export default function OptionStep({ group, selectedId, onSelect, note, blockedM
         )}
       </div>
 
-      {!blockedMessage && fitAdvice && fitAdvice.tips.length > 0 && (
+      {!blockedMessage && fitAdvice && (bestForYou.length > 0 || toAvoid.length > 0 || fitAdvice.tips.length > 0 || fitAdvice.conflicting) && (
         <div className="mb-5 flex animate-fade-in gap-3 rounded-2xl border border-[#F0E2E5] bg-[#FBF6F7] p-4">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-secondary">
             <Sparkles size={15} aria-hidden />
           </span>
-          <ul className="space-y-1 pt-1 text-sm text-dark/80">
-            {fitAdvice.tips.map((tip) => (
-              <li key={tip}>{tip}</li>
-            ))}
-          </ul>
+          <div className="min-w-0 space-y-2 pt-1 text-sm text-dark/80">
+            {bestForYou.length > 0 && (
+              <p>
+                <span className="font-semibold text-secondary">Best for you: </span>
+                {bestForYou.join(', ')}
+              </p>
+            )}
+            {fitAdvice.conflicting && bestForYou.length === 0 && (
+              <p className="font-medium text-dark">
+                Your choices pull in different directions here, so no single option suits all of them. Go with what
+                you feel best in.
+              </p>
+            )}
+            {toAvoid.length > 0 && (
+              <p>
+                <span className="font-semibold text-dark">Better to avoid: </span>
+                {toAvoid.join(', ')}
+              </p>
+            )}
+            {fitAdvice.tips.length > 0 && (
+              <ul className="space-y-1">
+                {fitAdvice.tips.map((tip) => (
+                  <li key={`${tip.from}-${tip.text}`}>
+                    <span className="font-medium text-dark">{tip.from}:</span> {tip.text}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
 

@@ -93,6 +93,13 @@ export interface CreateDesignBody {
   measurementProfileId?: string;
   sizeOptionId?: string;
   instructions?: string;
+  /**
+   * The picture of the customer's finished design: the AI preview
+   * (cdn.shopify.com) when one was made, else the plain photo if it already
+   * shows every choice. The backend keeps it on the design and puts it on the
+   * Shopify order line so the team sees what to make.
+   */
+  previewImageUrl?: string;
 }
 
 export interface SavedDesign {
@@ -109,6 +116,7 @@ export interface SavedDesign {
   }[];
   pricing: PriceBreakdown;
   instructions?: string;
+  previewImageUrl?: string;
   createdAt: string;
 }
 

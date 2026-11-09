@@ -24,6 +24,8 @@ export interface CartDesign {
     total: number;
   };
   instructions?: string;
+  /** The finished design's picture, when one was saved with it. */
+  previewImageUrl?: string;
 }
 
 export interface CartItem {

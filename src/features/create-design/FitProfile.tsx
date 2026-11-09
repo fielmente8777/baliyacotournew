@@ -11,10 +11,11 @@ import { createPortal } from 'react-dom';
 import { Check, Sparkles, X } from 'lucide-react';
 
 import { cn } from '@/lib/format';
-import { BODY_SHAPES, FIT_CONCERNS, fitSummary, hasFit, type FitProfile } from './fitAdvice';
+import { useStyleGuides } from '@/store/api/designApi';
+import { fitSummary, hasFit, type FitProfile } from './fitAdvice';
 
 /** A simple front silhouette from shoulder, bust, waist and hip widths. */
-function Silhouette({ widths, className }: { widths: [number, number, number, number]; className?: string }) {
+export function Silhouette({ widths, className }: { widths: [number, number, number, number]; className?: string }) {
   const [s, b, w, h] = widths;
   const c = 40;
   const d = [
@@ -41,6 +42,7 @@ function Silhouette({ widths, className }: { widths: [number, number, number, nu
 
 function FitSheet({ value, onSave, onClose }: { value: FitProfile; onSave: (fit: FitProfile) => void; onClose: () => void }) {
   const [draft, setDraft] = useState<FitProfile>(value);
+  const { bodyShapes, fitConcerns } = useStyleGuides();
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeFn = useRef(onClose);
   useEffect(() => {
@@ -98,7 +100,7 @@ function FitSheet({ value, onSave, onClose }: { value: FitProfile; onSave: (fit:
         <div className="overflow-y-auto px-5 pb-4 pt-4">
           <h3 className="text-sm font-semibold text-dark">Your body shape</h3>
           <div role="radiogroup" aria-label="Body shape" className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            {BODY_SHAPES.map((shape) => {
+            {bodyShapes.map((shape) => {
               const active = draft.shape === shape.id;
               return (
                 <button
@@ -129,7 +131,7 @@ function FitSheet({ value, onSave, onClose }: { value: FitProfile; onSave: (fit:
             Fit concerns <span className="font-normal text-dark/50">(pick any)</span>
           </h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {FIT_CONCERNS.map((concern) => {
+            {fitConcerns.map((concern) => {
               const active = draft.concerns.includes(concern.id);
               return (
                 <button
@@ -181,7 +183,11 @@ function FitSheet({ value, onSave, onClose }: { value: FitProfile; onSave: (fit:
 /** The card above the options: an invitation, or what the advice is for. */
 export default function FitProfileBar({ fit, onChange }: { fit: FitProfile; onChange: (fit: FitProfile) => void }) {
   const [open, setOpen] = useState(false);
+  const guides = useStyleGuides();
   const set = hasFit(fit);
+
+  /* The admin removed every shape and concern: nothing to offer. */
+  if (!guides.bodyShapes.length && !guides.fitConcerns.length) return null;
 
   return (
     <>
@@ -194,7 +200,7 @@ export default function FitProfileBar({ fit, onChange }: { fit: FitProfile; onCh
             {set ? (
               <>
                 <p className="text-[11px] font-medium uppercase tracking-wider text-dark/50">Styled for</p>
-                <p className="truncate text-sm font-medium text-dark">{fitSummary(fit)}</p>
+                <p className="truncate text-sm font-medium text-dark">{fitSummary(fit, guides)}</p>
               </>
             ) : (
               <>

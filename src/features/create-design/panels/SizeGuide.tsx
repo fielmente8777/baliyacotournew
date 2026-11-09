@@ -4,8 +4,9 @@
  * Size chart — standard Indian women's ethnic-wear sizes (body measurements).
  * A centred dialog on desktop, a bottom sheet on phones, same as MeasureGuide.
  *
- * Numbers are body measurements in inches; cm is worked out from them. Edit
- * SIZES below to change the chart.
+ * Numbers are body measurements in inches; cm is worked out from them. The
+ * admin edits the chart in Admin → Size & fit guide (defaults in
+ * lib/styleGuides.ts).
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -13,41 +14,9 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 import { cn } from '@/lib/format';
+import { useStyleGuides } from '@/store/api/designApi';
 
 type Unit = 'in' | 'cm';
-
-interface SizeRow {
-  size: string;
-  /** Inches. */
-  bust: number;
-  waist: number;
-  hip: number;
-  shoulder: number;
-}
-
-const SIZES: SizeRow[] = [
-  { size: 'XS', bust: 32, waist: 26, hip: 35, shoulder: 13.5 },
-  { size: 'S', bust: 34, waist: 28, hip: 37, shoulder: 14 },
-  { size: 'M', bust: 36, waist: 30, hip: 39, shoulder: 14.5 },
-  { size: 'L', bust: 38, waist: 32, hip: 41, shoulder: 15 },
-  { size: 'XL', bust: 40, waist: 34, hip: 43, shoulder: 15.5 },
-  { size: 'XXL', bust: 42, waist: 36, hip: 45, shoulder: 16 },
-  { size: '3XL', bust: 44, waist: 38, hip: 47, shoulder: 16.5 },
-];
-
-const COLUMNS: { key: keyof Omit<SizeRow, 'size'>; label: string }[] = [
-  { key: 'bust', label: 'Bust' },
-  { key: 'waist', label: 'Waist' },
-  { key: 'hip', label: 'Hip' },
-  { key: 'shoulder', label: 'Shoulder' },
-];
-
-const HOW_TO = [
-  { name: 'Bust', tip: 'Around the fullest part of your chest, tape level under the arms.' },
-  { name: 'Waist', tip: 'Around your natural waist — the narrowest part, just above the navel.' },
-  { name: 'Hip', tip: 'Around the fullest part of your hips, feet together.' },
-  { name: 'Shoulder', tip: 'Across the back, from one shoulder edge to the other.' },
-];
 
 const show = (inches: number, unit: Unit) =>
   unit === 'in' ? String(inches) : String(Math.round(inches * 2.54));
@@ -61,6 +30,7 @@ export default function SizeGuide({
   highlight?: string;
 }) {
   const [unit, setUnit] = useState<Unit>('in');
+  const { sizeChart, measureTips } = useStyleGuides();
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeFn = useRef(onClose);
   useEffect(() => {
@@ -137,24 +107,24 @@ export default function SizeGuide({
               <thead className="bg-[#FAF7F2] text-left text-[11px] uppercase tracking-wider text-dark/60">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">Size</th>
-                  {COLUMNS.map((c) => (
-                    <th key={c.key} scope="col" className="px-4 py-3 text-right font-medium">
-                      {c.label}
+                  {sizeChart.columns.map((c) => (
+                    <th key={c} scope="col" className="px-4 py-3 text-right font-medium">
+                      {c}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F2EEE8]">
-                {SIZES.map((row) => {
-                  const isActive = active === row.size;
+                {sizeChart.rows.map((row, r) => {
+                  const isActive = active === row.size.trim().toUpperCase();
                   return (
-                    <tr key={row.size} className={cn(isActive && 'bg-[#FBF6F7]')}>
+                    <tr key={`${row.size}-${r}`} className={cn(isActive && 'bg-[#FBF6F7]')}>
                       <th scope="row" className={cn('px-4 py-3 text-left font-semibold', isActive ? 'text-secondary' : 'text-dark')}>
                         {row.size}
                       </th>
-                      {COLUMNS.map((c) => (
-                        <td key={c.key} className="px-4 py-3 text-right tabular-nums text-dark/80">
-                          {show(row[c.key], unit)}
+                      {sizeChart.columns.map((c, i) => (
+                        <td key={c} className="px-4 py-3 text-right tabular-nums text-dark/80">
+                          {row.values[i] ? show(row.values[i], unit) : '—'}
                         </td>
                       ))}
                     </tr>
@@ -164,18 +134,18 @@ export default function SizeGuide({
             </table>
           </div>
           <p className="mt-2 text-xs text-dark/50">
-            All measurements in {unit === 'in' ? 'inches' : 'centimetres'}. Between two sizes? Pick the bigger one.
+            All measurements in {unit === 'in' ? 'inches' : 'centimetres'}. {sizeChart.note}
           </p>
 
-          <h3 className="mt-6 text-sm font-semibold text-dark">How to measure</h3>
-          <dl className="mt-2 divide-y divide-[#F2EEE8] rounded-xl border border-[#F2EEE8]">
-            {HOW_TO.map((m) => (
+          {measureTips.length > 0 && <h3 className="mt-6 text-sm font-semibold text-dark">How to measure</h3>}
+          {measureTips.length > 0 && <dl className="mt-2 divide-y divide-[#F2EEE8] rounded-xl border border-[#F2EEE8]">
+            {measureTips.map((m) => (
               <div key={m.name} className="px-4 py-3">
                 <dt className="text-sm font-medium text-dark">{m.name}</dt>
                 <dd className="mt-0.5 text-sm text-dark/70">{m.tip}</dd>
               </div>
             ))}
-          </dl>
+          </dl>}
         </div>
       </div>
     </div>,
