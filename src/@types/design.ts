@@ -20,6 +20,8 @@ export interface DesignOption {
   image?: string;
   /** Embroidery made in AI Studio: `image` is its extracted picture and wins over the Design Builder's. */
   fromStudio?: boolean;
+  /** Body shape ids ticked for this embroidery in AI Studio ("Suits you" for those shapes). */
+  suitsShapes?: string[];
   hex?: string;
   /** Minor units, added to the base price when chosen. */
   priceModifier: number;
@@ -93,6 +95,13 @@ export interface CreateDesignBody {
   measurementProfileId?: string;
   sizeOptionId?: string;
   instructions?: string;
+  /**
+   * The picture of the customer's finished design: the AI preview
+   * (cdn.shopify.com) when one was made, else the plain photo if it already
+   * shows every choice. The backend keeps it on the design and puts it on the
+   * Shopify order line so the team sees what to make.
+   */
+  previewImageUrl?: string;
 }
 
 export interface SavedDesign {
@@ -109,6 +118,7 @@ export interface SavedDesign {
   }[];
   pricing: PriceBreakdown;
   instructions?: string;
+  previewImageUrl?: string;
   createdAt: string;
 }
 

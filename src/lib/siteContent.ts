@@ -11,7 +11,8 @@
  * edit shows on the next page load.
  */
 
-export type ContentPage = 'home' | 'footer' | 'terms' | 'products';
+/** 'guides' is the builder's size chart and fit advice (lib/styleGuides.ts), read on the client. */
+export type ContentPage = 'home' | 'footer' | 'terms' | 'products' | 'guides';
 
 export const contentTag = (page: ContentPage) => `content:${page}`;
 

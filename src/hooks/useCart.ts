@@ -93,7 +93,7 @@ export function useCart() {
           source: 'backend' as const,
           kind: 'design' as const,
           title: design?.name ?? 'Custom Design',
-          image: DESIGN_PLACEHOLDER_IMAGE,
+          image: design?.previewImageUrl || DESIGN_PLACEHOLDER_IMAGE,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           selections: design?.selections.map((s) => ({

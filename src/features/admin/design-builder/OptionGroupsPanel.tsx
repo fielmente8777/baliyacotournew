@@ -16,6 +16,7 @@ import {
 import { cn, formatINR } from '@/lib/format';
 import { Badge, Button, Card, Field, ImageSlot, inputClass, NoticeBar, PriceField, TextField, Toggle, type Notice } from '../ui';
 import { byPosition, groupUsesImages, optionKey } from './catalogKeys';
+import BodyFitCard from './BodyFitCard';
 
 const INPUT_TYPES: { value: OptionInputType; label: string }[] = [
   { value: 'single_select', label: 'Pick one (with pictures)' },
@@ -167,6 +168,8 @@ function GroupEditor({ group, catalog }: { group: AdminOptionGroup; catalog: Adm
         </div>
         <NewOptionForm group={group} isColour={isColour} />
       </Card>
+
+      {!isColour && group.inputType !== 'size_select' && <BodyFitCard group={group} options={options.filter((o) => o.isActive)} />}
     </div>
   );
 }

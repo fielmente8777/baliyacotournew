@@ -12,6 +12,8 @@ import type {
 } from '@/@types/design';
 import type { GarmentType } from '@/@types/product';
 import { fetchDesignImages, type DesignImageMap } from '@/lib/designImages';
+import { DEFAULT_GUIDES, GUIDES_PAGE, mergeGuides, type StyleGuides } from '@/lib/styleGuides';
+import { LIVE } from '@/lib/liveUpdates';
 import { baseApi, unwrap, type ApiEnvelope } from './baseApi';
 
 /** The photo plus every chosen option that should show in it. */
@@ -20,6 +22,7 @@ export interface RecolourBody {
   /** imageUrl: the option's own picture, used by the AI as a reference. */
   options: { optionId: string; imageUrl?: string }[];
 }
+
 
 export interface RecolourResult {
   key: string;
@@ -30,6 +33,20 @@ export interface RecolourResult {
 
 const designApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    /**
+     * Size chart and body-shape advice (Admin → Size & fit guide). Never
+     * fails: until the admin saves, or if the backend can't be read, it
+     * returns the built-in defaults.
+     */
+    getStyleGuides: builder.query<StyleGuides, void>({
+      queryFn: async (_arg, _api, _extra, baseQuery) => {
+        const res = await baseQuery(`/content/${GUIDES_PAGE}`);
+        if (res.error) return { data: DEFAULT_GUIDES };
+        const saved = unwrap(res.data as ApiEnvelope<{ data: unknown } | null>);
+        return { data: mergeGuides(saved?.data) };
+      },
+    }),
+
     /** Garment, preview and option images — straight from Shopify. */
     getDesignImages: builder.query<DesignImageMap, void>({
       queryFn: async () => {
@@ -104,6 +121,7 @@ const designApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetStyleGuidesQuery,
   useGetDesignImagesQuery,
   useGetDesignConfigQuery,
   useQuotePriceMutation,
@@ -116,3 +134,8 @@ export const {
 /** Re-exported so the picker doesn't need to import from two API slices. */
 export type { GarmentType };
 
+/** Size chart and fit advice — the admin's, or the defaults while loading. */
+export function useStyleGuides(): StyleGuides {
+  const { data } = useGetStyleGuidesQuery(undefined, LIVE);
+  return data ?? DEFAULT_GUIDES;
+}

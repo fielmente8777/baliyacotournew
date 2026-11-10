@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Coins, FileText, Home, LayoutGrid, LogOut, Mail, Menu, PanelBottom, Ruler, ShoppingBag, Sparkles, Users, X } from 'lucide-react';
+import { Coins, FileText, Home, LayoutGrid, LogOut, Mail, Menu, PanelBottom, Ruler, Shirt, ShoppingBag, Sparkles, Users, X } from 'lucide-react';
 
 import { useAppDispatch } from '@/store/hooks';
 import { adminApi, useGetAdminMeQuery } from '@/store/api/adminApi';
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/admin/design-builder', label: 'Design Builder', icon: LayoutGrid },
   { href: '/admin/ai-studio', label: 'AI Studio', icon: Sparkles },
   { href: '/admin/measurements', label: 'Measurement fields', icon: Ruler },
+  { href: '/admin/style-guides', label: 'Size & fit guide', icon: Shirt },
   { href: '/admin/content/home', label: 'Home page', icon: Home },
   { href: '/admin/content/products', label: 'Pre-made Designs page', icon: ShoppingBag },
   { href: '/admin/content/footer', label: 'Footer', icon: PanelBottom },

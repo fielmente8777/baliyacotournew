@@ -34,6 +34,7 @@ import type {
 } from '@/@types/admin';
 import { clearAdminTokens, loadAdminTokens, saveAdminTokens } from '@/lib/adminAuthStorage';
 import { unwrap, type ApiEnvelope } from './baseApi';
+import type { GUIDES_PAGE } from '@/lib/styleGuides';
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1',
@@ -116,6 +117,8 @@ export type AppSettingsAdmin = { creditsEnabled: boolean; measureVideoUrl: strin
 /** One newsletter sign-up from the website form. */
 export type NewsletterSubscriber = { _id: string; email: string; source: string; createdAt: string };
 export type NewsletterPage = { items: NewsletterSubscriber[]; total: number; totalPages: number };
+
+type GuidesPage = typeof GUIDES_PAGE;
 
 export const adminApi = createApi({
   reducerPath: 'adminApi',
@@ -242,14 +245,14 @@ export const adminApi = createApi({
 
     /* ---- Website content ---- */
 
-    getContent: builder.query<{ data: Record<string, unknown>; updatedAt: string } | null, ContentPage>({
+    getContent: builder.query<{ data: Record<string, unknown>; updatedAt: string } | null, ContentPage | GuidesPage>({
       query: (page) => `/content/${page}`,
       transformResponse: unwrap<{ data: Record<string, unknown>; updatedAt: string } | null>,
       providesTags: (_r, _e, page) => [{ type: 'Content', id: page }],
     }),
 
     /** Saves, then asks the website to drop its cached copy of the page. */
-    saveContent: builder.mutation<{ updatedAt: string }, { page: ContentPage; data: Record<string, unknown> }>({
+    saveContent: builder.mutation<{ updatedAt: string }, { page: ContentPage | GuidesPage; data: Record<string, unknown> }>({
       queryFn: async ({ page, data }, api, extraOptions) => {
         const saved = await baseQueryWithReauth(
           { url: `/admin/content/${page}`, method: 'PUT', body: { data } },

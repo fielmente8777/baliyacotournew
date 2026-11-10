@@ -28,6 +28,7 @@ import {
   useGetDesignConfigQuery,
   useGetDesignImagesQuery,
   useQuotePriceMutation,
+  useStyleGuides,
 } from '@/store/api/designApi';
 import { useGetMeasurementProfilesQuery } from '@/store/api/measurementApi';
 import { useCart } from '@/hooks/useCart';
@@ -48,7 +49,7 @@ import { useRecolouredPreview } from './useRecolouredPreview';
 import { useStepInUrl } from './useStepInUrl';
 import RecolourOverlay, { TokenBalanceChip } from './RecolourOverlay';
 import FitProfileBar from './FitProfile';
-import { adviceFor, useFitProfile } from './fitAdvice';
+import { adviceFor, useFitProfile, withOptionShapes } from './fitAdvice';
 import { useGetWalletQuery } from '@/store/api/tokenApi';
 import { useCreditsEnabled } from '@/store/api/settingsApi';
 import { useAuth } from '@/features/auth/useAuth';
@@ -163,6 +164,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
   const [previewFailed, setPreviewFailed] = useState(false);
   const optionsRef = useRef<HTMLElement>(null);
   const [fit, setFit] = useFitProfile();
+  const guides = useStyleGuides();
 
   const { data: config, isLoading } = useGetDesignConfigQuery(
     { garmentTypeId, productId },
@@ -390,6 +392,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
           ? undefined
           : (measurementProfileId ?? undefined),
         instructions: instructions || undefined,
+        previewImageUrl: designPictureUrl,
       }).unwrap();
 
       const result = await add(
@@ -448,6 +451,17 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
     previewOptions,
     { credits: creditsEnabled, canSpend }
   );
+  /**
+   * The picture saved with the design, for the Shopify order: the AI preview
+   * once it's ready; or the plain photo when nothing differs from it (it
+   * already shows the design). Otherwise none — the photo would show a
+   * different design.
+   */
+  const designPictureUrl = [
+    recoloured.url,
+    !previewOptions.length && !previewFailed ? previewImage : undefined,
+  ].find((url): url is string => Boolean(url?.startsWith('https://')));
+
   /* Back to this exact design after signing in. */
   const signIn = () => openLogin(window.location.pathname + window.location.search);
 
@@ -628,7 +642,7 @@ export default function CreateDesignShell({ garmentTypeId, productId }: Props) {
                 key={activeStep.group._id}
                 group={activeStep.group}
                 {...pairingCopy(activeStep.group)}
-                fitAdvice={adviceFor(fit, activeStep.group.code)}
+                fitAdvice={adviceFor(fit, activeStep.group.code, withOptionShapes(guides, activeStep.group))}
                 tint={chosenHex}
                 selectedId={selections[activeStep.group._id]}
                 onSelect={(optionId) =>
